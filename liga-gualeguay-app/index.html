@@ -2,7 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./imagenes/logo-pasion-azul.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-8GQ2GWHH27"></script>
 <script>
@@ -578,7 +581,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
   </div>
   <div class="sec-div"><h3>Liga Departamental</h3></div>
   <div style="background:var(--card);border-radius:10px;padding:14px;text-align:center;border:1px solid rgba(232,0,28,.2)">
-    <img src="imagenes/logo-liga-gualeguay.png" style="height:60px;object-fit:contain;margin:0 auto 7px;display:block">
+    <img src="imagenes/logo-pasion-azul.png" onerror="this.style.opacity='0'" style="height:60px;object-fit:contain;margin:0 auto 7px;display:block">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px">Liga Departamental de Fútbol</div>
     <div style="font-size:.6rem;color:var(--muted)">Gualeguay · Entre Ríos · 2026</div>
   </div>
@@ -587,7 +590,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 <!-- ===================== RADIO ===================== -->
 <section id="radio" class="section">
   <div style="text-align:center;margin-bottom:16px">
-    <img src="imagenes/logo-fm-tradicion.png" style="height:90px;object-fit:contain;display:block;margin:0 auto 10px">
+    <img src="imagenes/logo-fm-tradicion.jpg" onerror="this.style.opacity='0'" style="height:90px;object-fit:contain;display:block;margin:0 auto 10px">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px">RADIO TRADICIÓN FM 97.1</div>
     <div style="font-size:.7rem;color:var(--muted)">Gualeguay · Entre Ríos · Tu Radio Amiga</div>
   </div>
@@ -711,7 +714,8 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
           </div>
           <div class="panel-title">🎁 Sorteos</div>
           <button class="panel-btn blu" onclick="admVerSorteos()">📋 VER PARTICIPANTES</button>
-          <button class="panel-btn sec" onclick="admSortear()">🎲 SORTEAR GANADOR</button>
+          <button class="panel-btn sec" onclick="admSortear()">🎲 SORTEAR Y PUBLICAR GANADOR</button>
+          <button class="panel-btn sec" onclick="admOcultarGanador()" style="font-size:.72rem">🙈 OCULTAR GANADOR</button>
           <div id="adm-sorteos-r" style="margin-top:8px"></div>
           <div class="panel-title" style="margin-top:14px">🏪 Consultas Comerciales</div>
           <button class="panel-btn blu" onclick="admVerConsultas()">📋 VER CONSULTAS</button>
@@ -748,7 +752,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 <!-- ===================== FOOTER ===================== -->
 <footer class="footer">
   <div class="footer-logos">
-    <img src="imagenes/logo-liga-gualeguay.png" alt="Liga">
+    <img src="imagenes/logo-pasion-azul.png" onerror="this.style.opacity='0'" alt="Liga">
     <img src="imagenes/logo-fernews.png" alt="Fer News">
     <img src="imagenes/logo-pasion-azul.png" alt="Pasión Azul">
   </div>
@@ -762,7 +766,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 // ============================================================
 // CONFIGURACIÓN — REEMPLAZÁ LA URL CUANDO PUBLIQUES EL SCRIPT
 // ============================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/TU_DEPLOYMENT_ID/exec'; // ← Reemplazá con tu URL de deploy
+var APPS_SCRIPT_URL = 'REEMPLAZAR_CON_URL_APPS_SCRIPT'; // ← PASO OBLIGATORIO: pegá tu URL de deploy aquí
 var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m'; // ← mismo token que en Code.gs
 var PASS = 'ferNews2026';  // cambiá esta contraseña
 
@@ -814,6 +818,15 @@ function toggleGolVallas(tipo, btn) {
 // CARGA DE DATOS DESDE APPS SCRIPT
 // ============================================================
 function cargarDatos(forzar) {
+  // Verificar que la URL esté configurada
+  if (APPS_SCRIPT_URL.indexOf('REEMPLAZAR') !== -1) {
+    document.querySelectorAll('.loading-state').forEach(function(el){
+      el.className = 'error-state';
+      el.innerHTML = '⚙️ App no configurada — falta la URL del Apps Script';
+    });
+    console.error('APPS_SCRIPT_URL no configurada. Reemplazá TU_DEPLOYMENT_ID con la URL real.');
+    return;
+  }
   var cacheKey = 'appDataCache';
   var cacheTs  = 'appDataTs';
   var ahora    = Date.now();
@@ -1548,8 +1561,28 @@ function admSortear() {
   var idx = Math.floor(Math.random() * ps.length);
   ps[idx].ganador = true;
   saveSP(ps);
-  document.getElementById('adm-sorteos-r').innerHTML = '<div class="msg-box ok">🏆 ¡GANADOR SORTEADO!<br><strong>'+ps[idx].nombre+'</strong><br>📱 '+ps[idx].tel+'</div>';
+  // Publicar ganador en Firebase para que aparezca en la app pública
+  var ganador = ps[idx];
+  if (window._firebaseSet && window._firebaseDB && window._firebaseRef) {
+    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'sorteo_ganador'), {
+      nombre:  ganador.nombre,
+      tel:     ganador.tel.replace(/\d(?=\d{4})/g, '*'), // ocultar número parcialmente
+      fecha:   new Date().toLocaleDateString('es-AR'),
+      activo:  true
+    });
+  }
+  document.getElementById('adm-sorteos-r').innerHTML =
+    '<div class="msg-box ok">🏆 ¡GANADOR SORTEADO Y PUBLICADO!<br><strong>'+ganador.nombre+'</strong><br>📱 '+ganador.tel+'</div>';
   admVerSorteos();
+}
+
+function admOcultarGanador() {
+  if (!admOK) return;
+  if (window._firebaseSet && window._firebaseDB && window._firebaseRef) {
+    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'sorteo_ganador'), null);
+  }
+  document.getElementById('ganadores-wrap').style.display = 'none';
+  document.getElementById('adm-sorteos-r').innerHTML = '<div class="msg-box ok">✅ Ganador ocultado</div>';
 }
 function admVerConsultas() {
   if (!admOK) return;
@@ -1841,6 +1874,26 @@ if ('serviceWorker' in navigator) {
   });
 
   console.log('✅ Firebase conectado — liga-gualeguay');
+
+  // Listener: ganador del sorteo (visible públicamente)
+  onValue(ref(db, 'sorteo_ganador'), function(snapshot) {
+    var data = snapshot.val();
+    var wrap = document.getElementById('ganadores-wrap');
+    var cont = document.getElementById('ganadores-contenido');
+    if (!wrap || !cont) return;
+    if (data && data.activo) {
+      wrap.style.display = 'block';
+      cont.innerHTML =
+        '<div style="padding:16px;text-align:center">' +
+        '<div style="font-size:2rem;margin-bottom:6px">🏆</div>' +
+        '<div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--gold);margin-bottom:4px">' + data.nombre + '</div>' +
+        '<div style="font-size:.7rem;color:var(--muted)">Ganador del sorteo · ' + (data.fecha || '') + '</div>' +
+        '<div style="margin-top:10px;font-size:.65rem;color:var(--muted)">📱 ' + (data.tel || '') + '</div>' +
+        '</div>';
+    } else {
+      wrap.style.display = 'none';
+    }
+  });
 </script>
 
 <footer>
