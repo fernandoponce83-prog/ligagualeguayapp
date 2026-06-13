@@ -1,8 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8GQ2GWHH27"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-8GQ2GWHH27');
+</script>
 <meta name="theme-color" content="#0a0a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Liga Departamental Gualeguay · Fer News</title>
@@ -569,7 +578,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
   </div>
   <div class="sec-div"><h3>Liga Departamental</h3></div>
   <div style="background:var(--card);border-radius:10px;padding:14px;text-align:center;border:1px solid rgba(232,0,28,.2)">
-    <img src="imagenes/escudo.png" style="height:60px;object-fit:contain;margin:0 auto 7px;display:block">
+    <img src="imagenes/logo-liga-gualeguay.png" style="height:60px;object-fit:contain;margin:0 auto 7px;display:block">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px">Liga Departamental de Fútbol</div>
     <div style="font-size:.6rem;color:var(--muted)">Gualeguay · Entre Ríos · 2026</div>
   </div>
@@ -578,7 +587,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 <!-- ===================== RADIO ===================== -->
 <section id="radio" class="section">
   <div style="text-align:center;margin-bottom:16px">
-    <img src="imagenes/escudo.png" style="height:90px;object-fit:contain;display:block;margin:0 auto 10px">
+    <img src="imagenes/logo-fm-tradicion.png" style="height:90px;object-fit:contain;display:block;margin:0 auto 10px">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px">RADIO TRADICIÓN FM 97.1</div>
     <div style="font-size:.7rem;color:var(--muted)">Gualeguay · Entre Ríos · Tu Radio Amiga</div>
   </div>
@@ -739,9 +748,9 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 <!-- ===================== FOOTER ===================== -->
 <footer class="footer">
   <div class="footer-logos">
-    <img src="imagenes/escudo.png" alt="Liga">
-    <img src="imagenes/escudo.png" alt="Fer News">
-    <img src="imagenes/escudo.png" alt="Pasión Azul">
+    <img src="imagenes/logo-liga-gualeguay.png" alt="Liga">
+    <img src="imagenes/logo-fernews.png" alt="Fer News">
+    <img src="imagenes/logo-pasion-azul.png" alt="Pasión Azul">
   </div>
   <p id="footer-texto">Liga Departamental de Fútbol · Gualeguay · 2026</p>
 </footer>
@@ -862,7 +871,10 @@ function mostrarErrorGeneral() {
 function renderTodo() {
   var d = appData;
   if (d.config)        renderConfig(d.config);
-  if (d.recursos)      renderRecursos(d.recursos);
+  if (d.recursos) {
+        renderRecursos(d.recursos);
+        actualizarBanners(); 
+    }
   if (d.clubes)        renderClubes(d.clubes);
   if (d.posiciones)    renderPosiciones(d.posiciones);
   if (d.resultados)    renderResultados(d.resultados);
@@ -1223,22 +1235,29 @@ function renderComercios(rows) {
   if (destacados.length) {
     html += '<div class="sec-div"><h3>⭐ Auspiciantes Destacados</h3></div>';
     html += destacados.map(function(c) {
-      var wa  = c.whatsapp ? c.whatsapp.replace(/[^0-9+]/g,'') : '';
-      var btn = c.boton_texto && c.link_externo
-        ? '<a href="' + c.link_externo + '" target="_blank" style="background:var(--gold);color:#000;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;letter-spacing:1px;text-decoration:none">' + c.boton_texto + '</a>' : '';
-      var btnWA = wa
-        ? '<a href="' + wa + '" target="_blank" style="background:var(--green);color:#fff;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;letter-spacing:1px;text-decoration:none">📱 WhatsApp</a>' : '';
-      var btnIG = c.instagram
-        ? '<a href="' + c.instagram + '" target="_blank" style="background:linear-gradient(135deg,#e1306c,#833ab4);color:#fff;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;letter-spacing:1px;text-decoration:none">📸 Instagram</a>' : '';
-      return '<div style="background:var(--card);border-radius:12px;margin-bottom:12px;border:1px solid rgba(245,197,24,.3);overflow:hidden">' +
-        (c.imagen_url ? '<img src="' + c.imagen_url + '" style="width:100%;max-height:160px;object-fit:cover;display:block" onerror="this.style.display='none'">' : '') +
-        '<div style="padding:14px">' +
-        '<div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--gold);margin-bottom:4px">' + c.nombre.toUpperCase() + '</div>' +
-        '<div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">' + (c.rubro||'') + '</div>' +
-        (c.mensaje ? '<p style="font-size:.75rem;line-height:1.5;margin-bottom:10px">' + c.mensaje + '</p>' : '') +
-        '<div style="display:flex;gap:7px;flex-wrap:wrap">' + btn + btnWA + btnIG + '</div>' +
-        '</div></div>';
+        var wa = c.whatsapp ? c.whatsapp.replace(/[^0-9+]/g, '') : '';
+        var btn = c.boton_texto && c.link_externo 
+            ? `<a href="${c.link_externo}" target="_blank" style="background:var(--gold);color:#000;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;text-decoration:none;">${c.boton_texto}</a>` 
+            : '';
+        var btnWA = wa 
+            ? `<a href="https://wa.me/${wa}" target="_blank" style="background:var(--green);color:#fff;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;text-decoration:none;">WhatsApp</a>` 
+            : '';
+        var btnIG = c.instagram 
+            ? `<a href="${c.instagram}" target="_blank" style="background:linear-gradient(135deg,#e1306c,#833ab4);color:#fff;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;text-decoration:none;">Instagram</a>` 
+            : '';
+
+        return `
+            <div style="background:var(--card);border-radius:12px;margin-bottom:12px;border:1px solid rgba(245,197,24,.3);overflow:hidden;">
+                ${c.imagen_url ? `<img src="${c.imagen_url}" style="width:100%;max-height:160px;object-fit:cover;display:block;" onerror="this.style.display='none'">` : ''}
+                <div style="padding:14px;">
+                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--gold);">${c.nombre.toUpperCase()}</div>
+                    <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;">${c.rubro || ''}</div>
+                    ${c.mensaje ? `<p style="font-size:.75rem;line-height:1.5;margin-bottom:10px;">${c.mensaje}</p>` : ''}
+                    <div style="display:flex;gap:7px;flex-wrap:wrap;">${btn}${btnWA}${btnIG}</div>
+                </div>
+            </div>`;
     }).join('');
+}
   }
 
   if (normales.length) {
@@ -1313,15 +1332,15 @@ function renderProximasTransmisiones(rows) {
         '<div style="flex:1"><strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:.88rem">' + t.titulo + '</strong>' +
         '<span style="font-size:.62rem;color:' + colorEstado + '">' + (t.inicio || '') + (t.canal ? ' · ' + t.canal : '') + '</span></div></div>';
     }).join('');
-  }
-  if (finalizadas.length) {
+if (finalizadas.length) {
     html += '<div class="sec-div"><h3>🔁 Ver Repetición</h3></div>';
     html += finalizadas.map(function(t) {
-      return '<div onclick="abrirVideo('' + t.youtube_id + '','')" style="background:var(--card);border-radius:8px;padding:10px 14px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;cursor:pointer">' +
-        '<span style="font-size:1.2rem">⚫</span>' +
-        '<div style="flex:1"><strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:.88rem">' + t.titulo + '</strong>' +
-        '<span style="font-size:.62rem;color:var(--muted)">Transmisión finalizada · ' + (t.canal || '') + '</span></div>' +
-        '<span style="background:var(--card2);color:var(--text);border-radius:20px;padding:3px 9px;font-family:'Bebas Neue',sans-serif;font-size:.68rem;letter-spacing:1px">▶ VER</span></div>';
+      // Usamos comillas dobles para el onclick y escapamos las simples de la función
+      return `<div onclick="abrirVideo('${t.youtube_id}', '')" style="background:var(--card);border-radius:8px;padding:10px 14px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;cursor:pointer">` +
+        `<span style="font-size:1.2rem">⚫</span>` +
+        `<div style="flex:1"><strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:.88rem">${t.titulo}</strong>` +
+        `<span style="font-size:.62rem;color:var(--muted)">Transmisión finalizada · ${t.canal || ''}</span></div>` +
+        `<span style="background:var(--card2);color:var(--text);border-radius:20px;padding:3px 9px;font-family:'Bebas Neue',sans-serif;font-size:.68rem;letter-spacing:1px">▶ VER</span></div>`;
     }).join('');
   }
   cont.innerHTML = html || '';
@@ -1604,21 +1623,32 @@ function renderNoticias(noticias) {
     var badge = tipoBadge[n.tipo] || '';
     var tieneImagen = n.imagen_url && n.imagen_url !== '';
     var tieneBoton  = n.boton_texto && n.boton_url;
-    return '<div class="card noticia-card" onclick="abrirModal('' +
-      encodeURIComponent(JSON.stringify(n)) + '')" style="cursor:pointer;margin-bottom:10px">' +
-      (tieneImagen ?
-        '<div style="position:relative;height:180px;overflow:hidden;background:#0d0d22">' +
-        '<img src="' + n.imagen_url + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.style.display='none'">' +
-        '<div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;border-radius:4px;padding:2px 8px;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:1px">' + icon + ' ' + n.tipo.toUpperCase() + '</div>' +
-        '</div>' : '') +
-      '<div style="padding:11px">' +
-      '<div style="font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--' + (badge||'red') + ');margin-bottom:3px">' + (n.categoria || n.tipo || '') + '</div>' +
-      '<h3 style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1px;line-height:1.2;margin-bottom:4px">' + n.titulo + '</h3>' +
-      (n.detalle ? '<p style="font-size:.7rem;color:var(--muted);line-height:1.5">' + n.detalle.substring(0,100) + (n.detalle.length > 100 ? '...' : '') + '</p>' : '') +
-      (tieneBoton ?
-        '<a href="' + n.boton_url + '" target="_blank" onclick="event.stopPropagation()" style="display:inline-block;margin-top:8px;background:var(--green);color:#fff;border-radius:20px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:1px;text-decoration:none">' + n.boton_texto + '</a>' : '') +
-      '</div></div>';
-  }).join('');
+    return `
+    <div class="card noticia-card" onclick="abrirModal('${encodeURIComponent(JSON.stringify(n))}')" style="cursor:pointer;margin-bottom:10px">
+        ${tieneImagen ? `
+            <div style="position:relative;height:180px;overflow:hidden;background:#0d0d22">
+                <img src="${n.imagen_url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.style.display='none'">
+                <div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;border-radius:4px;padding:2px 8px;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:1px">
+                    ${icon} ${n.tipo.toUpperCase()}
+                </div>
+            </div>` : ''
+        }
+        <div style="padding:11px">
+            <div style="font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--${badge || 'red'});margin-bottom:3px">
+                ${n.categoria || n.tipo || ''}
+            </div>
+            <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1px;line-height:1.2;margin-bottom:4px">
+                ${n.titulo}
+            </h3>
+            ${n.detalle ? `<p style="font-size:.7rem;color:var(--muted);line-height:1.5">${n.detalle.substring(0, 100)}${n.detalle.length > 100 ? '...' : ''}</p>` : ''}
+            ${tieneBoton ? `
+                <a href="${n.boton_url}" target="_blank" onclick="event.stopPropagation()" style="display:inline-block;margin-top:8px;background:var(--green);color:#fff;border-radius:20px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:1px;text-decoration:none">
+                    ${n.boton_texto}
+                </a>` : ''
+            }
+        </div>
+    </div>`;
+}).join('');
 }
 
 // ============================================================
@@ -1734,18 +1764,23 @@ function renderVideos(rows) {
 function renderVideoCard(v) {
   var canal_color = v.medio && v.medio.toLowerCase().indexOf('pasion') !== -1 ? 'var(--blue)' :
                     v.medio && v.medio.toLowerCase().indexOf('debate') !== -1 ? 'var(--red)' : 'var(--muted)';
-  return '<div class="video-card" onclick="abrirVideo('' + v.youtube_id + '','' + v.url_original + '')" style="cursor:pointer">' +
-    '<div style="position:relative;height:88px;overflow:hidden;background:#0d0d22">' +
-    '<img src="' + v.thumb + '" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">' +
-    '<div style="position:absolute;inset:0;background:rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center">' +
-    '<div style="width:28px;height:28px;background:rgba(232,0,28,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff">▶</div>' +
-    '</div>' +
-    '<div style="position:absolute;bottom:4px;left:4px;background:' + canal_color + ';color:#fff;border-radius:3px;padding:1px 5px;font-size:.5rem;font-family:'Bebas Neue',sans-serif;letter-spacing:.5px">' + (v.medio || '') + '</div>' +
-    '</div>' +
-    '<div class="video-info">' +
-    '<h4>' + v.titulo + '</h4>' +
-    '<p>' + (v.fecha_torneo || '') + (v.categoria ? ' · ' + v.categoria : '') + '</p>' +
-    '</div></div>';
+  
+  return `
+    <div class="video-card" onclick="abrirVideo('${v.youtube_id}', '${v.url_original}')" style="cursor:pointer">
+      <div style="position:relative;height:88px;overflow:hidden;background:#0d0d22">
+        <img src="${v.thumb}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center">
+          <div style="width:28px;height:28px;background:rgba(232,0,28,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff">▶</div>
+        </div>
+        <div style="position:absolute;bottom:4px;left:4px;background:${canal_color};color:#fff;border-radius:3px;padding:1px 5px;font-size:.5rem;font-family:'Bebas Neue',sans-serif;letter-spacing:.5px">
+          ${v.medio || ''}
+        </div>
+      </div>
+      <div class="video-info">
+        <h4>${v.titulo}</h4>
+        <p>${v.fecha_torneo || ''}${v.categoria ? ' · ' + v.categoria : ''}</p>
+      </div>
+    </div>`;
 }
 
 // ============================================================
@@ -1808,5 +1843,46 @@ if ('serviceWorker' in navigator) {
   console.log('✅ Firebase conectado — liga-gualeguay');
 </script>
 
+<footer>
+    <div style="text-align: center; padding: 20px; font-size: 0.75em; color: #888; border-top: 1px solid #333; margin-top: 20px;">
+        <p>
+            <strong>Desarrollado por Fernando Ponce</strong> | 2026<br>
+            <em>Proyectos digitales y streaming a medida.</em><br>
+            <span style="display: block; margin-top: 5px;">
+                Contacto: <a href="mailto:fernandoponce83@gmail.com" style="color: #bbb;">fernandoponce83@gmail.com</a> | 
+                <a href="https://wa.me/5493444571340" style="color: #bbb;">3444 571340</a>
+            </span>
+        </p>
+    </div>
+</footer>
+<script>
+async function actualizarBanners() {
+    try {
+        // Asumiendo que 'datosRecursos' es tu variable donde ya cargaste el Sheet
+        // Esta función busca en tus datos la fila que coincide con el ID y está activa
+        const recursos = datosRecursos.filter(r => r.activo && r.activo.toLowerCase() === 'sí');
+
+        recursos.forEach(item => {
+            // Buscamos el elemento en el HTML según el ID del recurso
+            // Por ejemplo, si el ID es 'banner_inicio', busca en el HTML un elemento con id 'inicio-banner-img'
+            const bannerId = item.id.replace('banner_', 'inicio-banner-img'); 
+            const imgElement = document.getElementById(bannerId);
+
+            if (imgElement && item.url_github) {
+                imgElement.src = item.url_github;
+                console.log(`Banner ${item.id} actualizado correctamente.`);
+            }
+        });
+    } catch (error) {
+        console.error("Error al actualizar los banners:", error);
+    }
+}
+
+// Llamamos a esta función después de que carguen los datos
+// Asegúrate de poner esto dentro de tu función principal de carga (donde ya cargas los clubes/noticias)
+window.addEventListener('load', () => {
+    actualizarBanners();
+});
+</script>
 </body>
 </html>
