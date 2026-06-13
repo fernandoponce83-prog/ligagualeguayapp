@@ -766,8 +766,8 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 // ============================================================
 // CONFIGURACIÓN — REEMPLAZÁ LA URL CUANDO PUBLIQUES EL SCRIPT
 // ============================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8GJGnSPh29CXqyF1-6OiqMmSgFfLslgzLLHA3wxzfNGJ5QOCybcnp1wmV44GoFY0M/exec'; // ← PASO OBLIGATORIO: pegá tu URL de deploy aquí
-var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m'; // ← mismo token que en Code.gs
+// Borra las líneas 769, 770 y 771 y pega esto en su lugar:
+const URL_COMPLETA = 'https://script.google.com/macros/s/AKfycbzJFwXZJT-yd1X3d7rGO8g-CrR6hLjLwgGdPQTvrTK37MVoNLZ4FmuwmLWimgg_zDfC/exec?action=getData&token=pA_LigaGualeguay_2026_xK9m';
 var PASS = 'ferNews2026';  // cambiá esta contraseña
 
 // ============================================================
@@ -846,7 +846,22 @@ function cargarDatos(forzar) {
     } catch(e) {}
   }
 
-  fetch(https://script.google.com/macros/s/AKfycbw8GJGnSPh29CXqyF1-6OiqMmSgFfLslgzLLHA3wxzfNGJ5QOCybcnp1wmV44GoFY0M/exec)
+  // Asegúrate de que esta línea quede en una sola línea en tu editor
+fetch('https://script.google.com/macros/s/AKfycbzJFwXZJT-yd1X3d7rGO8g-CrR6hLjLwgGdPQTvrTK37MVoNLZ4FmuwmLWimgg_zDfC/exec?action=getData&token=pA_LigaGualeguay_2026_xK9m')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        appData = data;
+        // Aquí continúa el resto de tu código que ya tenías
+        try {
+            localStorage.setItem(cacheKey, JSON.stringify(data));
+            localStorage.setItem(cacheTs, String(Date.now()));
+        } catch(e) {}
+        renderTodo();
+    })
+    .catch(function(err) {
+        console.error('Error cargando datos:', err);
+        mostrarErrorGeneral();
+    });
     .then(function(r){ return r.json(); })
     .then(function(data) {
       appData = data;
