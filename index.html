@@ -847,7 +847,7 @@ function cargarDatos(forzar) {
   }
 
   // Asegúrate de que esta línea quede en una sola línea en tu editor
-fetch('https://script.google.com/macros/s/AKfycbwg3cPCXgLfWeVq8bqYzR5CfL6rgC9v3umLkiAcW1Xpie2rTa6BC88mGNC_wyR_uM6T/exec')
+fetch('https://script.google.com/macros/s/AKfycbxTQshP6aTyRnp1qMzSgusBEALc8ermXjjLRXD-v-0ve75ApkSOd8K-Vo8I2bqbhmyu/exec')
     .then(function(r) { return r.json(); })
     .then(function(data) {
         appData = data;
@@ -1848,91 +1848,22 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <!-- ===================== FIREBASE ===================== -->
-<script type="module">
-  import { initializeApp }  from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
-  import { getAnalytics }   from "https://www.gstatic.com/firebasejs/12.14.0/firebase-analytics.js";
-
-  const firebaseConfig = {
-    apiKey:            "AIzaSyCv7tt0id1FXRaHlNxdWewiY4a5SNAfe8c",
-    authDomain:        "liga-gualeguay.firebaseapp.com",
-    databaseURL:       "https://liga-gualeguay-default-rtdb.firebaseio.com",
-    projectId:         "liga-gualeguay",
-    storageBucket:     "liga-gualeguay.firebasestorage.app",
-    messagingSenderId: "402887930793",
-    appId:             "1:402887930793:web:4322b3d9f79f816b9b4ab8",
-    measurementId:     "G-8GQ2GWHH27"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const db = getDatabase(app);
-
-  // Exponer para uso desde JS no-modular
-  window._firebaseDB  = db;
-  window._firebaseRef = ref;
-  window._firebaseSet = set;
-
-  // liveUrl en tiempo real (override de Sheets si existe)
-  onValue(ref(db, 'config/liveUrl'), function(snapshot) {
-    var url = snapshot.val();
-    if (url) {
-      var id = url.match(/(?:v=|youtu\.be\/)([\w-]{11})/);
-      if (id) {
-        document.getElementById('envivoIframe').src   = 'https://www.youtube.com/embed/' + id[1] + '?autoplay=1';
-        document.getElementById('envivoFrame').style.display = 'block';
-        document.getElementById('envivoOff').style.display   = 'none';
-        document.getElementById('liveBanner').classList.add('on');
-        document.getElementById('liveBannerBtn').href = url;
-      }
-    }
-  });
-
-  console.log('✅ Firebase conectado — liga-gualeguay');
-
-  // Listener: ganador del sorteo (visible públicamente)
-  onValue(ref(db, 'sorteo_ganador'), function(snapshot) {
-    var data = snapshot.val();
-    var wrap = document.getElementById('ganadores-wrap');
-    var cont = document.getElementById('ganadores-contenido');
-    if (!wrap || !cont) return;
-    if (data && data.activo) {
-      wrap.style.display = 'block';
-      cont.innerHTML =
-        '<div style="padding:16px;text-align:center">' +
-        '<div style="font-size:2rem;margin-bottom:6px">🏆</div>' +
-        '<div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--gold);margin-bottom:4px">' + data.nombre + '</div>' +
-        '<div style="font-size:.7rem;color:var(--muted)">Ganador del sorteo · ' + (data.fecha || '') + '</div>' +
-        '<div style="margin-top:10px;font-size:.65rem;color:var(--muted)">📱 ' + (data.tel || '') + '</div>' +
-        '</div>';
-    } else {
-      wrap.style.display = 'none';
-    }
-  });
-</script>
-
-<footer>
-    <div style="text-align: center; padding: 20px; font-size: 0.75em; color: #888; border-top: 1px solid #333; margin-top: 20px;">
-        <p>
-            <strong>Desarrollado por Fernando Ponce</strong> | 2026<br>
-            <em>Proyectos digitales y streaming a medida.</em><br>
-            <span style="display: block; margin-top: 5px;">
-                Contacto: <a href="mailto:fernandoponce83@gmail.com" style="color: #bbb;">fernandoponce83@gmail.com</a> | 
-                <a href="https://wa.me/5493444571340" style="color: #bbb;">3444 571340</a>
-            </span>
-        </p>
-    </div>
-</footer>
 <script>
+// 1. Declaramos la variable globalmente para que sea accesible
+window.datosRecursos = window.datosRecursos || []; 
+
 async function actualizarBanners() {
+    // 2. Verificamos si los datos ya fueron cargados
+    if (!window.datosRecursos || window.datosRecursos.length === 0) {
+        console.log("Esperando carga de datos para banners...");
+        return; 
+    }
+
     try {
-        // Asumiendo que 'datosRecursos' es tu variable donde ya cargaste el Sheet
-        // Esta función busca en tus datos la fila que coincide con el ID y está activa
-        const recursos = datosRecursos.filter(r => r.activo && r.activo.toLowerCase() === 'sí');
+        const recursos = window.datosRecursos.filter(r => r.activo && r.activo.toLowerCase() === 'sí');
 
         recursos.forEach(item => {
-            // Buscamos el elemento en el HTML según el ID del recurso
-            // Por ejemplo, si el ID es 'banner_inicio', busca en el HTML un elemento con id 'inicio-banner-img'
+            // Asegurate que tu HTML tenga elementos con estos IDs
             const bannerId = item.id.replace('banner_', 'inicio-banner-img'); 
             const imgElement = document.getElementById(bannerId);
 
@@ -1946,11 +1877,7 @@ async function actualizarBanners() {
     }
 }
 
-// Llamamos a esta función después de que carguen los datos
-// Asegúrate de poner esto dentro de tu función principal de carga (donde ya cargas los clubes/noticias)
-window.addEventListener('load', () => {
-    actualizarBanners();
-});
+// 3. Mejoramos la forma en que detectamos la carga
+// Si usas una función para cargar tus datos (ej: cargarDatos()), 
+// llamá a actualizarBanners() JUSTO después de que termines de llenar window.datosRecursos.
 </script>
-</body>
-</html>
