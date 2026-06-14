@@ -270,7 +270,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
     </div>
   </div>
 </header>
-
+ 
 <!-- ===================== LIVE BANNER ===================== -->
 <div class="live-banner" id="liveBanner">
   <div class="live-inner">
@@ -578,7 +578,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
   </div>
   <div class="sec-div"><h3>Liga Departamental</h3></div>
   <div style="background:var(--card);border-radius:10px;padding:14px;text-align:center;border:1px solid rgba(232,0,28,.2)">
-    <img src="imagenes/escudo.png" onerror="this.style.opacity=\'0\'" style="height:60px;object-fit:contain;margin:0 auto 7px;display:block">
+    <img src="imagenes/logo_liga_gualeguay" onerror="this.style.opacity=\'0\'" style="height:60px;object-fit:contain;margin:0 auto 7px;display:block">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px">Liga Departamental de Fútbol</div>
     <div style="font-size:.6rem;color:var(--muted)">Gualeguay · Entre Ríos · 2026</div>
   </div>
@@ -587,7 +587,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 <!-- ===================== RADIO ===================== -->
 <section id="radio" class="section">
   <div style="text-align:center;margin-bottom:16px">
-    <img src="imagenes/escudo.png" onerror="this.style.opacity=\'0\'" style="height:90px;object-fit:contain;display:block;margin:0 auto 10px">
+    <img src="imagenes/logo_liga_gualeguay" onerror="this.style.opacity=\'0\'" style="height:90px;object-fit:contain;display:block;margin:0 auto 10px">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px">RADIO TRADICIÓN FM 97.1</div>
     <div style="font-size:.7rem;color:var(--muted)">Gualeguay · Entre Ríos · Tu Radio Amiga</div>
   </div>
@@ -763,7 +763,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 // ============================================================
 // CONFIGURACIÓN — REEMPLAZÁ LA URL CUANDO PUBLIQUES EL SCRIPT
 // ============================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzjgxLmORCgycRHb5Z2HQOe2oTIxLRtdhtR0woD3t_fTrthSkBZvV7o34YbYXFPK57x/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxokZEBZKxHPgnTl02wecDCCg6M8rcOGjqxCS-idmsTKxYWBv9LuXpWD3bDZ7zdaj_V/exec';
 var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m';
 var PASS = 'ferNews2026';
 
@@ -784,6 +784,16 @@ function go(id, btn) {
   document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
   window.scrollTo(0, 0);
+  // Actualizar header-banner según la sección activa
+  if (appData.recursos) {
+    var hdr = document.getElementById('header-banner');
+    if (hdr) {
+      var bannerKey = (id === 'inicio') ? 'banner_inicio' : ('banner_' + id);
+      var bannerSrc = appData.recursos[bannerKey] || appData.recursos['banner_inicio'] || '';
+      if (bannerSrc) { hdr.src = bannerSrc; hdr.style.display = 'block'; }
+      else { hdr.style.display = 'none'; }
+    }
+  }
 }
 
 function sc(prefix, id, btn) {
@@ -919,7 +929,7 @@ function renderClubes(clubes) {
   if (!clubes.length) { grid.innerHTML = '<div class="error-state" style="grid-column:span 5">Sin datos</div>'; return; }
   grid.innerHTML = clubes.map(function(c) {
     return '<div style="text-align:center">' +
-      '<img src="' + (c.escudo_url || 'imagenes/escudo.png') + '" style="width:44px;height:44px;object-fit:contain;display:block;margin:0 auto" onerror="this.src=\'imagenes/escudo.png\'">' +
+      '<img src="' + escudoUrl(c.nombre, c.escudo_url) + '" style="width:44px;height:44px;object-fit:contain;display:block;margin:0 auto" onerror="escudoFallback(this)">' +
       '<span style="font-size:.5rem;color:var(--muted);font-family:\'Barlow Condensed\',sans-serif;display:block;margin-top:2px">' + (c.abrev || c.nombre).toUpperCase() + '</span>' +
       '</div>';
   }).join('');
@@ -977,7 +987,7 @@ function renderPosiciones(rows) {
       var cls = zonas[parseInt(e.pos)] || '';
       return '<tr class="' + cls + '">' +
         '<td class="pos-num">' + e.pos + '</td>' +
-        '<td><div class="td-club"><img class="escudo" src="' + (e.escudo_url||'imagenes/escudo.png') + '" onerror="this.src=\'imagenes/escudo.png\'"><span class="club-name">' + e.club.toUpperCase() + '</span></div></td>' +
+        '<td><div class="td-club"><img class="escudo" src="' + escudoUrl(e.club, e.escudo_url) + '" onerror="escudoFallback(this)"><span class="club-name">' + e.club.toUpperCase() + '</span></div></td>' +
         '<td class="pts">' + e.pts + '</td>' +
         '<td>' + e.pj + '</td>' +
         '<td>' + e.g + '</td>' +
@@ -1053,9 +1063,9 @@ function renderResultados(rows) {
     var fechaPanels = fechas.map(function(f) {
       var partidos = grupos[d][f].map(function(p) {
         return '<div class="match-row">' +
-          '<div class="match-team"><img src="' + (p.escudo_local||'imagenes/escudo.png') + '" onerror="this.src=\'imagenes/escudo.png\'"><span class="team-name">' + p.local.toUpperCase() + '</span></div>' +
+          '<div class="match-team"><img src="' + escudoUrl(p.local, p.escudo_local) + '" onerror="escudoFallback(this)"><span class="team-name">' + p.local.toUpperCase() + '</span></div>' +
           '<div class="match-score"><div class="score-box">' + p.goles_local + '</div><span class="score-vs">VS</span><div class="score-box">' + p.goles_visita + '</div></div>' +
-          '<div class="match-team away"><img src="' + (p.escudo_visita||'imagenes/escudo.png') + '" onerror="this.src=\'imagenes/escudo.png\'"><span class="team-name">' + p.visita.toUpperCase() + '</span></div>' +
+          '<div class="match-team away"><img src="' + escudoUrl(p.visita, p.escudo_visita) + '" onerror="escudoFallback(this)"><span class="team-name">' + p.visita.toUpperCase() + '</span></div>' +
           '</div>';
       }).join('');
       return '<div id="res-fecha-' + sanitizeId(d) + '-' + f + '" style="display:' + (f===ultima?'block':'none') + '">' +
@@ -1097,9 +1107,9 @@ function renderInicioUltimaFecha(grupos) {
     if (tituloEl) tituloEl.textContent = ultima.slice(1) + 'ª Fecha · Torneo ' + (isMasc?'Oficial':'Femenino') + ' 2026';
     if (resEl) resEl.innerHTML = grupos[div][ultima].map(function(p) {
       return '<div class="match-row">' +
-        '<div class="match-team"><img src="' + (p.escudo_local||'imagenes/escudo.png') + '" onerror="this.src=\'imagenes/escudo.png\'"><span class="team-name">' + p.local.toUpperCase() + '</span></div>' +
+        '<div class="match-team"><img src="' + escudoUrl(p.local, p.escudo_local) + '" onerror="escudoFallback(this)"><span class="team-name">' + p.local.toUpperCase() + '</span></div>' +
         '<div class="match-score"><div class="score-box">' + p.goles_local + '</div><span class="score-vs">VS</span><div class="score-box">' + p.goles_visita + '</div></div>' +
-        '<div class="match-team away"><img src="' + (p.escudo_visita||'imagenes/escudo.png') + '" onerror="this.src=\'imagenes/escudo.png\'"><span class="team-name">' + p.visita.toUpperCase() + '</span></div>' +
+        '<div class="match-team away"><img src="' + escudoUrl(p.visita, p.escudo_visita) + '" onerror="escudoFallback(this)"><span class="team-name">' + p.visita.toUpperCase() + '</span></div>' +
         '</div>';
     }).join('');
   });
@@ -1122,7 +1132,7 @@ function renderListaGolVallas(containerId, rows, tipo, badgeText, titulo) {
   var items = rows.map(function(r, i) {
     return '<div class="gol-row">' +
       '<span class="gol-rank ' + (rankClass[i]||'') + '">' + (i+1) + '</span>' +
-      '<img class="escudo" src="' + (r.escudo_url||'imagenes/escudo.png') + '" onerror="this.src=\'imagenes/escudo.png\'">' +
+      '<img class="escudo" src="' + escudoUrl(r.club, r.escudo_url) + '" onerror="escudoFallback(this)">' +
       '<div class="gol-info"><div class="gol-name">' + r.nombre.toUpperCase() + '</div><div class="gol-club">' + r.club + '</div></div>' +
       '<div class="gol-count ' + tipo + '">' + r.cantidad + '</div>' +
       '</div>';
@@ -1165,9 +1175,9 @@ function renderProximos(rows) {
         fechas[f][dia][cancha].forEach(function(p) {
           html += '<div class="fixture-row">' +
             '<div class="fixture-teams">' +
-            '<img src="' + (p.escudo_local||'imagenes/escudo.png') + '" onerror="this.src=\'imagenes/escudo.png\'">' +
+            '<img src="' + escudoUrl(p.local, p.escudo_local) + '" onerror="escudoFallback(this)">' +
             ' ' + p.local + ' vs ' +
-            '<img src="' + (p.escudo_visita||'imagenes/escudo.png') + '" onerror="this.src=\'imagenes/escudo.png\'">' +
+            '<img src="' + escudoUrl(p.visita, p.escudo_visita) + '" onerror="escudoFallback(this)">' +
             ' ' + p.visita +
             '</div>' +
             '<span class="fixture-hora">' + p.hora + (p.division?' · '+p.division:'') + '</span>' +
@@ -1561,6 +1571,27 @@ function admVerConsultas() {
 function sanitizeId(str) {
   return str.replace(/[^a-zA-Z0-9]/g, '_');
 }
+
+// Construye URL del escudo desde el nombre del club (con mapa de slugs GitHub)
+var ESCUDO_MAP = {
+  'aldea asuncion':'aldea-asuncion','aldea asunción':'aldea-asuncion',
+  'bancario':'bancario','barrio norte':'barrio-norte',
+  'el progreso':'el-progreso','gualeguay central':'gualeguay-central',
+  'juventud unida':'juventud-unida','la academia':'la-academia',
+  'libertad':'libertad','quilmes':'quilmes',
+  'sportiva':'sportiva','urquiza':'urquiza'
+};
+function escudoUrl(nombre, escudo_url_fb) {
+  if (escudo_url_fb) return escudo_url_fb;
+  if (!nombre) return 'imagenes/logo_liga_gualeguay';
+  var key = nombre.toLowerCase()
+    .replace(/[áà]/g,'a').replace(/[éè]/g,'e').replace(/[íì]/g,'i')
+    .replace(/[óò]/g,'o').replace(/[úù]/g,'u').replace(/ñ/g,'n').trim();
+  var slug = ESCUDO_MAP[key];
+  if (slug) return 'imagenes/' + slug + '.png';
+  return 'imagenes/' + key.replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'') + '.png';
+}
+function escudoFallback(img) { img.onerror=null; img.src='imagenes/logo_liga_gualeguay'; }
 
 
 // ============================================================
