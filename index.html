@@ -749,9 +749,9 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 <!-- ===================== FOOTER ===================== -->
 <footer class="footer">
   <div class="footer-logos">
-    <img src="imagenes/escudo.png" onerror="this.style.opacity=\'0\'" alt="Liga">
-    <img src="imagenes/escudo.png" onerror="this.style.opacity=\'0\'" alt="Fer News">
-    <img src="imagenes/escudo.png" onerror="this.style.opacity=\'0\'" alt="Pasión Azul">
+    <img src="imagenes/logo_liga_gualeguay.png" onerror="this.style.opacity=\'0\'" alt="Liga">
+    <img src="imagenes/fer_news.png" onerror="this.style.opacity=\'0\'" alt="Fer News">
+    <img src="imagenes/pasion_azul.png" onerror="this.style.opacity=\'0\'" alt="Pasión Azul">
   </div>
   <p id="footer-texto">Liga Departamental de Fútbol · Gualeguay · 2026</p>
 </footer>
@@ -763,7 +763,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 // ============================================================
 // CONFIGURACIÓN — REEMPLAZÁ LA URL CUANDO PUBLIQUES EL SCRIPT
 // ============================================================
-var APPS_SCRIPT_URL = 'PENDIENTE'; // ← REEMPLAZAR con URL del Apps Script
+var https://script.google.com/macros/s/AKfycbyXDssIsoT23oESQE9DnEkFVdUYcqR1R3jINr8eEoSE_dFuFr6T1FZCTrO2CzQx8nLw/exec
 var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m'; // ← mismo token que en Code.gs
 var PASS = 'ferNews2026';  // cambiá esta contraseña
 
@@ -841,21 +841,20 @@ function cargarDatos(forzar) {
     } catch(e) {}
   }
 
-  fetch('https://script.google.com/macros/s/AKfycbyXDssIsoT23oESQE9DnEkFVdUYcqR1R3jINr8eEoSE_dFuFr6T1FZCTrO2CzQx8nLw/exec')
-    .then(function(r){ return r.json(); })
+  fetch(APPS_SCRIPT_URL + '?action=getData&token=' + APPS_SCRIPT_TOKEN)
+    .then(function(r) { return r.json(); })
     .then(function(data) {
-      appData = data;
-      try {
-        localStorage.setItem(cacheKey, JSON.stringify(data));
-        localStorage.setItem(cacheTs, String(Date.now()));         
-      } catch(e) {}
-      renderTodo();
+        appData = data;
+        try {
+            localStorage.setItem(cacheKey, JSON.stringify(data));
+            localStorage.setItem(cacheTs, String(Date.now()));
+        } catch(e) {}
+        renderTodo();
     })
     .catch(function(err) {
-      console.error('Error cargando datos:', err);
-      mostrarErrorGeneral();
+        console.error('Error cargando datos:', err);
+        mostrarErrorGeneral();
     });
-}
 
 function recargarDatos() {
   var r = document.getElementById('adm-reload-r');
@@ -1242,15 +1241,15 @@ function renderComercios(rows) {
     html += destacados.map(function(c) {
       var wa  = c.whatsapp ? c.whatsapp.replace(/[^0-9+]/g,'') : '';
       var btn = c.boton_texto && c.link_externo
-        ? '<a href="' + c.link_externo + '" target="_blank" style="background:var(--gold);color:#000;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;letter-spacing:1px;text-decoration:none">' + c.boton_texto + '</a>' : '';
+        ? '<a href="' + c.link_externo + '" target="_blank" style="background:var(--gold);color:#000;border-radius:20px;padding:7px 14px;font-family:"Bebas Neue",sans-serif;font-size:.78rem;letter-spacing:1px;text-decoration:none">' + c.boton_texto + '</a>' : '';
       var btnWA = wa
-        ? '<a href="' + wa + '" target="_blank" style="background:var(--green);color:#fff;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;letter-spacing:1px;text-decoration:none">📱 WhatsApp</a>' : '';
+        ? '<a href="' + wa + '" target="_blank" style="background:var(--green);color:#fff;border-radius:20px;padding:7px 14px;font-family:"Bebas Neue",sans-serif;font-size:.78rem;letter-spacing:1px;text-decoration:none">📱 WhatsApp</a>' : '';
       var btnIG = c.instagram
-        ? '<a href="' + c.instagram + '" target="_blank" style="background:linear-gradient(135deg,#e1306c,#833ab4);color:#fff;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;letter-spacing:1px;text-decoration:none">📸 Instagram</a>' : '';
+        ? '<a href="' + c.instagram + '" target="_blank" style="background:linear-gradient(135deg,#e1306c,#833ab4);color:#fff;border-radius:20px;padding:7px 14px;font-family:"Bebas Neue",sans-serif;font-size:.78rem;letter-spacing:1px;text-decoration:none">📸 Instagram</a>' : '';
       return '<div style="background:var(--card);border-radius:12px;margin-bottom:12px;border:1px solid rgba(245,197,24,.3);overflow:hidden">' +
-        (c.imagen_url ? '<img src="' + c.imagen_url + '" style="width:100%;max-height:160px;object-fit:cover;display:block" onerror="this.style.display='none'">' : '') +
+        (c.imagen_url ? '<img src="' + c.imagen_url + '" style="width:100%;max-height:160px;object-fit:cover;display:block" onerror="this.style.display=\'none\'">' : '') +
         '<div style="padding:14px">' +
-        '<div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--gold);margin-bottom:4px">' + c.nombre.toUpperCase() + '</div>' +
+        '<div style="font-family:"Bebas Neue",sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--gold);margin-bottom:4px">' + c.nombre.toUpperCase() + '</div>' +
         '<div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">' + (c.rubro||'') + '</div>' +
         (c.mensaje ? '<p style="font-size:.75rem;line-height:1.5;margin-bottom:10px">' + c.mensaje + '</p>' : '') +
         '<div style="display:flex;gap:7px;flex-wrap:wrap">' + btn + btnWA + btnIG + '</div>' +
@@ -1841,6 +1840,5 @@ if ('serviceWorker' in navigator) {
     }
   });
 </script>
-
 </body>
 </html>
