@@ -1,20 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <link rel="manifest" href="./manifest.json">
+<meta charset="UTF-8">
+<link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./imagenes/logo-pasion-azul.png">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-8GQ2GWHH27"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-8GQ2GWHH27');
-</script>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <meta name="theme-color" content="#0a0a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Liga Departamental Gualeguay · Fer News</title>
@@ -265,10 +256,10 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
     <!-- Banner modo imagen -->
     <img id="header-banner" src="" alt="Liga Gualeguay" style="display:none;width:100%;height:44px;object-fit:cover;border-radius:6px;position:absolute;top:0;left:0;right:0;bottom:0;z-index:0;opacity:.95">
     <div style="display:flex;align-items:center;gap:5px;position:relative;z-index:1">
-      <img id="logo-pasion_azul" class="hlogo" src="imagenes/logo-pasion-azul.png" alt="Pasión Azul">
-      <img id="logo-fer_news" class="hlogo" src="imagenes/logo-fernews.png" alt="Fer News">
-      <img id="logo-debate_pregon" class="hlogo sq" src="imagenes/logo-el-debate.png" alt="El Debate Pregón" style="background:#fff;padding:2px;border-radius:4px">
-      <img id="logo-fm_tradicion" class="hlogo" src="imagenes/logo-fm-tradicion.jpg" alt="FM Tradición" style="border-radius:6px">
+      <img id="logo-pasion_azul" class="hlogo" src="imagenes/logo-pasion-azul.png" onerror="this.style.opacity=\'0\'" alt="Pasión Azul">
+      <img id="logo-fer_news" class="hlogo" src="imagenes/logo-fernews.png" onerror="this.style.opacity=\'0\'" alt="Fer News">
+      <img id="logo-debate_pregon" class="hlogo sq" src="imagenes/logo-el-debate.png" onerror="this.style.opacity=\'0\'" alt="El Debate Pregón" style="background:#fff;padding:2px;border-radius:4px">
+      <img id="logo-fm_tradicion" class="hlogo" src="imagenes/logo-fm-tradicion.jpg" onerror="this.style.opacity=\'0\'" alt="FM Tradición" style="border-radius:6px">
     </div>
     <div class="header-title" style="position:relative;z-index:1">
       <h1 id="app-titulo">FÚTBOL GUALEGUAY</h1>
@@ -335,6 +326,12 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
     <div id="clubes-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px;padding:11px">
       <div class="loading-state" style="grid-column:span 5;padding:15px">Cargando clubes...</div>
     </div>
+  </div>
+
+  <!-- Ganadores sorteo — visible cuando hay ganador publicado en Firebase -->
+  <div id="ganadores-wrap" style="display:none">
+    <div class="sec-div"><h3>🏆 Ganador del Sorteo</h3></div>
+    <div id="ganadores-contenido" class="card"></div>
   </div>
 
   <!-- Último resultado destacado 1° Masc -->
@@ -581,7 +578,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
   </div>
   <div class="sec-div"><h3>Liga Departamental</h3></div>
   <div style="background:var(--card);border-radius:10px;padding:14px;text-align:center;border:1px solid rgba(232,0,28,.2)">
-    <img src="imagenes/logo-pasion-azul.png" onerror="this.style.opacity='0'" style="height:60px;object-fit:contain;margin:0 auto 7px;display:block">
+    <img src="imagenes/escudo.png" onerror="this.style.opacity=\'0\'" style="height:60px;object-fit:contain;margin:0 auto 7px;display:block">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px">Liga Departamental de Fútbol</div>
     <div style="font-size:.6rem;color:var(--muted)">Gualeguay · Entre Ríos · 2026</div>
   </div>
@@ -590,7 +587,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 <!-- ===================== RADIO ===================== -->
 <section id="radio" class="section">
   <div style="text-align:center;margin-bottom:16px">
-    <img src="imagenes/logo-fm-tradicion.jpg" onerror="this.style.opacity='0'" style="height:90px;object-fit:contain;display:block;margin:0 auto 10px">
+    <img src="imagenes/escudo.png" onerror="this.style.opacity=\'0\'" style="height:90px;object-fit:contain;display:block;margin:0 auto 10px">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px">RADIO TRADICIÓN FM 97.1</div>
     <div style="font-size:.7rem;color:var(--muted)">Gualeguay · Entre Ríos · Tu Radio Amiga</div>
   </div>
@@ -714,8 +711,8 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
           </div>
           <div class="panel-title">🎁 Sorteos</div>
           <button class="panel-btn blu" onclick="admVerSorteos()">📋 VER PARTICIPANTES</button>
-          <button class="panel-btn sec" onclick="admSortear()">🎲 SORTEAR Y PUBLICAR GANADOR</button>
-          <button class="panel-btn sec" onclick="admOcultarGanador()" style="font-size:.72rem">🙈 OCULTAR GANADOR</button>
+          <button class="panel-btn sec" onclick="admSortear()">🎲 SORTEAR Y PUBLICAR</button>
+          <button class="panel-btn sec" onclick="admOcultarGanador()" style="font-size:.72rem;background:var(--card2)">🙈 OCULTAR GANADOR</button>
           <div id="adm-sorteos-r" style="margin-top:8px"></div>
           <div class="panel-title" style="margin-top:14px">🏪 Consultas Comerciales</div>
           <button class="panel-btn blu" onclick="admVerConsultas()">📋 VER CONSULTAS</button>
@@ -752,9 +749,9 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 <!-- ===================== FOOTER ===================== -->
 <footer class="footer">
   <div class="footer-logos">
-    <img src="imagenes/logo-pasion-azul.png" onerror="this.style.opacity='0'" alt="Liga">
-    <img src="imagenes/logo-fernews.png" alt="Fer News">
-    <img src="imagenes/logo-pasion-azul.png" alt="Pasión Azul">
+    <img src="imagenes/escudo.png" onerror="this.style.opacity=\'0\'" alt="Liga">
+    <img src="imagenes/escudo.png" onerror="this.style.opacity=\'0\'" alt="Fer News">
+    <img src="imagenes/escudo.png" onerror="this.style.opacity=\'0\'" alt="Pasión Azul">
   </div>
   <p id="footer-texto">Liga Departamental de Fútbol · Gualeguay · 2026</p>
 </footer>
@@ -766,8 +763,8 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 // ============================================================
 // CONFIGURACIÓN — REEMPLAZÁ LA URL CUANDO PUBLIQUES EL SCRIPT
 // ============================================================
-// Borra las líneas 769, 770 y 771 y pega esto en su lugar:
-const URL_COMPLETA = 'https://script.google.com/macros/s/AKfycbzJFwXZJT-yd1X3d7rGO8g-CrR6hLjLwgGdPQTvrTK37MVoNLZ4FmuwmLWimgg_zDfC/exec?action=getData&token=pA_LigaGualeguay_2026_xK9m';
+var APPS_SCRIPT_URL = 'PENDIENTE'; // ← REEMPLAZAR con URL del Apps Script
+var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m'; // ← mismo token que en Code.gs
 var PASS = 'ferNews2026';  // cambiá esta contraseña
 
 // ============================================================
@@ -818,13 +815,11 @@ function toggleGolVallas(tipo, btn) {
 // CARGA DE DATOS DESDE APPS SCRIPT
 // ============================================================
 function cargarDatos(forzar) {
-  // Verificar que la URL esté configurada
-  if (APPS_SCRIPT_URL.indexOf('REEMPLAZAR') !== -1) {
+  if (APPS_SCRIPT_URL === 'PENDIENTE' || APPS_SCRIPT_URL.indexOf('PENDIENTE') !== -1) {
     document.querySelectorAll('.loading-state').forEach(function(el){
       el.className = 'error-state';
-      el.innerHTML = '⚙️ App no configurada — falta la URL del Apps Script';
+      el.innerHTML = '⚙️ Configuración pendiente — falta la URL del Apps Script';
     });
-    console.error('APPS_SCRIPT_URL no configurada. Reemplazá TU_DEPLOYMENT_ID con la URL real.');
     return;
   }
   var cacheKey = 'appDataCache';
@@ -846,28 +841,13 @@ function cargarDatos(forzar) {
     } catch(e) {}
   }
 
-  // Asegúrate de que esta línea quede en una sola línea en tu editor
-fetch('https://script.google.com/macros/s/AKfycbxTQshP6aTyRnp1qMzSgusBEALc8ermXjjLRXD-v-0ve75ApkSOd8K-Vo8I2bqbhmyu/exec')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        appData = data;
-        // Aquí continúa el resto de tu código que ya tenías
-        try {
-            localStorage.setItem(cacheKey, JSON.stringify(data));
-            localStorage.setItem(cacheTs, String(Date.now()));
-        } catch(e) {}
-        renderTodo();
-    })
-    .catch(function(err) {
-        console.error('Error cargando datos:', err);
-        mostrarErrorGeneral();
-    });
+  fetch('https://script.google.com/macros/s/AKfycbyXDssIsoT23oESQE9DnEkFVdUYcqR1R3jINr8eEoSE_dFuFr6T1FZCTrO2CzQx8nLw/exec')
     .then(function(r){ return r.json(); })
     .then(function(data) {
       appData = data;
       try {
         localStorage.setItem(cacheKey, JSON.stringify(data));
-        localStorage.setItem(cacheTs, String(Date.now()));
+        localStorage.setItem(cacheTs, String(Date.now()));         
       } catch(e) {}
       renderTodo();
     })
@@ -899,10 +879,7 @@ function mostrarErrorGeneral() {
 function renderTodo() {
   var d = appData;
   if (d.config)        renderConfig(d.config);
-  if (d.recursos) {
-        renderRecursos(d.recursos);
-        actualizarBanners(); 
-    }
+  if (d.recursos)      renderRecursos(d.recursos);
   if (d.clubes)        renderClubes(d.clubes);
   if (d.posiciones)    renderPosiciones(d.posiciones);
   if (d.resultados)    renderResultados(d.resultados);
@@ -1263,29 +1240,22 @@ function renderComercios(rows) {
   if (destacados.length) {
     html += '<div class="sec-div"><h3>⭐ Auspiciantes Destacados</h3></div>';
     html += destacados.map(function(c) {
-        var wa = c.whatsapp ? c.whatsapp.replace(/[^0-9+]/g, '') : '';
-        var btn = c.boton_texto && c.link_externo 
-            ? `<a href="${c.link_externo}" target="_blank" style="background:var(--gold);color:#000;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;text-decoration:none;">${c.boton_texto}</a>` 
-            : '';
-        var btnWA = wa 
-            ? `<a href="https://wa.me/${wa}" target="_blank" style="background:var(--green);color:#fff;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;text-decoration:none;">WhatsApp</a>` 
-            : '';
-        var btnIG = c.instagram 
-            ? `<a href="${c.instagram}" target="_blank" style="background:linear-gradient(135deg,#e1306c,#833ab4);color:#fff;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;text-decoration:none;">Instagram</a>` 
-            : '';
-
-        return `
-            <div style="background:var(--card);border-radius:12px;margin-bottom:12px;border:1px solid rgba(245,197,24,.3);overflow:hidden;">
-                ${c.imagen_url ? `<img src="${c.imagen_url}" style="width:100%;max-height:160px;object-fit:cover;display:block;" onerror="this.style.display='none'">` : ''}
-                <div style="padding:14px;">
-                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--gold);">${c.nombre.toUpperCase()}</div>
-                    <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;">${c.rubro || ''}</div>
-                    ${c.mensaje ? `<p style="font-size:.75rem;line-height:1.5;margin-bottom:10px;">${c.mensaje}</p>` : ''}
-                    <div style="display:flex;gap:7px;flex-wrap:wrap;">${btn}${btnWA}${btnIG}</div>
-                </div>
-            </div>`;
+      var wa  = c.whatsapp ? c.whatsapp.replace(/[^0-9+]/g,'') : '';
+      var btn = c.boton_texto && c.link_externo
+        ? '<a href="' + c.link_externo + '" target="_blank" style="background:var(--gold);color:#000;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;letter-spacing:1px;text-decoration:none">' + c.boton_texto + '</a>' : '';
+      var btnWA = wa
+        ? '<a href="' + wa + '" target="_blank" style="background:var(--green);color:#fff;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;letter-spacing:1px;text-decoration:none">📱 WhatsApp</a>' : '';
+      var btnIG = c.instagram
+        ? '<a href="' + c.instagram + '" target="_blank" style="background:linear-gradient(135deg,#e1306c,#833ab4);color:#fff;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.78rem;letter-spacing:1px;text-decoration:none">📸 Instagram</a>' : '';
+      return '<div style="background:var(--card);border-radius:12px;margin-bottom:12px;border:1px solid rgba(245,197,24,.3);overflow:hidden">' +
+        (c.imagen_url ? '<img src="' + c.imagen_url + '" style="width:100%;max-height:160px;object-fit:cover;display:block" onerror="this.style.display='none'">' : '') +
+        '<div style="padding:14px">' +
+        '<div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--gold);margin-bottom:4px">' + c.nombre.toUpperCase() + '</div>' +
+        '<div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">' + (c.rubro||'') + '</div>' +
+        (c.mensaje ? '<p style="font-size:.75rem;line-height:1.5;margin-bottom:10px">' + c.mensaje + '</p>' : '') +
+        '<div style="display:flex;gap:7px;flex-wrap:wrap">' + btn + btnWA + btnIG + '</div>' +
+        '</div></div>';
     }).join('');
-}
   }
 
   if (normales.length) {
@@ -1360,15 +1330,15 @@ function renderProximasTransmisiones(rows) {
         '<div style="flex:1"><strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:.88rem">' + t.titulo + '</strong>' +
         '<span style="font-size:.62rem;color:' + colorEstado + '">' + (t.inicio || '') + (t.canal ? ' · ' + t.canal : '') + '</span></div></div>';
     }).join('');
-if (finalizadas.length) {
+  }
+  if (finalizadas.length) {
     html += '<div class="sec-div"><h3>🔁 Ver Repetición</h3></div>';
     html += finalizadas.map(function(t) {
-      // Usamos comillas dobles para el onclick y escapamos las simples de la función
-      return `<div onclick="abrirVideo('${t.youtube_id}', '')" style="background:var(--card);border-radius:8px;padding:10px 14px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;cursor:pointer">` +
-        `<span style="font-size:1.2rem">⚫</span>` +
-        `<div style="flex:1"><strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:.88rem">${t.titulo}</strong>` +
-        `<span style="font-size:.62rem;color:var(--muted)">Transmisión finalizada · ${t.canal || ''}</span></div>` +
-        `<span style="background:var(--card2);color:var(--text);border-radius:20px;padding:3px 9px;font-family:'Bebas Neue',sans-serif;font-size:.68rem;letter-spacing:1px">▶ VER</span></div>`;
+      return '<div onclick="abrirVideo('' + t.youtube_id + '','')" style="background:var(--card);border-radius:8px;padding:10px 14px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;cursor:pointer">' +
+        '<span style="font-size:1.2rem">⚫</span>' +
+        '<div style="flex:1"><strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:.88rem">' + t.titulo + '</strong>' +
+        '<span style="font-size:.62rem;color:var(--muted)">Transmisión finalizada · ' + (t.canal || '') + '</span></div>' +
+        '<span style="background:var(--card2);color:var(--text);border-radius:20px;padding:3px 9px;font-family:'Bebas Neue',sans-serif;font-size:.68rem;letter-spacing:1px">▶ VER</span></div>';
     }).join('');
   }
   cont.innerHTML = html || '';
@@ -1576,28 +1546,8 @@ function admSortear() {
   var idx = Math.floor(Math.random() * ps.length);
   ps[idx].ganador = true;
   saveSP(ps);
-  // Publicar ganador en Firebase para que aparezca en la app pública
-  var ganador = ps[idx];
-  if (window._firebaseSet && window._firebaseDB && window._firebaseRef) {
-    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'sorteo_ganador'), {
-      nombre:  ganador.nombre,
-      tel:     ganador.tel.replace(/\d(?=\d{4})/g, '*'), // ocultar número parcialmente
-      fecha:   new Date().toLocaleDateString('es-AR'),
-      activo:  true
-    });
-  }
-  document.getElementById('adm-sorteos-r').innerHTML =
-    '<div class="msg-box ok">🏆 ¡GANADOR SORTEADO Y PUBLICADO!<br><strong>'+ganador.nombre+'</strong><br>📱 '+ganador.tel+'</div>';
+  document.getElementById('adm-sorteos-r').innerHTML = '<div class="msg-box ok">🏆 ¡GANADOR SORTEADO!<br><strong>'+ps[idx].nombre+'</strong><br>📱 '+ps[idx].tel+'</div>';
   admVerSorteos();
-}
-
-function admOcultarGanador() {
-  if (!admOK) return;
-  if (window._firebaseSet && window._firebaseDB && window._firebaseRef) {
-    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'sorteo_ganador'), null);
-  }
-  document.getElementById('ganadores-wrap').style.display = 'none';
-  document.getElementById('adm-sorteos-r').innerHTML = '<div class="msg-box ok">✅ Ganador ocultado</div>';
 }
 function admVerConsultas() {
   if (!admOK) return;
@@ -1671,32 +1621,21 @@ function renderNoticias(noticias) {
     var badge = tipoBadge[n.tipo] || '';
     var tieneImagen = n.imagen_url && n.imagen_url !== '';
     var tieneBoton  = n.boton_texto && n.boton_url;
-    return `
-    <div class="card noticia-card" onclick="abrirModal('${encodeURIComponent(JSON.stringify(n))}')" style="cursor:pointer;margin-bottom:10px">
-        ${tieneImagen ? `
-            <div style="position:relative;height:180px;overflow:hidden;background:#0d0d22">
-                <img src="${n.imagen_url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.style.display='none'">
-                <div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;border-radius:4px;padding:2px 8px;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:1px">
-                    ${icon} ${n.tipo.toUpperCase()}
-                </div>
-            </div>` : ''
-        }
-        <div style="padding:11px">
-            <div style="font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--${badge || 'red'});margin-bottom:3px">
-                ${n.categoria || n.tipo || ''}
-            </div>
-            <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1px;line-height:1.2;margin-bottom:4px">
-                ${n.titulo}
-            </h3>
-            ${n.detalle ? `<p style="font-size:.7rem;color:var(--muted);line-height:1.5">${n.detalle.substring(0, 100)}${n.detalle.length > 100 ? '...' : ''}</p>` : ''}
-            ${tieneBoton ? `
-                <a href="${n.boton_url}" target="_blank" onclick="event.stopPropagation()" style="display:inline-block;margin-top:8px;background:var(--green);color:#fff;border-radius:20px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:1px;text-decoration:none">
-                    ${n.boton_texto}
-                </a>` : ''
-            }
-        </div>
-    </div>`;
-}).join('');
+    return '<div class="card noticia-card" onclick="abrirModal('' +
+      encodeURIComponent(JSON.stringify(n)) + '')" style="cursor:pointer;margin-bottom:10px">' +
+      (tieneImagen ?
+        '<div style="position:relative;height:180px;overflow:hidden;background:#0d0d22">' +
+        '<img src="' + n.imagen_url + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.style.display='none'">' +
+        '<div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;border-radius:4px;padding:2px 8px;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:1px">' + icon + ' ' + n.tipo.toUpperCase() + '</div>' +
+        '</div>' : '') +
+      '<div style="padding:11px">' +
+      '<div style="font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--' + (badge||'red') + ');margin-bottom:3px">' + (n.categoria || n.tipo || '') + '</div>' +
+      '<h3 style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1px;line-height:1.2;margin-bottom:4px">' + n.titulo + '</h3>' +
+      (n.detalle ? '<p style="font-size:.7rem;color:var(--muted);line-height:1.5">' + n.detalle.substring(0,100) + (n.detalle.length > 100 ? '...' : '') + '</p>' : '') +
+      (tieneBoton ?
+        '<a href="' + n.boton_url + '" target="_blank" onclick="event.stopPropagation()" style="display:inline-block;margin-top:8px;background:var(--green);color:#fff;border-radius:20px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:1px;text-decoration:none">' + n.boton_texto + '</a>' : '') +
+      '</div></div>';
+  }).join('');
 }
 
 // ============================================================
@@ -1812,23 +1751,18 @@ function renderVideos(rows) {
 function renderVideoCard(v) {
   var canal_color = v.medio && v.medio.toLowerCase().indexOf('pasion') !== -1 ? 'var(--blue)' :
                     v.medio && v.medio.toLowerCase().indexOf('debate') !== -1 ? 'var(--red)' : 'var(--muted)';
-  
-  return `
-    <div class="video-card" onclick="abrirVideo('${v.youtube_id}', '${v.url_original}')" style="cursor:pointer">
-      <div style="position:relative;height:88px;overflow:hidden;background:#0d0d22">
-        <img src="${v.thumb}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
-        <div style="position:absolute;inset:0;background:rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center">
-          <div style="width:28px;height:28px;background:rgba(232,0,28,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff">▶</div>
-        </div>
-        <div style="position:absolute;bottom:4px;left:4px;background:${canal_color};color:#fff;border-radius:3px;padding:1px 5px;font-size:.5rem;font-family:'Bebas Neue',sans-serif;letter-spacing:.5px">
-          ${v.medio || ''}
-        </div>
-      </div>
-      <div class="video-info">
-        <h4>${v.titulo}</h4>
-        <p>${v.fecha_torneo || ''}${v.categoria ? ' · ' + v.categoria : ''}</p>
-      </div>
-    </div>`;
+  return '<div class="video-card" onclick="abrirVideo('' + v.youtube_id + '','' + v.url_original + '')" style="cursor:pointer">' +
+    '<div style="position:relative;height:88px;overflow:hidden;background:#0d0d22">' +
+    '<img src="' + v.thumb + '" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">' +
+    '<div style="position:absolute;inset:0;background:rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center">' +
+    '<div style="width:28px;height:28px;background:rgba(232,0,28,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff">▶</div>' +
+    '</div>' +
+    '<div style="position:absolute;bottom:4px;left:4px;background:' + canal_color + ';color:#fff;border-radius:3px;padding:1px 5px;font-size:.5rem;font-family:'Bebas Neue',sans-serif;letter-spacing:.5px">' + (v.medio || '') + '</div>' +
+    '</div>' +
+    '<div class="video-info">' +
+    '<h4>' + v.titulo + '</h4>' +
+    '<p>' + (v.fecha_torneo || '') + (v.categoria ? ' · ' + v.categoria : '') + '</p>' +
+    '</div></div>';
 }
 
 // ============================================================
@@ -1848,36 +1782,65 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <!-- ===================== FIREBASE ===================== -->
-<script>
-// 1. Declaramos la variable globalmente para que sea accesible
-window.datosRecursos = window.datosRecursos || []; 
+<script type="module">
+  import { initializeApp }  from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
-async function actualizarBanners() {
-    // 2. Verificamos si los datos ya fueron cargados
-    if (!window.datosRecursos || window.datosRecursos.length === 0) {
-        console.log("Esperando carga de datos para banners...");
-        return; 
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCv7tt0id1FXRaHlNxdWewiY4a5SNAfe8c",
+    authDomain:        "liga-gualeguay.firebaseapp.com",
+    databaseURL:       "https://liga-gualeguay-default-rtdb.firebaseio.com",
+    projectId:         "liga-gualeguay",
+    storageBucket:     "liga-gualeguay.firebasestorage.app",
+    messagingSenderId: "402887930793",
+    appId:             "1:402887930793:web:4322b3d9f79f816b9b4ab8",
+    measurementId:     "G-8GQ2GWHH27"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // Exponer para uso desde JS no-modular
+  window._firebaseDB  = db;
+  window._firebaseRef = ref;
+  window._firebaseSet = set;
+
+  // liveUrl en tiempo real (override de Sheets si existe)
+  onValue(ref(db, 'config/liveUrl'), function(snapshot) {
+    var url = snapshot.val();
+    if (url) {
+      var id = url.match(/(?:v=|youtu\.be\/)([\w-]{11})/);
+      if (id) {
+        document.getElementById('envivoIframe').src   = 'https://www.youtube.com/embed/' + id[1] + '?autoplay=1';
+        document.getElementById('envivoFrame').style.display = 'block';
+        document.getElementById('envivoOff').style.display   = 'none';
+        document.getElementById('liveBanner').classList.add('on');
+        document.getElementById('liveBannerBtn').href = url;
+      }
     }
+  });
 
-    try {
-        const recursos = window.datosRecursos.filter(r => r.activo && r.activo.toLowerCase() === 'sí');
+  console.log('✅ Firebase conectado — liga-gualeguay');
 
-        recursos.forEach(item => {
-            // Asegurate que tu HTML tenga elementos con estos IDs
-            const bannerId = item.id.replace('banner_', 'inicio-banner-img'); 
-            const imgElement = document.getElementById(bannerId);
-
-            if (imgElement && item.url_github) {
-                imgElement.src = item.url_github;
-                console.log(`Banner ${item.id} actualizado correctamente.`);
-            }
-        });
-    } catch (error) {
-        console.error("Error al actualizar los banners:", error);
+  // Ganador del sorteo en tiempo real
+  onValue(ref(db, 'sorteo_ganador'), function(snapshot) {
+    var data = snapshot.val();
+    var wrap = document.getElementById('ganadores-wrap');
+    var cont = document.getElementById('ganadores-contenido');
+    if (!wrap || !cont) return;
+    if (data && data.activo) {
+      wrap.style.display = 'block';
+      cont.innerHTML =
+        '<div style="padding:16px;text-align:center">' +
+        '<div style="font-size:2rem;margin-bottom:6px">🏆</div>' +
+        '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--gold);margin-bottom:4px">' + data.nombre + '</div>' +
+        '<div style="font-size:.7rem;color:var(--muted)">Ganador del sorteo · ' + (data.fecha||'') + '</div>' +
+        '</div>';
+    } else {
+      wrap.style.display = 'none';
     }
-}
-
-// 3. Mejoramos la forma en que detectamos la carga
-// Si usas una función para cargar tus datos (ej: cargarDatos()), 
-// llamá a actualizarBanners() JUSTO después de que termines de llenar window.datosRecursos.
+  });
 </script>
+
+</body>
+</html>
