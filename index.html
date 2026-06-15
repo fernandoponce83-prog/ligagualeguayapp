@@ -729,6 +729,37 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
           <div class="panel-title" style="margin-top:14px">🔄 Datos</div>
           <button class="panel-btn sec" onclick="recargarDatos()">🔄 FORZAR RECARGA DESDE SHEETS</button>
           <div id="adm-reload-r" style="margin-top:8px"></div>
+
+          <!-- ── SUBIDOR DE FOTOS A IMGUR ── -->
+          <div class="panel-title" style="margin-top:14px">📸 Subir fotos (carrusel)</div>
+          <p class="panel-hint">Seleccioná hasta 10 fotos. Se suben a Imgur y obtenés las URLs listas para pegar en el Sheets.</p>
+
+          <div id="imgur-drop" onclick="document.getElementById('imgur-input').click()"
+            style="border:2px dashed rgba(255,255,255,.18);border-radius:10px;padding:22px 14px;text-align:center;cursor:pointer;margin-bottom:10px;transition:border-color .2s;background:var(--card)"
+            ondragover="event.preventDefault();this.style.borderColor='var(--gold)'"
+            ondragleave="this.style.borderColor='rgba(255,255,255,.18)'"
+            ondrop="imgurHandleDrop(event)">
+            <div style="font-size:1.8rem;margin-bottom:6px">🖼️</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1px;color:var(--gold)">TOCÁ O ARRASTRÁ LAS FOTOS</div>
+            <div style="font-size:.62rem;color:var(--muted);margin-top:4px">JPG · PNG · WEBP · hasta 10 MB c/u</div>
+          </div>
+          <input id="imgur-input" type="file" accept="image/*" multiple style="display:none" onchange="imgurHandleFiles(this.files)">
+
+          <!-- Preview antes de subir -->
+          <div id="imgur-preview" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px"></div>
+
+          <button id="imgur-btn" class="panel-btn pri" onclick="imgurSubirTodo()" style="display:none">
+            ☁️ SUBIR TODAS A IMGUR
+          </button>
+          <div id="imgur-progress" style="margin:8px 0"></div>
+
+          <!-- URLs resultantes con botón copiar -->
+          <div id="imgur-resultado" style="display:none">
+            <div class="panel-title" style="margin-top:10px;color:var(--green)">✅ URLs listas para el Sheets</div>
+            <p class="panel-hint">Copiá cada URL en la columna <strong>url_foto</strong> de la hoja <em>galeria</em>, o en <strong>url_carrusel</strong> separadas por coma en <em>noticias</em>.</p>
+            <div id="imgur-urls-list"></div>
+            <button class="panel-btn suc" onclick="imgurCopiarTodas()" style="margin-top:6px">📋 COPIAR TODAS LAS URLs</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1581,7 +1612,6 @@ function renderGaleria(rows) {
     cont.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:.8rem">📷 Sin fotos cargadas por ahora.<br>Volvé pronto.</div>';
     return;
   }
-  // Agrupar por categoria/fecha si existe
   var grupos = {};
   rows.forEach(function(r) {
     var g = r.categoria || r.fecha || 'General';
@@ -1592,21 +1622,28 @@ function renderGaleria(rows) {
   var html = '';
   Object.keys(grupos).forEach(function(grupo) {
     html += '<div class="sec-div"><h3>📸 ' + grupo + '</h3></div>';
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">';
+    html += '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">';
     grupos[grupo].forEach(function(foto) {
-      html += '<div style="background:var(--card);border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.06);cursor:pointer" onclick="verFotoGaleria(\'' + encodeURIComponent(JSON.stringify(foto)) + '\')">';
-      if (foto.url_foto) {
-        html += '<img src="' + foto.url_foto + '" alt="' + (foto.nombre||'') + '"' +
-          ' style="width:100%;height:auto;display:block;object-fit:contain;max-height:240px;background:#0d0d22"' +
-          ' onerror="this.parentNode.querySelector(\'.gal-fallback\').style.display=\'flex\';this.style.display=\'none\'">';
-        html += '<div class="gal-fallback" style="display:none;height:80px;align-items:center;justify-content:center;font-size:1.5rem">📷</div>';
+      // Soporte de carrusel: url_foto puede ser una URL única o varias separadas por coma
+      var urls = foto.url_foto ? foto.url_foto.split(',').map(function(u){ return u.trim(); }).filter(Boolean) : [];
+      var esCarrusel = urls.length > 1;
+      html += '<div style="background:var(--card);border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.07)">';
+      if (urls.length) {
+        if (esCarrusel) {
+          html += crearCarrusel(urls, foto.nombre || '');
+        } else {
+          html += '<img src="' + urls[0] + '" alt="' + (foto.nombre||'') + '"' +
+            ' style="width:100%;height:auto;display:block;object-fit:contain;max-height:320px;background:#0d0d22"' +
+            ' onerror="this.style.display=\'none\'">';
+        }
       } else {
         html += '<div style="height:80px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--muted)">📷</div>';
       }
       if (foto.nombre || foto.descripcion) {
-        html += '<div style="padding:6px 8px">';
-        if (foto.nombre) html += '<div style="font-family:Barlow Condensed,sans-serif;font-size:.75rem;font-weight:700;color:var(--text)">' + foto.nombre + '</div>';
-        if (foto.descripcion) html += '<div style="font-size:.6rem;color:var(--muted);margin-top:2px">' + foto.descripcion + '</div>';
+        html += '<div style="padding:8px 12px">';
+        if (foto.nombre) html += '<div style="font-family:Barlow Condensed,sans-serif;font-size:.8rem;font-weight:700;color:var(--text)">' + foto.nombre + '</div>';
+        if (foto.descripcion) html += '<div style="font-size:.65rem;color:var(--muted);margin-top:2px">' + foto.descripcion + '</div>';
+        if (esCarrusel) html += '<div style="font-size:.58rem;color:var(--gold);margin-top:3px">📷 ' + urls.length + ' fotos</div>';
         html += '</div>';
       }
       html += '</div>';
@@ -1640,6 +1677,200 @@ function verFotoGaleria(encoded) {
     } else pdfBtn.style.display = 'none';
     overlay.classList.add('open');
   } catch(e) {}
+}
+
+
+// ============================================================
+// IMGUR UPLOADER
+// ============================================================
+var IMGUR_CLIENT_ID = '546c25a59c58ad7'; // Client-ID público para uploads anónimos
+var imgurArchivos = [];
+var imgurUrlsSubidas = [];
+
+function imgurHandleDrop(e) {
+  e.preventDefault();
+  document.getElementById('imgur-drop').style.borderColor = 'rgba(255,255,255,.18)';
+  imgurHandleFiles(e.dataTransfer.files);
+}
+
+function imgurHandleFiles(files) {
+  var arr = Array.prototype.slice.call(files);
+  arr = arr.filter(function(f){ return f.type.indexOf('image/') === 0; });
+  if (!arr.length) return;
+  // Máximo 10
+  imgurArchivos = imgurArchivos.concat(arr).slice(0, 10);
+  imgurMostrarPreview();
+}
+
+function imgurMostrarPreview() {
+  var cont = document.getElementById('imgur-preview');
+  cont.innerHTML = '';
+  imgurArchivos.forEach(function(f, i) {
+    var url = URL.createObjectURL(f);
+    var div = document.createElement('div');
+    div.style.cssText = 'position:relative;border-radius:6px;overflow:hidden;background:var(--card2);border:1px solid rgba(255,255,255,.08)';
+    div.innerHTML =
+      '<img src="' + url + '" style="width:100%;height:72px;object-fit:cover;display:block">' +
+      '<button onclick="imgurQuitarFoto(' + i + ')" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.55rem;cursor:pointer;line-height:18px;text-align:center">✕</button>' +
+      '<div style="font-size:.45rem;color:var(--muted);padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + f.name + '</div>';
+    cont.appendChild(div);
+  });
+  document.getElementById('imgur-btn').style.display = imgurArchivos.length ? 'block' : 'none';
+  document.getElementById('imgur-resultado').style.display = 'none';
+}
+
+function imgurQuitarFoto(i) {
+  imgurArchivos.splice(i, 1);
+  imgurMostrarPreview();
+}
+
+function imgurSubirTodo() {
+  if (!imgurArchivos.length) return;
+  imgurUrlsSubidas = [];
+  var prog = document.getElementById('imgur-progress');
+  var btn  = document.getElementById('imgur-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Subiendo...';
+  document.getElementById('imgur-resultado').style.display = 'none';
+
+  var total = imgurArchivos.length;
+  var idx = 0;
+
+  function subirSiguiente() {
+    if (idx >= total) {
+      btn.disabled = false;
+      btn.textContent = '☁️ SUBIR TODAS A IMGUR';
+      prog.innerHTML = '';
+      imgurMostrarResultado();
+      return;
+    }
+    var f = imgurArchivos[idx];
+    prog.innerHTML = '<div style="font-size:.68rem;color:var(--gold);text-align:center">⬆️ Subiendo ' + (idx+1) + ' de ' + total + ': ' + f.name + '</div>';
+
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var base64 = ev.target.result.split(',')[1];
+      fetch('https://api.imgur.com/3/image', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Client-ID ' + IMGUR_CLIENT_ID,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ image: base64, type: 'base64', name: f.name })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (data.success && data.data && data.data.link) {
+          imgurUrlsSubidas.push({ nombre: f.name, url: data.data.link });
+        } else {
+          imgurUrlsSubidas.push({ nombre: f.name, url: '', error: (data.data && data.data.error) || 'Error desconocido' });
+        }
+        idx++;
+        subirSiguiente();
+      })
+      .catch(function(err) {
+        imgurUrlsSubidas.push({ nombre: f.name, url: '', error: 'Sin conexión' });
+        idx++;
+        subirSiguiente();
+      });
+    };
+    reader.readAsDataURL(f);
+  }
+  subirSiguiente();
+}
+
+function imgurMostrarResultado() {
+  var cont = document.getElementById('imgur-urls-list');
+  cont.innerHTML = imgurUrlsSubidas.map(function(item) {
+    if (!item.url) {
+      return '<div style="background:rgba(232,0,28,.1);border-radius:6px;padding:7px 10px;margin-bottom:6px;font-size:.65rem;color:var(--red)">❌ ' + item.nombre + ' — ' + (item.error||'error') + '</div>';
+    }
+    return '<div style="background:var(--card);border-radius:6px;padding:7px 10px;margin-bottom:6px;border:1px solid rgba(255,255,255,.07)">' +
+      '<div style="font-size:.6rem;color:var(--muted);margin-bottom:4px">' + item.nombre + '</div>' +
+      '<div style="display:flex;gap:6px;align-items:center">' +
+      '<input type="text" value="' + item.url + '" readonly style="flex:1;background:var(--card2);border:1px solid rgba(255,255,255,.1);color:var(--text);border-radius:5px;padding:5px 7px;font-size:.62rem;font-family:monospace">' +
+      '<button onclick="imgurCopiarUna(\'' + item.url + '\',this)" style="background:var(--blue);color:#fff;border:none;border-radius:5px;padding:5px 8px;font-size:.62rem;cursor:pointer;white-space:nowrap">📋 Copiar</button>' +
+      '</div></div>';
+  }).join('');
+  document.getElementById('imgur-resultado').style.display = 'block';
+  // Limpiar archivos para nueva tanda
+  imgurArchivos = [];
+  imgurMostrarPreview();
+}
+
+function imgurCopiarUna(url, btn) {
+  navigator.clipboard.writeText(url).then(function() {
+    btn.textContent = '✅ OK';
+    setTimeout(function(){ btn.textContent = '📋 Copiar'; }, 1800);
+  }).catch(function(){
+    // fallback
+    var ta = document.createElement('textarea');
+    ta.value = url; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✅ OK';
+    setTimeout(function(){ btn.textContent = '📋 Copiar'; }, 1800);
+  });
+}
+
+function imgurCopiarTodas() {
+  var urls = imgurUrlsSubidas.filter(function(i){ return i.url; }).map(function(i){ return i.url; }).join('\n');
+  navigator.clipboard.writeText(urls).catch(function(){
+    var ta = document.createElement('textarea');
+    ta.value = urls; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+  var btn = event.target;
+  btn.textContent = '✅ URLs copiadas';
+  setTimeout(function(){ btn.textContent = '📋 COPIAR TODAS LAS URLs'; }, 2000);
+}
+
+// ── CARRUSEL DE IMÁGENES (para galería y noticias) ───────────
+function crearCarrusel(urls, altBase) {
+  if (!urls || !urls.length) return '';
+  if (urls.length === 1) {
+    return '<img src="' + urls[0] + '" alt="' + (altBase||'') + '" style="width:100%;height:auto;display:block;object-fit:contain;border-radius:8px;background:#0d0d22" onerror="this.style.display=\'none\'">';
+  }
+  var id = 'car_' + Math.random().toString(36).slice(2,8);
+  var slides = urls.map(function(url, i) {
+    return '<div class="car-slide" style="min-width:100%;transition:transform .35s ease">' +
+      '<img src="' + url + '" alt="' + (altBase||'Foto') + ' ' + (i+1) + '" style="width:100%;height:auto;max-height:320px;object-fit:contain;display:block;background:#0d0d22" onerror="this.style.display=\'none\'">' +
+      '</div>';
+  }).join('');
+  var dots = urls.map(function(_,i){
+    return '<button onclick="carIr(\'' + id + '\',' + i + ')" style="width:7px;height:7px;border-radius:50%;border:none;cursor:pointer;background:' + (i===0?'var(--gold)':'rgba(255,255,255,.3)') + ';padding:0;transition:background .2s" id="' + id + '_d' + i + '"></button>';
+  }).join('');
+  return '<div id="' + id + '" style="position:relative;overflow:hidden;border-radius:8px;background:#0d0d22">' +
+    '<div id="' + id + '_track" style="display:flex;will-change:transform">' + slides + '</div>' +
+    (urls.length > 1 ?
+      '<button onclick="carMover(\'' + id + '\',-1)" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:.9rem;cursor:pointer;z-index:2">‹</button>' +
+      '<button onclick="carMover(\'' + id + '\',1)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:.9rem;cursor:pointer;z-index:2">›</button>' +
+      '<div style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:5px;z-index:2">' + dots + '</div>' +
+      '<div style="position:absolute;top:8px;right:10px;background:rgba(0,0,0,.55);color:#fff;border-radius:10px;padding:2px 7px;font-size:.55rem;z-index:2" id="' + id + '_cnt">1 / ' + urls.length + '</div>'
+    : '') +
+    '</div>';
+}
+window._carIdx = {};
+function carMover(id, dir) {
+  var track = document.getElementById(id + '_track');
+  if (!track) return;
+  var n = track.children.length;
+  var idx = ((_carIdx[id] || 0) + dir + n) % n;
+  carIr(id, idx);
+}
+function carIr(id, idx) {
+  var track = document.getElementById(id + '_track');
+  if (!track) return;
+  var n = track.children.length;
+  _carIdx[id] = idx;
+  track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+  for (var i = 0; i < n; i++) {
+    var d = document.getElementById(id + '_d' + i);
+    if (d) d.style.background = i === idx ? 'var(--gold)' : 'rgba(255,255,255,.3)';
+  }
+  var cnt = document.getElementById(id + '_cnt');
+  if (cnt) cnt.textContent = (idx+1) + ' / ' + n;
 }
 
 
@@ -1827,26 +2058,47 @@ function renderNoticias(noticias) {
     cont.innerHTML = '<div class="error-state">Sin noticias disponibles</div>';
     return;
   }
-  var tipoIcon = { figura:'⭐', goleador:'⚽', arquero:'🧤', comunicado:'📢', publicidad:'🏪', noticia:'📰' };
+  var tipoIcon  = { figura:'⭐', goleador:'⚽', arquero:'🧤', comunicado:'📢', publicidad:'🏪', noticia:'📰' };
   var tipoBadge = { figura:'gold', goleador:'', arquero:'blue', comunicado:'', publicidad:'green', noticia:'' };
   cont.innerHTML = noticias.map(function(n) {
     var icon  = tipoIcon[n.tipo]  || '📰';
     var badge = tipoBadge[n.tipo] || '';
-    var tieneImagen = n.imagen_url && n.imagen_url !== '';
-    var tieneBoton  = n.boton_texto && n.boton_url;
+    var tieneBoton = n.boton_texto && n.boton_url;
+
+    // Soporte carrusel: url_carrusel es una o varias URLs separadas por coma
+    // Si no hay url_carrusel, usa imagen_url como única imagen
+    var urlsCarrusel = [];
+    if (n.url_carrusel && n.url_carrusel !== '') {
+      urlsCarrusel = n.url_carrusel.split(',').map(function(u){ return u.trim(); }).filter(Boolean);
+    } else if (n.imagen_url && n.imagen_url !== '') {
+      urlsCarrusel = [n.imagen_url];
+    }
+    var tieneImagen = urlsCarrusel.length > 0;
+
+    var mediaHtml = '';
+    if (tieneImagen) {
+      if (urlsCarrusel.length > 1) {
+        mediaHtml = '<div style="position:relative">' + crearCarrusel(urlsCarrusel, n.titulo) + '</div>';
+      } else {
+        mediaHtml = '<div style="position:relative;background:#0d0d22">' +
+          '<img src="' + urlsCarrusel[0] + '" style="width:100%;height:auto;max-height:220px;object-fit:contain;display:block" onerror="this.parentNode.style.display=\'none\'">' +
+          '</div>';
+      }
+      // Badge tipo encima de la imagen
+      mediaHtml = mediaHtml.replace('<div style="position:relative', '<div style="position:relative');
+    }
+
     return '<div class="card noticia-card" onclick="abrirModal(\'' +
-      encodeURIComponent(JSON.stringify(n)) + '\')" style="cursor:pointer;margin-bottom:10px">' +
-      (tieneImagen ?
-        '<div style="position:relative;height:180px;overflow:hidden;background:#0d0d22">' +
-        '<img src="' + n.imagen_url + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.style.display=\'none\'">' +
-        '<div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;border-radius:4px;padding:2px 8px;font-family:Bebas Neue,sans-serif;font-size:.72rem;letter-spacing:1px">' + icon + ' ' + n.tipo.toUpperCase() + '</div>' +
-        '</div>' : '') +
+      encodeURIComponent(JSON.stringify(n)) + '\')" style="cursor:pointer;margin-bottom:10px;overflow:hidden">' +
+      (tieneImagen ? '<div style="position:relative">' + (urlsCarrusel.length > 1 ? crearCarrusel(urlsCarrusel, n.titulo) : '<img src="' + urlsCarrusel[0] + '" style="width:100%;height:auto;max-height:220px;object-fit:contain;display:block;background:#0d0d22" onerror="this.parentNode.style.display=\'none\'">') +
+        '<div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;border-radius:4px;padding:2px 8px;font-family:Bebas Neue,sans-serif;font-size:.72rem;letter-spacing:1px;z-index:3">' + icon + ' ' + n.tipo.toUpperCase() + '</div>' +
+        (urlsCarrusel.length > 1 ? '<div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:var(--gold);border-radius:10px;padding:2px 7px;font-size:.55rem;z-index:3">📷 ' + urlsCarrusel.length + '</div>' : '') +
+      '</div>' : '') +
       '<div style="padding:11px">' +
       '<div style="font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--' + (badge||'red') + ');margin-bottom:3px">' + (n.categoria || n.tipo || '') + '</div>' +
       '<h3 style="font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:1px;line-height:1.2;margin-bottom:4px">' + n.titulo + '</h3>' +
-      (n.detalle ? '<p style="font-size:.7rem;color:var(--muted);line-height:1.5">' + n.detalle.substring(0,100) + (n.detalle.length > 100 ? '...' : '') + '</p>' : '') +
-      (tieneBoton ?
-        '<a href="' + n.boton_url + '" target="_blank" onclick="event.stopPropagation()" style="display:inline-block;margin-top:8px;background:var(--green);color:#fff;border-radius:20px;padding:5px 12px;font-family:Bebas Neue,sans-serif;font-size:.72rem;letter-spacing:1px;text-decoration:none">' + n.boton_texto + '</a>' : '') +
+      (n.detalle ? '<p style="font-size:.7rem;color:var(--muted);line-height:1.5">' + n.detalle.substring(0,120) + (n.detalle.length > 120 ? '...' : '') + '</p>' : '') +
+      (tieneBoton ? '<a href="' + n.boton_url + '" target="_blank" onclick="event.stopPropagation()" style="display:inline-block;margin-top:8px;background:var(--green);color:#fff;border-radius:20px;padding:5px 12px;font-family:Bebas Neue,sans-serif;font-size:.72rem;letter-spacing:1px;text-decoration:none">' + n.boton_texto + '</a>' : '') +
       '</div></div>';
   }).join('');
 }
