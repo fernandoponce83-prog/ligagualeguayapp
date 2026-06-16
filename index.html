@@ -326,16 +326,14 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 <!-- ===================== INICIO ===================== -->
 <section id="inicio" class="section active">
 
-  <!-- 1. Banner principal (imagen estática o carrusel de publicidades autoplay) -->
-  <div id="inicio-banner-wrap" style="border-radius:12px;overflow:hidden;margin-bottom:12px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(135deg,#0d0d2b,#1a0a20);position:relative">
-    <div style="width:100%;position:relative">
-      <img id="inicio-banner-img" src="" alt="Liga Gualeguay"
-        style="width:100%;height:auto;display:block;object-fit:contain;transition:opacity .4s"
-        onerror="this.style.display='none';document.getElementById('inicio-banner-fallback').style.display='flex'">
-      <div id="inicio-banner-fallback" style="display:flex;padding:28px 0;align-items:center;justify-content:center;flex-direction:column;gap:4px;background:linear-gradient(135deg,#0d0d2b,#1a0a20)">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)">⚽ LIGA GUALEGUAY 2026</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:.7rem;color:rgba(255,255,255,.6);letter-spacing:1px">Fer News · Pasión Azul · El Debate Pregón</div>
-      </div>
+  <!-- 1. Banner principal panorámico — se adapta sin recortar -->
+  <div id="inicio-banner-wrap" style="border-radius:12px;overflow:hidden;margin-bottom:12px;border:1px solid rgba(255,255,255,.08);background:#020b1a;position:relative">
+    <img id="inicio-banner-img" src="https://raw.githubusercontent.com/fernandoponce83-prog/ligagualeguayapp/refs/heads/main/imagenes/banner_inicio.png" alt="Liga Gualeguay"
+      style="width:100%;height:auto;display:block;object-fit:contain;transition:opacity .4s"
+      onerror="this.style.display='none';document.getElementById('inicio-banner-fallback').style.display='flex'">
+    <div id="inicio-banner-fallback" style="display:none;padding:28px 0;align-items:center;justify-content:center;flex-direction:column;gap:4px;background:linear-gradient(135deg,#0d0d2b,#1a0a20)">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)">⚽ LIGA GUALEGUAY 2026</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:.7rem;color:rgba(255,255,255,.6);letter-spacing:1px">Fer News · Pasión Azul · El Debate Pregón</div>
     </div>
   </div>
 
@@ -2230,18 +2228,14 @@ function escudoFallback(img) { img.onerror=null; img.src='imagenes/logo_liga_gua
 // RECURSOS / BANNERS
 // ============================================================
 function renderRecursos(recursos) {
-  // recursos: {seccion_id: url}
-  // Banner 3:1 en sección Inicio — se adapta sin recortar
-  if (recursos.banner_inicio) {
-    var bannerImg = document.getElementById('inicio-banner-img');
-    var fallback  = document.getElementById('inicio-banner-fallback');
-    if (bannerImg) {
-      bannerImg.onload = function() {
-        this.classList.add('loaded');
-        if (fallback) fallback.style.display = 'none';
-      };
-      bannerImg.src = recursos.banner_inicio;
-    }
+  // Banner inicio — Sheets tiene prioridad, si no usa GitHub directo
+  var GITHUB_BASE = 'https://raw.githubusercontent.com/fernandoponce83-prog/ligagualeguayapp/refs/heads/main/imagenes/';
+  var bannerImg = document.getElementById('inicio-banner-img');
+  var fallback  = document.getElementById('inicio-banner-fallback');
+  var bannerSrc = recursos.banner_inicio || (GITHUB_BASE + 'banner_inicio.png');
+  if (bannerImg) {
+    bannerImg.onload = function() { this.classList.add('loaded'); if (fallback) fallback.style.display = 'none'; };
+    bannerImg.src = bannerSrc;
   }
   // Logos de medios en header
   ['pasion_azul','debate_pregon','fm_tradicion','fer_news'].forEach(function(id) {
