@@ -267,6 +267,39 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 .drive-video-info{padding:8px 12px}
 .drive-video-info h4{font-family:'Bebas Neue',sans-serif;font-size:.92rem;letter-spacing:1px;margin-bottom:2px}
 .drive-video-info p{font-size:.62rem;color:var(--muted)}
+
+/* ── PERFIL DE CLUB ── */
+.club-back-btn{display:flex;align-items:center;gap:7px;background:none;border:none;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:1px;cursor:pointer;padding:0;margin-bottom:12px;text-transform:uppercase}
+.club-back-btn:hover{color:var(--text)}
+.club-hero{border-radius:12px;overflow:hidden;margin-bottom:12px;border:1px solid rgba(255,255,255,.08);position:relative;background:#0d0d22}
+.club-hero img.club-banner{width:100%;height:auto;display:block;object-fit:cover;max-height:160px}
+.club-hero-info{display:flex;align-items:center;gap:12px;padding:12px 14px;background:linear-gradient(to right,rgba(10,10,26,.95),rgba(10,10,26,.7))}
+.club-hero-escudo{width:60px;height:60px;object-fit:contain;flex-shrink:0}
+.club-hero-nombre{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;line-height:1.1}
+.club-hero-sub{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;color:var(--muted);letter-spacing:1px;margin-top:2px}
+.club-tabs{display:flex;gap:5px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.club-tabs::-webkit-scrollbar{display:none}
+.club-tab{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:5px 12px;font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:1px;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .2s}
+.club-tab.active{background:var(--red);border-color:var(--red);color:#fff}
+.club-panel{display:none}.club-panel.active{display:block}
+
+/* ── MURO DE CARDS (portada dinámica) ── */
+.muro-card{background:var(--card);border-radius:12px;margin-bottom:12px;border:1px solid rgba(255,255,255,.07);overflow:hidden}
+.muro-badge{display:inline-block;font-family:'Bebas Neue',sans-serif;font-size:.62rem;letter-spacing:1px;padding:2px 8px;border-radius:4px;margin-bottom:6px}
+.muro-titulo{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:1px;line-height:1.2;margin-bottom:4px}
+.muro-subtitulo{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;color:var(--muted);margin-bottom:8px}
+.muro-texto{font-size:.75rem;color:var(--text);line-height:1.6}
+.muro-body{padding:11px 13px}
+.muro-video-wrap{position:relative;width:100%;padding-top:56.25%;background:#0d0d22}
+.muro-video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+.muro-video-thumb{position:relative;cursor:pointer}
+.muro-video-thumb img{width:100%;height:auto;max-height:200px;object-fit:cover;display:block}
+.muro-play-btn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3)}
+.muro-play-btn span{width:48px;height:48px;background:rgba(232,0,28,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff}
+
+/* ── SLIDER PUBLICIDADES ── */
+.pub-slide{min-width:100%;position:relative;cursor:pointer}
+.pub-slide img{width:100%;aspect-ratio:2/1;object-fit:cover;display:block}
 </style>
 </head>
 <body>
@@ -345,7 +378,13 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
     <div id="pub-dots" style="position:absolute;bottom:6px;left:0;right:0;display:flex;justify-content:center;gap:5px;z-index:2"></div>
   </div>
 
-  <!-- 3. Ganadores sorteo -->
+  <!-- 3. Muro de cards dinamico (desde Sheets hoja portada) -->
+  <div id="muro-cards-wrap" style="display:none">
+    <div class="sec-div"><h3>📰 Novedades</h3></div>
+    <div id="muro-cards-contenido"></div>
+  </div>
+
+  <!-- 4. Ganadores sorteo -->
   <div id="ganadores-wrap" style="display:none">
     <div class="sec-div"><h3>🏆 Ganador del Sorteo</h3></div>
     <div id="ganadores-contenido" class="card"></div>
@@ -687,6 +726,53 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
   </div>
 </section>
 
+<!-- ===================== PERFIL DE CLUB ===================== -->
+<section id="perfil-club" class="section">
+  <button class="club-back-btn" onclick="cerrarPerfilClub()">&#8592; Volver al Inicio</button>
+
+  <!-- Hero: banner + escudo + nombre -->
+  <div class="club-hero" id="club-hero">
+    <img class="club-banner" id="club-banner-img" src="" alt="" style="display:none">
+    <div class="club-hero-info">
+      <img id="club-hero-escudo" class="club-hero-escudo" src="" alt="" onerror="escudoFallback(this)">
+      <div>
+        <div class="club-hero-nombre" id="club-hero-nombre">CLUB</div>
+        <div class="club-hero-sub" id="club-hero-sub">Liga Departamental · Gualeguay 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="club-tabs">
+    <button class="club-tab active" onclick="clubTab('publicaciones',this)">&#128240; Publicaciones</button>
+    <button class="club-tab" onclick="clubTab('plantel',this)">&#128085; Plantel</button>
+    <button class="club-tab" onclick="clubTab('historia',this)">&#127963; Historia</button>
+    <button class="club-tab" onclick="clubTab('institucional',this)">&#128203; Institucional</button>
+  </div>
+
+  <!-- Panel: Publicaciones etiquetadas -->
+  <div id="club-panel-publicaciones" class="club-panel active">
+    <div id="club-pub-contenido"><div class="loading-state">Cargando publicaciones...</div></div>
+  </div>
+
+  <!-- Panel: Plantel -->
+  <div id="club-panel-plantel" class="club-panel">
+    <div id="club-plantel-contenido"><div class="loading-state">Cargando plantel...</div></div>
+  </div>
+
+  <!-- Panel: Historia -->
+  <div id="club-panel-historia" class="club-panel">
+    <div class="card" style="padding:14px;font-size:.78rem;color:var(--muted);line-height:1.7" id="club-historia-texto">
+      Informacion historica del club proximamente.
+    </div>
+  </div>
+
+  <!-- Panel: Institucional -->
+  <div id="club-panel-institucional" class="club-panel">
+    <div id="club-institucional-contenido"><div class="loading-state">Cargando informacion institucional...</div></div>
+  </div>
+</section>
+
 </main>
 
 <!-- ===================== PANEL USUARIO ===================== -->
@@ -831,7 +917,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 // ============================================================
 // CONFIGURACIÓN — REEMPLAZÁ LA URL CUANDO PUBLIQUES EL SCRIPT
 // ============================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMN_ERt2EdECeGVUX35NBoMMoy40j-YVYpTLrFbWWUfsSCLacHPArJ6NhzT7GL2cVr/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZSATQOlYucutSPtDDCGb27PRMwrX3NaibUH23Gvu3-E2qJCi1N5ROfMx5mDSmikGB/exec';
 var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m';
 var PASS = 'Reyazucar95';
 
@@ -956,21 +1042,23 @@ function mostrarErrorGeneral() {
 // ============================================================
 function renderTodo() {
   var d = appData;
-  if (d.config)        renderConfig(d.config);
-  if (d.recursos)      renderRecursos(d.recursos);
-  if (d.clubes)        renderClubes(d.clubes);
-  if (d.posiciones)    renderPosiciones(d.posiciones);
-  if (d.resultados)    renderResultados(d.resultados);
-  if (d.goleadores)    renderGoleadores(d.goleadores);
-  if (d.vallas)        renderVallas(d.vallas);
-  if (d.proximos)      renderProximos(d.proximos);
-  if (d.videos)        renderVideos(d.videos);
-  if (d.tribunal)      renderTribunal(d.tribunal);
-  if (d.comercios)     renderComercios(d.comercios);
-  if (d.transmisiones) renderTransmisiones(d.transmisiones);
-  if (d.noticias)      renderNoticias(d.noticias);
-  if (d.galeria)       renderGaleria(d.galeria);
-  if (d.sponsors)      renderSponsors(d.sponsors);
+  if (d.config)          renderConfig(d.config);
+  if (d.recursos)        renderRecursos(d.recursos);
+  if (d.clubes)          renderClubes(d.clubes);
+  if (d.posiciones)      renderPosiciones(d.posiciones);
+  if (d.resultados)      renderResultados(d.resultados);
+  if (d.goleadores)      renderGoleadores(d.goleadores);
+  if (d.vallas)          renderVallas(d.vallas);
+  if (d.proximos)        renderProximos(d.proximos);
+  if (d.videos)          renderVideos(d.videos);
+  if (d.tribunal)        renderTribunal(d.tribunal);
+  if (d.comercios)       renderComercios(d.comercios);
+  if (d.transmisiones)   renderTransmisiones(d.transmisiones);
+  if (d.noticias)        renderNoticias(d.noticias);
+  if (d.galeria)         renderGaleria(d.galeria);
+  if (d.sponsors)        renderSponsors(d.sponsors);
+  if (d.portada_cards)   renderMuroCards(d.portada_cards);
+  if (d.slider_ads)      renderSliderPublicidades(d.slider_ads);
 }
 
 // ============================================================
@@ -997,9 +1085,12 @@ function renderClubes(clubes) {
   // clubes: [{nombre, escudo_url, abrev}]
   var grid = document.getElementById('clubes-grid');
   if (!clubes.length) { grid.innerHTML = '<div class="error-state" style="grid-column:span 5">Sin datos</div>'; return; }
+  // Guardar referencia global para el perfil
+  window._clubesData = clubes;
   grid.innerHTML = clubes.map(function(c) {
-    return '<div style="text-align:center">' +
-      '<img src="' + escudoUrl(c.nombre, c.escudo_url) + '" style="width:44px;height:44px;object-fit:contain;display:block;margin:0 auto" onerror="escudoFallback(this)">' +
+    var nombre = (c.nombre || '').replace(/'/g, "\\'");
+    return '<div style="text-align:center;cursor:pointer" onclick="abrirPerfilClub(\'' + nombre + '\')">' +
+      '<img src="' + escudoUrl(c.nombre, c.escudo_url) + '" style="width:44px;height:44px;object-fit:contain;display:block;margin:0 auto;transition:transform .2s" onerror="escudoFallback(this)" onmouseover="this.style.transform=\'scale(1.12)\'" onmouseout="this.style.transform=\'scale(1)\'">' +
       '<span style="font-size:.5rem;color:var(--muted);font-family:\'Barlow Condensed\',sans-serif;display:block;margin-top:2px">' + (c.abrev || c.nombre).toUpperCase() + '</span>' +
       '</div>';
   }).join('');
@@ -1104,11 +1195,19 @@ function leyendaZona(zonas) {
 // RESULTADOS
 // ============================================================
 function renderResultados(rows) {
-  // rows: [{division, fecha_num, local, escudo_local, goles_local, goles_visita, visita, escudo_visita}]
+  // rows: [{division, fecha_num(="Fecha 9"), local, goles_local, goles_visita, visita}]
+  // Normalizar fecha_num: "Fecha 9" / "fecha 8" → "F9" / "F8"
+  rows.forEach(function(r) {
+    var fn = String(r.fecha_num || '').trim();
+    var m = fn.match(/(\d+)/);
+    r._fechaKey = m ? 'F' + m[1] : fn.replace(/\s+/g,'').toUpperCase();
+    r._fechaN   = m ? parseInt(m[1]) : 0;
+  });
+
   var grupos = {};
   rows.forEach(function(r) {
     if (!grupos[r.division]) grupos[r.division] = {};
-    var f = 'F' + r.fecha_num;
+    var f = r._fechaKey;
     if (!grupos[r.division][f]) grupos[r.division][f] = [];
     grupos[r.division][f].push(r);
   });
@@ -1119,23 +1218,25 @@ function renderResultados(rows) {
   // Tabs de división
   var divTabsEl = document.getElementById('res-division-tabs');
   divTabsEl.innerHTML = divs.map(function(d, i) {
-    var label = d.replace('° ','°&nbsp;').replace('División','Div.');
+    var label = d.replace('° ','°&nbsp;').replace('División','Div.').replace('División','Div.');
     return '<button class="ct' + (i===0?' active':'') + '" onclick="mostrarResDivision(\'' + d.replace(/'/g,"\\'") + '\',this)">' + label + '</button>';
   }).join('');
 
   var cont = document.getElementById('res-contenido');
   cont.innerHTML = divs.map(function(d, i) {
-    var fechas = Object.keys(grupos[d]).sort(function(a,b){ return parseInt(a.slice(1))-parseInt(b.slice(1)); });
+    var fechas = Object.keys(grupos[d]).sort(function(a,b){
+      return (parseInt(a.slice(1))||0) - (parseInt(b.slice(1))||0);
+    });
     var ultima = fechas[fechas.length - 1];
-    var fechaTabs = fechas.map(function(f, fi) {
-      return '<button class="ct' + (f===ultima?' active':'') + '" onclick="mostrarResFecha(\'' + sanitizeId(d) + '\',\'' + f + '\',this)">' + f.replace('F','') + 'ª</button>';
+    var fechaTabs = fechas.map(function(f) {
+      return '<button class="ct' + (f===ultima?' active':'') + '" onclick="mostrarResFecha(\'' + sanitizeId(d) + '\',\'' + f + '\',this)">F' + f.slice(1) + '</button>';
     }).join('');
     var fechaPanels = fechas.map(function(f) {
       var partidos = grupos[d][f].map(function(p) {
         return '<div class="match-row">' +
-          '<div class="match-team"><img src="' + escudoUrl(p.local, p.escudo_local) + '" onerror="escudoFallback(this)"><span class="team-name">' + p.local.toUpperCase() + '</span></div>' +
+          '<div class="match-team"><img src="' + escudoUrl(p.local, p.escudo_local||'') + '" onerror="escudoFallback(this)"><span class="team-name">' + p.local.toUpperCase() + '</span></div>' +
           '<div class="match-score"><div class="score-box">' + p.goles_local + '</div><span class="score-vs">VS</span><div class="score-box">' + p.goles_visita + '</div></div>' +
-          '<div class="match-team away"><img src="' + escudoUrl(p.visita, p.escudo_visita) + '" onerror="escudoFallback(this)"><span class="team-name">' + p.visita.toUpperCase() + '</span></div>' +
+          '<div class="match-team away"><img src="' + escudoUrl(p.visita, p.escudo_visita||'') + '" onerror="escudoFallback(this)"><span class="team-name">' + p.visita.toUpperCase() + '</span></div>' +
           '</div>';
       }).join('');
       return '<div id="res-fecha-' + sanitizeId(d) + '-' + f + '" style="display:' + (f===ultima?'block':'none') + '">' +
@@ -1145,7 +1246,6 @@ function renderResultados(rows) {
       '<div class="cat-tabs">' + fechaTabs + '</div>' + fechaPanels + '</div>';
   }).join('');
 
-  // Completar inicio con ultima fecha 1° Masc y 1° Fem
   renderInicioUltimaFecha(grupos);
 }
 
@@ -1556,13 +1656,6 @@ function activarLive() {
   document.getElementById('liveBanner').classList.add('on');
   document.getElementById('liveBannerBtn').href = url;
 }
-function desactivarLive() {
-  document.getElementById('envivoIframe').src = '';
-  document.getElementById('envivoFrame').style.display = 'none';
-  document.getElementById('envivoOff').style.display   = 'block';
-  document.getElementById('liveBanner').classList.remove('on');
-}
-
 function desactivarLive() {
   document.getElementById('envivoIframe').src = '';
   document.getElementById('envivoFrame').style.display = 'none';
@@ -2292,7 +2385,7 @@ function renderNoticias(noticias) {
       '<div style="padding:11px">' +
       '<div style="font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--' + (badge||'red') + ');margin-bottom:3px">' + (n.categoria || n.tipo || '') + '</div>' +
       '<h3 style="font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:1px;line-height:1.2;margin-bottom:4px">' + n.titulo + '</h3>' +
-      (n.detalle ? '<p style="font-size:.7rem;color:var(--muted);line-height:1.5">' + n.detalle.substring(0,120) + (n.detalle.length > 120 ? '...' : '') + '</p>' : '') +
+      (n.texto || n.detalle ? '<p style="font-size:.7rem;color:var(--muted);line-height:1.5">' + (n.texto||n.detalle).substring(0,120) + ((n.texto||n.detalle).length > 120 ? '...' : '') + '</p>' : '') +
       (tieneBoton ? '<a href="' + n.boton_url + '" target="_blank" onclick="event.stopPropagation()" style="display:inline-block;margin-top:8px;background:var(--green);color:#fff;border-radius:20px;padding:5px 12px;font-family:Bebas Neue,sans-serif;font-size:.72rem;letter-spacing:1px;text-decoration:none">' + n.boton_texto + '</a>' : '') +
       '</div></div>' +
       renderReactionBar('noticia', itemId, n.titulo) +
@@ -2364,6 +2457,325 @@ function abrirModal(dataEncoded) {
 
 function cerrarModal() {
   document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ============================================================
+// SLIDER DE PUBLICIDADES (inicio)
+// ============================================================
+var _pubIdx = 0;
+var _pubTimer = null;
+var _pubTotal = 0;
+
+function renderSliderPublicidades(items) {
+  if (!items || !items.length) return;
+  var activos = items.filter(function(i){ return String(i.activo).toUpperCase() === 'SI'; });
+  activos.sort(function(a,b){ return (parseInt(a.orden)||99) - (parseInt(b.orden)||99); });
+  if (!activos.length) return;
+
+  _pubTotal = activos.length;
+  _pubIdx   = 0;
+
+  var wrap  = document.getElementById('pub-carrusel-wrap');
+  var track = document.getElementById('pub-carrusel-track');
+  var dots  = document.getElementById('pub-dots');
+
+  track.innerHTML = activos.map(function(p) {
+    var link = p.link_externo ? ' onclick="window.open(\'' + p.link_externo + '\',\'_blank\')"' : '';
+    return '<div class="pub-slide"' + link + '>' +
+      '<img src="' + p.imagen_url + '" alt="' + (p.alt_texto||'Publicidad') + '" onerror="this.parentNode.style.display=\'none\'">' +
+      '</div>';
+  }).join('');
+
+  dots.innerHTML = activos.map(function(_,i){
+    return '<div style="width:7px;height:7px;border-radius:50%;background:' + (i===0?'#fff':'rgba(255,255,255,.4)') + ';cursor:pointer;transition:background .2s" onclick="pubIr(' + i + ')"></div>';
+  }).join('');
+
+  wrap.style.display = 'block';
+
+  // Pausa con touch
+  wrap.addEventListener('touchstart', function(){ pubPausar(); }, {passive:true});
+  wrap.addEventListener('touchend',   function(){ pubReanudar(); }, {passive:true});
+  wrap.addEventListener('mouseenter', function(){ pubPausar(); });
+  wrap.addEventListener('mouseleave', function(){ pubReanudar(); });
+
+  pubReanudar();
+}
+
+function pubIr(idx) {
+  var track = document.getElementById('pub-carrusel-track');
+  if (!track) return;
+  _pubIdx = (idx + _pubTotal) % _pubTotal;
+  track.style.transform = 'translateX(-' + (_pubIdx * 100) + '%)';
+  var dots = document.getElementById('pub-dots');
+  if (dots) {
+    Array.prototype.forEach.call(dots.children, function(d, i){
+      d.style.background = i === _pubIdx ? '#fff' : 'rgba(255,255,255,.4)';
+    });
+  }
+}
+function pubMover(dir) { pubIr(_pubIdx + dir); }
+function pubPausar()   { if (_pubTimer) { clearInterval(_pubTimer); _pubTimer = null; } }
+function pubReanudar() {
+  pubPausar();
+  if (_pubTotal > 1) _pubTimer = setInterval(function(){ pubIr(_pubIdx + 1); }, 4000);
+}
+
+// ============================================================
+// MURO DE CARDS DINAMICO (inicio — hoja portada)
+// ============================================================
+function renderMuroCards(items) {
+  if (!items || !items.length) return;
+  var activos = items.filter(function(i){ return String(i.activo).toUpperCase() === 'SI'; });
+  activos.sort(function(a,b){ return (parseInt(a.orden)||99) - (parseInt(b.orden)||99); });
+  if (!activos.length) return;
+
+  var cont = document.getElementById('muro-cards-contenido');
+  var wrap = document.getElementById('muro-cards-wrap');
+
+  cont.innerHTML = activos.map(function(card) {
+    return renderMuroCard(card);
+  }).join('');
+
+  wrap.style.display = 'block';
+}
+
+function renderMuroCard(card) {
+  var tipo      = (card.tipo || 'texto').toLowerCase();
+  var titulo    = card.titulo    || '';
+  var subtitulo = card.subtitulo || '';
+  var contenido = card.contenido || '';
+  var imgUrl    = card.imagen_url || '';
+  var linkExt   = card.link_externo || '';
+  var etiqueta  = card.etiqueta  || '';
+  var colorFondo= card.color_fondo || '';
+  var badgeHtml = etiqueta ? '<span class="muro-badge" style="background:var(--red);color:#fff">' + etiqueta + '</span>' : '';
+
+  var html = '<div class="muro-card"' + (colorFondo ? ' style="background:' + colorFondo + '"' : '') + '>';
+
+  if (tipo === 'video') {
+    // Detectar YouTube
+    var ytMatch = contenido.match(/(?:v=|youtu\.be\/)([\w-]{11})/);
+    if (ytMatch) {
+      var ytId  = ytMatch[1];
+      var thumb = 'https://img.youtube.com/vi/' + ytId + '/mqdefault.jpg';
+      html += '<div class="muro-video-thumb" onclick="abrirVideo(\'' + ytId + '\',\'' + contenido + '\')">' +
+        '<img src="' + thumb + '" alt="' + titulo + '" style="width:100%;max-height:200px;object-fit:cover;display:block">' +
+        '<div class="muro-play-btn"><span>▶</span></div>' +
+        '</div>';
+    }
+    html += '<div class="muro-body">' + badgeHtml +
+      '<div class="muro-titulo">' + titulo + '</div>' +
+      (subtitulo ? '<div class="muro-subtitulo">' + subtitulo + '</div>' : '') +
+      '</div>';
+
+  } else if (tipo === 'imagen') {
+    var urls = imgUrl ? imgUrl.split(',').map(function(u){ return u.trim(); }).filter(Boolean) : [];
+    if (urls.length > 1) {
+      html += crearCarrusel(urls, titulo);
+    } else if (urls.length === 1) {
+      html += '<img src="' + urls[0] + '" alt="' + titulo + '" style="width:100%;height:auto;max-height:260px;object-fit:cover;display:block" onerror="this.style.display=\'none\'">';
+    }
+    html += '<div class="muro-body">' + badgeHtml +
+      (titulo ? '<div class="muro-titulo">' + titulo + '</div>' : '') +
+      (subtitulo ? '<div class="muro-subtitulo">' + subtitulo + '</div>' : '') +
+      (contenido ? '<div class="muro-texto">' + contenido + '</div>' : '') +
+      '</div>';
+
+  } else if (tipo === 'publicidad') {
+    var clickAttr = linkExt ? ' onclick="window.open(\'' + linkExt + '\',\'_blank\')" style="cursor:pointer"' : '';
+    if (imgUrl) {
+      html += '<div' + clickAttr + '><img src="' + imgUrl + '" alt="' + titulo + '" style="width:100%;height:auto;display:block" onerror="this.style.display=\'none\'"></div>';
+    }
+    if (titulo) html += '<div class="muro-body"><div class="muro-titulo" style="font-size:.85rem">' + titulo + '</div></div>';
+
+  } else {
+    // tipo texto (default)
+    if (imgUrl) {
+      html += '<img src="' + imgUrl + '" alt="' + titulo + '" style="width:100%;height:auto;max-height:200px;object-fit:cover;display:block" onerror="this.style.display=\'none\'">';
+    }
+    html += '<div class="muro-body">' + badgeHtml +
+      (titulo ? '<div class="muro-titulo">' + titulo + '</div>' : '') +
+      (subtitulo ? '<div class="muro-subtitulo">' + subtitulo + '</div>' : '') +
+      (contenido ? '<div class="muro-texto">' + contenido + '</div>' : '') +
+      (linkExt ? '<a href="' + linkExt + '" target="_blank" style="display:inline-block;margin-top:8px;background:var(--blue);color:#fff;border-radius:20px;padding:5px 14px;font-family:Bebas Neue,sans-serif;font-size:.72rem;letter-spacing:1px;text-decoration:none">Ver mas</a>' : '') +
+      '</div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+// ============================================================
+// PERFIL DE CLUB
+// ============================================================
+var _clubActual = null;
+
+function abrirPerfilClub(nombreClub) {
+  // Buscar datos del club
+  var clubes = window._clubesData || [];
+  var club = clubes.find(function(c){ return c.nombre === nombreClub; }) || { nombre: nombreClub };
+  _clubActual = club;
+
+  // Actualizar hero
+  var escudoSrc = escudoUrl(club.nombre, club.escudo_url);
+  document.getElementById('club-hero-escudo').src = escudoSrc;
+  document.getElementById('club-hero-nombre').textContent = (club.nombre || '').toUpperCase();
+
+  // Banner del club (desde perfil_clubes en appData)
+  var bannerImg = document.getElementById('club-banner-img');
+  var bannerSrc = '';
+  if (appData.perfil_clubes) {
+    var perfil = appData.perfil_clubes.find(function(p){
+      return (p.nombre||'').toLowerCase() === (club.nombre||'').toLowerCase();
+    });
+    if (perfil) {
+      if (perfil.banner_url) { bannerSrc = perfil.banner_url; }
+      if (perfil.historia) {
+        document.getElementById('club-historia-texto').innerHTML =
+          '<div style="padding:14px;font-size:.78rem;color:var(--text);line-height:1.7">' + perfil.historia + '</div>';
+      }
+      var sub = [];
+      if (perfil.fundacion) sub.push('Fundado en ' + perfil.fundacion);
+      if (perfil.colores)   sub.push(perfil.colores);
+      document.getElementById('club-hero-sub').textContent = sub.join(' · ') || 'Liga Departamental · Gualeguay 2026';
+    }
+  }
+  if (bannerSrc) { bannerImg.src = bannerSrc; bannerImg.style.display = 'block'; }
+  else           { bannerImg.style.display = 'none'; }
+
+  // Cargar publicaciones etiquetadas
+  renderClubPublicaciones(club.nombre);
+
+  // Cargar plantel
+  renderClubPlantel(club.nombre);
+
+  // Cargar institucional
+  renderClubInstitucional(club.nombre);
+
+  // Resetear al tab publicaciones
+  document.querySelectorAll('.club-tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.club-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelector('.club-tab').classList.add('active');
+  document.getElementById('club-panel-publicaciones').classList.add('active');
+
+  // Navegar a la sección
+  document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('perfil-club').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  window.scrollTo(0, 0);
+}
+
+function cerrarPerfilClub() {
+  document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('inicio').classList.add('active');
+  // Reactivar boton inicio en nav
+  var navBtns = document.querySelectorAll('.nav-btn');
+  navBtns[0].classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function clubTab(id, btn) {
+  document.querySelectorAll('.club-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('club-panel-' + id).classList.add('active');
+  btn.closest('.club-tabs').querySelectorAll('.club-tab').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+function renderClubPublicaciones(nombreClub) {
+  var cont = document.getElementById('club-pub-contenido');
+  // Filtrar portada_cards por etiqueta_club
+  var cards = [];
+  if (appData.portada_cards) {
+    cards = appData.portada_cards.filter(function(c){
+      return String(c.activo).toUpperCase() === 'SI' &&
+             (c.etiqueta_club || '').toLowerCase() === nombreClub.toLowerCase();
+    });
+  }
+  // Tambien filtrar noticias por etiqueta_club si existe
+  if (appData.noticias) {
+    var notis = appData.noticias.filter(function(n){
+      return (n.etiqueta_club || '').toLowerCase() === nombreClub.toLowerCase();
+    });
+    // Convertir noticias al formato de card para mostrarlas
+    notis.forEach(function(n){
+      cards.push({
+        activo: 'SI', orden: 99, tipo: 'imagen',
+        titulo: n.titulo, subtitulo: n.categoria || '',
+        contenido: n.detalle || '', imagen_url: n.imagen_url || n.url_carrusel || '',
+        etiqueta: n.tipo || 'NOTICIA', etiqueta_club: nombreClub
+      });
+    });
+  }
+  if (!cards.length) {
+    cont.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:.8rem">Sin publicaciones de este club por ahora.</div>';
+    return;
+  }
+  cont.innerHTML = cards.map(function(c){ return renderMuroCard(c); }).join('');
+}
+
+function renderClubPlantel(nombreClub) {
+  var cont = document.getElementById('club-plantel-contenido');
+  if (!appData.plantel_clubes) {
+    cont.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:.8rem">Plantel no disponible aun.</div>';
+    return;
+  }
+  var jugadores = appData.plantel_clubes.filter(function(j){
+    return (j.club || '').toLowerCase() === nombreClub.toLowerCase() &&
+           String(j.activo).toUpperCase() !== 'NO';
+  });
+  if (!jugadores.length) {
+    cont.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:.8rem">Plantel no cargado aun.</div>';
+    return;
+  }
+  var POSICIONES = ['Arquero','Defensor','Mediocampista','Delantero'];
+  var grupos = {};
+  jugadores.forEach(function(j){
+    var pos = j.posicion || 'Otros';
+    if (!grupos[pos]) grupos[pos] = [];
+    grupos[pos].push(j);
+  });
+  var html = '';
+  POSICIONES.concat(Object.keys(grupos).filter(function(p){ return POSICIONES.indexOf(p) === -1; }))
+    .filter(function(p){ return grupos[p]; })
+    .forEach(function(pos){
+      html += '<div class="sec-div"><h3>' + pos + 's</h3></div>';
+      html += '<div class="card">';
+      grupos[pos].forEach(function(j){
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid rgba(255,255,255,.05)">' +
+          '<div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;color:var(--muted);min-width:26px;text-align:center">' + (j.numero || '-') + '</div>' +
+          '<div style="flex:1"><div style="font-family:Barlow Condensed,sans-serif;font-weight:700;font-size:.88rem">' + (j.nombre || '') + '</div>' +
+          (j.detalle ? '<div style="font-size:.6rem;color:var(--muted)">' + j.detalle + '</div>' : '') +
+          '</div></div>';
+      });
+      html += '</div>';
+    });
+  cont.innerHTML = html;
+}
+
+function renderClubInstitucional(nombreClub) {
+  var cont = document.getElementById('club-institucional-contenido');
+  if (!appData.eventos_clubes) {
+    cont.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:.8rem">Sin actividades institucionales cargadas.</div>';
+    return;
+  }
+  var eventos = appData.eventos_clubes.filter(function(e){
+    return (e.club || '').toLowerCase() === nombreClub.toLowerCase() &&
+           String(e.activo).toUpperCase() !== 'NO';
+  });
+  if (!eventos.length) {
+    cont.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:.8rem">Sin actividades cargadas aun.</div>';
+    return;
+  }
+  var html = eventos.map(function(e){
+    return '<div class="card" style="margin-bottom:10px">' +
+      (e.imagen_url ? '<img src="' + e.imagen_url + '" style="width:100%;max-height:180px;object-fit:cover;display:block" onerror="this.style.display=\'none\'">' : '') +
+      '<div style="padding:11px 13px">' +
+      (e.fecha ? '<div style="font-size:.6rem;color:var(--gold);font-family:Barlow Condensed,sans-serif;letter-spacing:1px;margin-bottom:3px">' + e.fecha + '</div>' : '') +
+      '<div style="font-family:Bebas Neue,sans-serif;font-size:.98rem;letter-spacing:1px;margin-bottom:3px">' + (e.titulo || '') + '</div>' +
+      (e.descripcion ? '<div style="font-size:.72rem;color:var(--muted);line-height:1.5">' + e.descripcion + '</div>' : '') +
+      '</div></div>';
+  }).join('');
+  cont.innerHTML = html;
 }
 
 // ============================================================
