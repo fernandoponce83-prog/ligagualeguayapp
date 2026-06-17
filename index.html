@@ -989,7 +989,7 @@ function cargarDatos(forzar) {
   var cacheKey = 'appDataCache';
   var cacheTs  = 'appDataTs';
   var ahora    = Date.now();
-  var ttl      = 5 * 60 * 1000; // 5 minutos de caché
+  var ttl      = 1 * 60 * 1000; // 1 minuto de caché
 
   if (!forzar) {
     try {
@@ -2468,7 +2468,7 @@ var _pubTotal = 0;
 
 function renderSliderPublicidades(items) {
   if (!items || !items.length) return;
-  var activos = items.filter(function(i){ return String(i.activo).toUpperCase() === 'SI'; });
+  var activos = items.filter(function(i){ return _esSI(i.activo); });
   activos.sort(function(a,b){ return (parseInt(a.orden)||99) - (parseInt(b.orden)||99); });
   if (!activos.length) return;
 
@@ -2523,9 +2523,14 @@ function pubReanudar() {
 // ============================================================
 // MURO DE CARDS DINAMICO (inicio — hoja portada)
 // ============================================================
+function _esSI(v) {
+  var s = String(v||'').trim().toUpperCase();
+  return s==='SI'||s==='SÍ'||s==='TRUE'||s==='1'||s==='VERDADERO'||s==='YES'||v===true;
+}
+
 function renderMuroCards(items) {
   if (!items || !items.length) return;
-  var activos = items.filter(function(i){ return String(i.activo).toUpperCase() === 'SI'; });
+  var activos = items.filter(function(i){ return _esSI(i.activo); });
   activos.sort(function(a,b){ return (parseInt(a.orden)||99) - (parseInt(b.orden)||99); });
   if (!activos.length) return;
 
@@ -2846,7 +2851,59 @@ function renderVideoCard(v) {
 window.addEventListener('load', function() {
   renderLista();
   cargarDatos(false);
+  // Mostrar popup de club si nunca eligió
+  setTimeout(function() {
+    if (!localStorage.getItem('clubHincha')) mostrarPopupClub();
+  }, 2500);
 });
+
+// ============================================================
+// POPUP ELECCIÓN DE CLUB HINCHA
+// ============================================================
+var _clubesPopup = [
+  'Urquiza','Quilmes','Gualeguay Central','Libertad','Sportiva',
+  'Barrio Norte','El Progreso','Bancario','La Academia','Juventud Unida','Aldea Asuncion'
+];
+
+function mostrarPopupClub() {
+  // No mostrar si ya eligió o si está en el panel admin
+  if (localStorage.getItem('clubHincha')) return;
+  var overlay = document.createElement('div');
+  overlay.id = 'popup-club-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML =
+    '<div style="background:#0d0d22;border-radius:18px 18px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;border-top:2px solid var(--red)">' +
+    '<div style="text-align:center;margin-bottom:16px">' +
+    '<div style="font-size:1.8rem;margin-bottom:4px">⚽</div>' +
+    '<div style="font-family:Bebas Neue,sans-serif;font-size:1.3rem;letter-spacing:2px;color:var(--gold)">¿DE QUÉ CLUB SOS HINCHA?</div>' +
+    '<div style="font-size:.68rem;color:var(--muted);margin-top:3px">Personalizamos tu experiencia y notificaciones</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">' +
+    _clubesPopup.map(function(c) {
+      return '<button onclick="elegirClub(\'' + c + '\')" style="background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 8px;font-family:Barlow Condensed,sans-serif;font-weight:700;font-size:.78rem;color:var(--text);cursor:pointer;letter-spacing:.5px;transition:all .2s" onmouseover="this.style.background=\'var(--red)\'" onmouseout="this.style.background=\'var(--card)\'">' + c + '</button>';
+    }).join('') +
+    '</div>' +
+    '<button onclick="elegirClub(\'todos\')" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:10px;font-family:Barlow Condensed,sans-serif;font-size:.75rem;color:var(--muted);cursor:pointer;letter-spacing:1px">Todos los equipos / Sin preferencia</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+}
+
+function elegirClub(club) {
+  localStorage.setItem('clubHincha', club);
+  var overlay = document.getElementById('popup-club-overlay');
+  if (overlay) overlay.remove();
+  // Confirmar
+  var toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;border-radius:20px;padding:8px 18px;font-family:Bebas Neue,sans-serif;font-size:.85rem;letter-spacing:1px;z-index:9999;white-space:nowrap';
+  toast.textContent = club === 'todos' ? '✅ Recibirás todas las novedades' : '✅ Hincha de ' + club + ' registrado';
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 2500);
+}
+
+function cambiarClubHincha() {
+  localStorage.removeItem('clubHincha');
+  mostrarPopupClub();
+}
 
 // Service Worker
 if ('serviceWorker' in navigator) {
