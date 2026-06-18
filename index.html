@@ -1100,25 +1100,77 @@ function renderClubes(clubes) {
 // POSICIONES
 // ============================================================
 // Orden de divisiones para los tabs
+// Categorías exactas de la Liga Departamental de Gualeguay
 var DIVISIONES_ORDEN = [
-  '1° Masculino','1° Femenino','Sub-18 Femenino','Sub-14 Femenino',
-  '3° División','4° División','5° División','6° División','7° División',
-  'Inf. 2015','Inf. 2016','Inf. 2017'
+  'Primera Masculino','Primera Femenino','Sub 18 Femenino','Sub 14 Femenino',
+  'Tercera División','Cuarta División','Quinta División','Sexta División','Séptima División',
+  'Categoría 2015','Categoría 2016','Categoría 2017','Categoría 2018',
+  'Supercopa'
 ];
-var DIVISIONES_BADGE = {
-  '1° Masculino':'','1° Femenino':'pink','Sub-18 Femenino':'pink',
-  'Sub-14 Femenino':'pink','3° División':'blue','4° División':'blue',
-  '5° División':'blue','6° División':'blue','7° División':'blue',
-  'Inf. 2015':'green','Inf. 2016':'green','Inf. 2017':'green'
+// Alias de compatibilidad para nombres alternativos que puedan venir del Sheets
+var DIVISIONES_ALIAS = {
+  '1° masculino':'Primera Masculino','primera masculino':'Primera Masculino',
+  '1° femenino':'Primera Femenino','primera femenino':'Primera Femenino',
+  'sub-18 femenino':'Sub 18 Femenino','sub 18 femenino':'Sub 18 Femenino',
+  'sub-14 femenino':'Sub 14 Femenino','sub 14 femenino':'Sub 14 Femenino',
+  '3° división':'Tercera División','tercera división':'Tercera División','tercera division':'Tercera División',
+  '4° división':'Cuarta División','cuarta división':'Cuarta División','cuarta division':'Cuarta División',
+  '5° división':'Quinta División','quinta división':'Quinta División','quinta division':'Quinta División',
+  '6° división':'Sexta División','sexta división':'Sexta División','sexta division':'Sexta División',
+  '7° división':'Séptima División','séptima división':'Séptima División','septima división':'Séptima División','septima division':'Séptima División',
+  'inf. 2015':'Categoría 2015','inf 2015':'Categoría 2015','categoria 2015':'Categoría 2015',
+  'inf. 2016':'Categoría 2016','inf 2016':'Categoría 2016','categoria 2016':'Categoría 2016',
+  'inf. 2017':'Categoría 2017','inf 2017':'Categoría 2017','categoria 2017':'Categoría 2017',
+  'inf. 2018':'Categoría 2018','inf 2018':'Categoría 2018','categoria 2018':'Categoría 2018',
+  'supercopa':'Supercopa'
 };
+function normalizarDivision(d) {
+  var s = String(d||'').trim();
+  var alias = DIVISIONES_ALIAS[s.toLowerCase()];
+  return alias || s;
+}
+var DIVISIONES_BADGE = {
+  'Primera Masculino':'','Primera Femenino':'pink','Sub 18 Femenino':'pink',
+  'Sub 14 Femenino':'pink','Tercera División':'blue','Cuarta División':'blue',
+  'Quinta División':'blue','Sexta División':'blue','Séptima División':'blue',
+  'Categoría 2015':'green','Categoría 2016':'green','Categoría 2017':'green','Categoría 2018':'green',
+  'Supercopa':'red'
+};
+// Líneas de corte clasificatorio:
+// Primera Masculino: verde 1-3 (Petit Torneo), amarillo 4-7 (Repechaje)
+// Todas las demás: verde 1-4 (clasifican)
 var DIVISIONES_ZONA = {
-  '1° Masculino': {1:'zona-petit',2:'zona-petit',3:'zona-petit',4:'zona-repechaje',5:'zona-repechaje'},
-  '1° Femenino':  {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'}
+  'Primera Masculino': {1:'zona-petit',2:'zona-petit',3:'zona-petit',4:'zona-repechaje',5:'zona-repechaje',6:'zona-repechaje',7:'zona-repechaje'},
+  'Primera Femenino':  {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'},
+  'Sub 18 Femenino':   {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'},
+  'Sub 14 Femenino':   {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'},
+  'Tercera División':  {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'},
+  'Cuarta División':   {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'},
+  'Quinta División':   {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'},
+  'Sexta División':    {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'},
+  'Séptima División':  {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'},
+  'Categoría 2015':    {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'},
+  'Categoría 2016':    {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'},
+  'Categoría 2017':    {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'},
+  'Categoría 2018':    {1:'zona-semis',2:'zona-semis',3:'zona-semis',4:'zona-semis'}
+};
+// Leyenda de zonas mejorada para Primera Masculino
+var LEYENDA_ZONA_TEXTOS = {
+  'zona-petit':    '🟢 Petit Torneo',
+  'zona-repechaje':'🟡 Repechaje',
+  'zona-semis':    '🟢 Clasifican'
+};
+var LEYENDA_ZONA_COLORES = {
+  'zona-petit':    'var(--green)',
+  'zona-repechaje':'var(--gold)',
+  'zona-semis':    'var(--green)'
 };
 
 function renderPosiciones(rows) {
   // rows: [{division, pos, club, escudo_url, pts, pj, g, e, p, gf, gc, dg}]
-  // Agrupar por división
+  // Normalizar nombres de división
+  rows.forEach(function(r) { r.division = normalizarDivision(r.division); });
+
   var grupos = {};
   rows.forEach(function(r) {
     if (!grupos[r.division]) grupos[r.division] = [];
@@ -1126,7 +1178,6 @@ function renderPosiciones(rows) {
   });
 
   var divs = DIVISIONES_ORDEN.filter(function(d){ return grupos[d]; });
-  // Agregar divisiones no previstas al final
   Object.keys(grupos).forEach(function(d){ if (divs.indexOf(d) === -1) divs.push(d); });
 
   if (!divs.length) { document.getElementById('pos-contenido').innerHTML = '<div class="error-state">Sin datos de posiciones</div>'; return; }
@@ -1134,8 +1185,9 @@ function renderPosiciones(rows) {
   // Tabs
   var tabsEl = document.getElementById('pos-tabs');
   tabsEl.innerHTML = divs.map(function(d, i) {
-    var label = d.replace('° ','°&nbsp;').replace('División','Div.');
-    return '<button class="ct' + (i===0?' active':'') + '" onclick="mostrarPosDiv(\'' + d.replace(/'/g,"\\'") + '\',this)">' + label + '</button>';
+    var label = d === 'Supercopa' ? '🏆 Supercopa' : d.replace('° ','°&nbsp;').replace('División','Div.').replace('Categoría','Cat.');
+    var badgeCls = d === 'Supercopa' ? ' style="color:#ff4444"' : '';
+    return '<button class="ct' + (i===0?' active':'') + '"' + badgeCls + ' onclick="mostrarPosDiv(\'' + d.replace(/'/g,"\\'") + '\',this)">' + label + '</button>';
   }).join('');
 
   // Paneles
@@ -1144,9 +1196,22 @@ function renderPosiciones(rows) {
     var equi = grupos[d];
     var badge = DIVISIONES_BADGE[d] || '';
     var zonas = DIVISIONES_ZONA[d] || {};
+    // Supercopa: todas clasifican → verde 1-4 por defecto
+    if (d === 'Supercopa') {
+      equi.forEach(function(_,idx){ if (!zonas[idx+1]) zonas[idx+1] = 'zona-semis'; });
+    }
     var filas = equi.map(function(e) {
-      var cls = zonas[parseInt(e.pos)] || '';
-      return '<tr class="' + cls + '">' +
+      var posInt = parseInt(e.pos);
+      var cls = zonas[posInt] || '';
+      // Para Primera Masculino: verde 1-3, amarillo 4-7
+      var rowStyle = '';
+      if (d === 'Primera Masculino') {
+        if (posInt <= 3) rowStyle = ' style="background:rgba(0,166,81,.08)"';
+        else if (posInt <= 7) rowStyle = ' style="background:rgba(245,197,24,.07)"';
+      } else if (zonas[posInt]) {
+        rowStyle = ' style="background:rgba(0,166,81,.08)"';
+      }
+      return '<tr class="' + cls + '"' + rowStyle + '>' +
         '<td class="pos-num">' + e.pos + '</td>' +
         '<td><div class="td-club"><img class="escudo" src="' + escudoUrl(e.club, e.escudo_url) + '" onerror="escudoFallback(this)"><span class="club-name">' + e.club.toUpperCase() + '</span></div></td>' +
         '<td class="pts">' + e.pts + '</td>' +
@@ -1159,12 +1224,15 @@ function renderPosiciones(rows) {
         '<td>' + e.dg + '</td>' +
         '</tr>';
     }).join('');
+    var tituloCard = d === 'Supercopa' ? '🏆 SUPERCOPA 2026' : d + ' · 2026';
+    var badgeCls   = badge ? ' class="badge ' + badge + '"' : ' class="badge"';
+    if (d === 'Supercopa') badgeCls = ' class="badge" style="background:var(--red)"';
     return '<div id="pos-panel-' + sanitizeId(d) + '" style="display:' + (i===0?'block':'none') + '">' +
       '<div class="card">' +
-      '<div class="card-header"><h3>' + d + ' · 2026</h3><span class="badge ' + badge + '">' + equi.length + ' EQUIPOS</span></div>' +
+      '<div class="card-header"><h3>' + tituloCard + '</h3><span' + badgeCls + '>' + equi.length + ' EQUIPOS</span></div>' +
       '<table class="tabla"><thead><tr><th>#</th><th>Club</th><th>Pts</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th></tr></thead>' +
       '<tbody>' + filas + '</tbody></table>' +
-      leyendaZona(zonas) +
+      leyendaZona(zonas, d) +
       '</div></div>';
   }).join('');
 }
