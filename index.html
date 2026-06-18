@@ -989,7 +989,12 @@ function cargarDatos(forzar) {
   var cacheKey = 'appDataCache';
   var cacheTs  = 'appDataTs';
   var ahora    = Date.now();
-  var ttl      = 1 * 60 * 1000; // 1 minuto de caché
+  var ttl      = 5 * 60 * 1000; // 5 minutos de caché
+
+  // Limpiar caché si se fuerza recarga
+  if (forzar) {
+    try { localStorage.removeItem(cacheKey); localStorage.removeItem(cacheTs); } catch(e) {}
+  }
 
   if (!forzar) {
     try {
@@ -1017,17 +1022,22 @@ function cargarDatos(forzar) {
     })
     .catch(function(err) {
         console.error('Error cargando datos:', err);
+        // Intentar usar caché viejo como fallback
+        try {
+          var old = localStorage.getItem(cacheKey);
+          if (old) { appData = JSON.parse(old); renderTodo(); return; }
+        } catch(e2) {}
         mostrarErrorGeneral();
     });
 } // fin cargarDatos
 
 function recargarDatos() {
   var r = document.getElementById('adm-reload-r');
-  if (r) r.innerHTML = '<div class="msg-box">⏳ Recargando...</div>';
+  if (r) r.innerHTML = '<div class="msg-box">⏳ Recargando desde Sheets...</div>';
   cargarDatos(true);
   setTimeout(function(){
-    if (r) r.innerHTML = '<div class="msg-box ok">✅ Datos recargados</div>';
-  }, 2000);
+    if (r) r.innerHTML = '<div class="msg-box ok">✅ Datos recargados correctamente</div>';
+  }, 3000);
 }
 
 function mostrarErrorGeneral() {
@@ -1245,14 +1255,19 @@ function mostrarPosDiv(division, btn) {
   btn.classList.add('active');
 }
 
-function leyendaZona(zonas) {
+function leyendaZona(zonas, division) {
   var textos = {
-    'zona-petit': 'Petit Torneo', 'zona-repechaje': 'Repechaje',
-    'zona-semis': 'Clasifican a Semifinales'
+    'zona-petit':    '🟢 Petit Torneo',
+    'zona-repechaje':'🟡 Repechaje (4°vs7° / 5°vs6°)',
+    'zona-semis':    '🟢 Clasifican'
   };
-  var colores = { 'zona-petit': '#aaa', 'zona-repechaje': 'var(--red)', 'zona-semis': 'var(--pink)' };
+  var colores = {
+    'zona-petit':    'var(--green)',
+    'zona-repechaje':'var(--gold)',
+    'zona-semis':    'var(--green)'
+  };
   var usadas = [];
-  Object.values(zonas).forEach(function(z){ if (usadas.indexOf(z) === -1) usadas.push(z); });
+  Object.keys(zonas).forEach(function(k){ var z=zonas[k]; if(usadas.indexOf(z)===-1) usadas.push(z); });
   if (!usadas.length) return '';
   return '<div class="zona-legend">' + usadas.map(function(z){
     return '<span><span class="dot" style="background:' + colores[z] + '"></span>' + textos[z] + '</span>';
@@ -1385,81 +1400,128 @@ function renderProximos(rows) {
   var cont = document.getElementById('proximos-contenido');
   if (!rows || !rows.length) { cont.innerHTML = '<div class="error-state">Sin próximos partidos cargados</div>'; return; }
 
-  // Orden de categorías (de mayor a menor)
-  var ORDEN_CAT = [
-    '1° Masculino','1° Femenino',
-    'Sub-18 Femenino','Sub-14 Femenino',
-    '3° División','4° División','5° División','6° División','7° División',
-    'Inf. 2015','Inf. 2016','Inf. 2017'
-  ];
-  var BADGE_CAT = {
-    '1° Masculino':'','1° Femenino':'pink',
-    'Sub-18 Femenino':'pink','Sub-14 Femenino':'pink'
-  };
-
-  // Agrupar: fecha_label > categoria > dia_label > cancha
-  var fechas = {};
+  // Normalizar y sanitizar campos
   rows.forEach(function(r) {
-    var f = r.fecha_label || 'Próxima Fecha';
-    var cat = r.division || r.categoria || 'General';
-    var d = r.dia_label || '';
-    var c = r.cancha || 'A confirmar';
-    if (!fechas[f]) fechas[f] = {};
-    if (!fechas[f][cat]) fechas[f][cat] = {};
-    if (!fechas[f][cat][d]) fechas[f][cat][d] = {};
-    if (!fechas[f][cat][d][c]) fechas[f][cat][d][c] = [];
-    fechas[f][cat][d][c].push(r);
+    r.division = normalizarDivision(String(r.division || r.categoria || 'General').trim());
+    r.fecha_label = String(r.fecha_label || '').trim();
+    r.dia_label   = String(r.dia_label   || '').trim();
+    r.cancha      = String(r.cancha      || 'A confirmar').trim();
+    r.hora        = String(r.hora        || '').trim();
+    r.local       = String(r.local       || '').trim();
+    r.visita      = String(r.visita      || '').trim();
+    // Extraer número de fecha para ordenar
+    var m = r.fecha_label.match(/(\d+)/);
+    r._fechaN = m ? parseInt(m[1]) : 99;
   });
 
-  var html = '';
-  Object.keys(fechas).sort().forEach(function(f) {
-    html += '<div class="card" style="margin-bottom:12px">';
-    html += '<div class="card-header"><h3>' + f + '</h3><span class="badge gold">PROGRAMADO</span></div>';
-    html += '<div style="padding:10px 14px">';
+  var BADGE_CAT = {
+    'Primera Masculino':'','Primera Femenino':'pink',
+    'Sub 18 Femenino':'pink','Sub 14 Femenino':'pink'
+  };
 
-    // Ordenar categorías
-    var cats = Object.keys(fechas[f]);
-    cats.sort(function(a,b){
-      var ia = ORDEN_CAT.indexOf(a); var ib = ORDEN_CAT.indexOf(b);
-      if (ia<0) ia=99; if (ib<0) ib=99;
-      return ia - ib;
+  // Agrupar por categoría → fecha → dia → cancha
+  var porCat = {};
+  rows.forEach(function(r) {
+    var cat = r.division;
+    var f   = r.fecha_label || 'Próxima Fecha';
+    var d   = r.dia_label;
+    var c   = r.cancha;
+    if (!porCat[cat]) porCat[cat] = {};
+    if (!porCat[cat][f]) porCat[cat][f] = {};
+    if (!porCat[cat][f][d]) porCat[cat][f][d] = {};
+    if (!porCat[cat][f][d][c]) porCat[cat][f][d][c] = [];
+    porCat[cat][f][d][c].push(r);
+  });
+
+  // Ordenar categorías
+  var cats = Object.keys(porCat);
+  cats.sort(function(a,b){
+    var ia = DIVISIONES_ORDEN.indexOf(a); var ib = DIVISIONES_ORDEN.indexOf(b);
+    if (ia<0) ia=99; if (ib<0) ib=99;
+    return ia - ib;
+  });
+
+  if (!cats.length) { cont.innerHTML = '<div class="error-state">Sin próximos partidos</div>'; return; }
+
+  // Tabs de categoría
+  var tabsHtml = '<div class="cat-tabs" id="prox-cat-tabs" style="margin-bottom:10px">' +
+    cats.map(function(cat, i) {
+      var label = cat.replace('División','Div.').replace('Categoría','Cat.').replace('Primera','1°');
+      return '<button class="ct' + (i===0?' active':'') + '" onclick="mostrarProxCat(\'' + sanitizeId(cat) + '\',this)">' + label + '</button>';
+    }).join('') + '</div>';
+
+  // Panel por categoría
+  var panelsHtml = cats.map(function(cat, ci) {
+    var fechas = Object.keys(porCat[cat]).sort(function(a,b){
+      var ma = a.match(/(\d+)/); var mb = b.match(/(\d+)/);
+      return (ma?parseInt(ma[1]):99) - (mb?parseInt(mb[1]):99);
     });
+    // Por defecto mostrar la última fecha cargada (próxima)
+    var ultimaFecha = fechas[fechas.length-1];
 
-    cats.forEach(function(cat) {
-      var badge = BADGE_CAT[cat] || 'blue';
-      html += '<div style="margin-bottom:14px">';
-      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid rgba(255,255,255,.06)">';
-      html += '<span class="badge ' + badge + '" style="font-size:.6rem">' + cat.toUpperCase() + '</span>';
-      html += '</div>';
+    var fechaTabsHtml = '';
+    if (fechas.length > 1) {
+      fechaTabsHtml = '<div class="cat-tabs" id="prox-ftabs-' + sanitizeId(cat) + '" style="margin-bottom:8px">' +
+        fechas.map(function(f) {
+          var fm = f.match(/(\d+)/);
+          var label = fm ? 'F' + fm[1] : f;
+          return '<button class="ct' + (f===ultimaFecha?' active':'') + '" onclick="mostrarProxFecha(\'' + sanitizeId(cat) + '\',\'' + sanitizeId(f) + '\',this)">' + label + '</button>';
+        }).join('') + '</div>';
+    }
 
-      Object.keys(fechas[f][cat]).forEach(function(dia) {
-        if (dia) html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:.75rem;letter-spacing:1px;color:var(--gold);margin-bottom:6px">📅 ' + dia + '</div>';
-        var canchas = Object.keys(fechas[f][cat][dia]);
-        canchas.forEach(function(cancha, ci) {
-          var colores = ['var(--blue)','var(--green)','var(--red)','#cc0000','var(--pink)'];
-          var color = colores[ci % colores.length];
+    var fechaPanelsHtml = fechas.map(function(f) {
+      var html = '';
+      var dias = Object.keys(porCat[cat][f]);
+      dias.forEach(function(dia) {
+        if (dia) html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:.75rem;letter-spacing:1px;color:var(--gold);margin:8px 0 5px">📅 ' + dia + '</div>';
+        var canchas = Object.keys(porCat[cat][f][dia]);
+        canchas.forEach(function(cancha, ci2) {
+          var colores = ['var(--blue)','var(--green)','var(--red)','var(--pink)','#cc7700'];
+          var color = colores[ci2 % colores.length];
           html += '<div class="fixture-venue" style="border-left:3px solid ' + color + '">';
           html += '<div class="fixture-venue-title" style="color:' + color + '">🏟️ ' + cancha + '</div>';
-          fechas[f][cat][dia][cancha].forEach(function(p) {
+          porCat[cat][f][dia][cancha].forEach(function(p) {
             html += '<div class="fixture-row">' +
               '<div class="fixture-teams">' +
-              '<img src="' + escudoUrl(p.local, p.escudo_local) + '" onerror="escudoFallback(this)">' +
-              ' ' + p.local + ' vs ' +
-              '<img src="' + escudoUrl(p.visita, p.escudo_visita) + '" onerror="escudoFallback(this)">' +
-              ' ' + p.visita +
+              '<img src="' + escudoUrl(p.local, p.escudo_local||'') + '" onerror="escudoFallback(this)">' +
+              ' <strong>' + p.local + '</strong> vs ' +
+              '<img src="' + escudoUrl(p.visita, p.escudo_visita||'') + '" onerror="escudoFallback(this)">' +
+              ' <strong>' + p.visita + '</strong>' +
               '</div>' +
-              '<span class="fixture-hora">' + (p.hora||'') + '</span>' +
+              (p.hora ? '<span class="fixture-hora">⏰ ' + p.hora + '</span>' : '') +
               '</div>';
           });
           html += '</div>';
         });
       });
-      html += '</div>';
-    });
+      return '<div id="prox-fpanel-' + sanitizeId(cat) + '-' + sanitizeId(f) + '" style="display:' + (f===ultimaFecha?'block':'none') + '">' + html + '</div>';
+    }).join('');
 
-    html += '</div></div>';
-  });
-  cont.innerHTML = html;
+    var badge = BADGE_CAT[cat] || 'blue';
+    return '<div id="prox-cat-' + sanitizeId(cat) + '" style="display:' + (ci===0?'block':'none') + '">' +
+      '<div class="card">' +
+      '<div class="card-header"><h3>' + cat + '</h3><span class="badge ' + badge + '">PROGRAMADO</span></div>' +
+      '<div style="padding:10px 14px">' + fechaTabsHtml + fechaPanelsHtml + '</div>' +
+      '</div></div>';
+  }).join('');
+
+  cont.innerHTML = tabsHtml + panelsHtml;
+}
+
+function mostrarProxCat(catId, btn) {
+  document.querySelectorAll('[id^="prox-cat-"]').forEach(function(el){ el.style.display='none'; });
+  var el = document.getElementById('prox-cat-' + catId);
+  if (el) el.style.display = 'block';
+  btn.closest('.cat-tabs').querySelectorAll('.ct').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+function mostrarProxFecha(catId, fechaId, btn) {
+  document.querySelectorAll('[id^="prox-fpanel-' + catId + '-"]').forEach(function(el){ el.style.display='none'; });
+  var el = document.getElementById('prox-fpanel-' + catId + '-' + fechaId);
+  if (el) el.style.display = 'block';
+  btn.closest('.cat-tabs').querySelectorAll('.ct').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
 }
 
 // ============================================================
@@ -2548,9 +2610,12 @@ function renderSliderPublicidades(items) {
   var dots  = document.getElementById('pub-dots');
 
   track.innerHTML = activos.map(function(p) {
-    var link = p.link_externo ? ' onclick="window.open(\'' + p.link_externo + '\',\'_blank\')"' : '';
+    var imgSrc = String(p.imagen_url||'').trim();
+    var linkHref = String(p.link_externo||'').trim();
+    var alt = String(p.alt_texto||'Publicidad').trim();
+    var link = linkHref ? ' onclick="window.open(\'' + linkHref + '\',\'_blank\')"' : '';
     return '<div class="pub-slide"' + link + '>' +
-      '<img src="' + p.imagen_url + '" alt="' + (p.alt_texto||'Publicidad') + '" onerror="this.parentNode.style.display=\'none\'">' +
+      '<img src="' + imgSrc + '" alt="' + alt + '" onerror="this.parentNode.style.display=\'none\'">' +
       '</div>';
   }).join('');
 
@@ -2592,18 +2657,23 @@ function pubReanudar() {
 // MURO DE CARDS DINAMICO (inicio — hoja portada)
 // ============================================================
 function _esSI(v) {
-  var s = String(v||'').trim().toUpperCase();
-  return s==='SI'||s==='SÍ'||s==='TRUE'||s==='1'||s==='VERDADERO'||s==='YES'||v===true;
+  if (v === true || v === 1) return true;
+  var s = String(v === null || v === undefined ? '' : v).trim().toUpperCase()
+           .normalize('NFD').replace(/[\u0300-\u036f]/g,''); // quita tildes
+  return s==='SI'||s==='SÍ'||s==='TRUE'||s==='1'||s==='VERDADERO'||s==='YES';
 }
 
 function renderMuroCards(items) {
-  if (!items || !items.length) return;
+  if (!items || !items.length) { console.warn('[Portada] Sin items'); return; }
+  console.log('[Portada] items recibidos:', items.length, items.map(function(i){return i.activo+'|'+i.tipo+'|'+i.titulo;}));
   var activos = items.filter(function(i){ return _esSI(i.activo); });
+  console.log('[Portada] activos tras filtro:', activos.length);
   activos.sort(function(a,b){ return (parseInt(a.orden)||99) - (parseInt(b.orden)||99); });
-  if (!activos.length) return;
+  if (!activos.length) { console.warn('[Portada] Ningún item pasó el filtro activo'); return; }
 
   var cont = document.getElementById('muro-cards-contenido');
   var wrap = document.getElementById('muro-cards-wrap');
+  if (!cont || !wrap) { console.warn('[Portada] No se encontró el contenedor muro-cards-contenido'); return; }
 
   cont.innerHTML = activos.map(function(card) {
     return renderMuroCard(card);
@@ -2613,14 +2683,14 @@ function renderMuroCards(items) {
 }
 
 function renderMuroCard(card) {
-  var tipo      = (card.tipo || 'texto').toLowerCase();
-  var titulo    = card.titulo    || '';
-  var subtitulo = card.subtitulo || '';
-  var contenido = card.contenido || '';
-  var imgUrl    = card.imagen_url || '';
-  var linkExt   = card.link_externo || '';
-  var etiqueta  = card.etiqueta  || '';
-  var colorFondo= card.color_fondo || '';
+  var tipo      = String(card.tipo || 'texto').trim().toLowerCase();
+  var titulo    = String(card.titulo    || '').trim();
+  var subtitulo = String(card.subtitulo || '').trim();
+  var contenido = String(card.contenido || '').trim();
+  var imgUrl    = String(card.imagen_url || '').trim();
+  var linkExt   = String(card.link_externo || '').trim();
+  var etiqueta  = String(card.etiqueta  || '').trim();
+  var colorFondo= String(card.color_fondo || '').trim();
   var badgeHtml = etiqueta ? '<span class="muro-badge" style="background:var(--red);color:#fff">' + etiqueta + '</span>' : '';
 
   var html = '<div class="muro-card"' + (colorFondo ? ' style="background:' + colorFondo + '"' : '') + '>';
