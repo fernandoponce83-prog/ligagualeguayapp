@@ -345,9 +345,9 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
     <button class="nav-btn" onclick="go('goleadores',this)">🥅 Goleadores</button>
     <button class="nav-btn" onclick="go('proximos',this)">📅 Próximos</button>
     <button class="nav-btn" onclick="go('videos',this)">▶️ Videos</button>
-    <button class="nav-btn" onclick="go('tribunal',this)">⚖️ Tribunal</button>
-    <button class="nav-btn" onclick="go('noticias',this)">📰 Noticias</button>
     <button class="nav-btn" onclick="go('galeria',this)">📷 Galería</button>
+    <button class="nav-btn" onclick="go('noticias',this)">📰 Noticias</button>
+    <button class="nav-btn" onclick="go('tribunal',this)">⚖️ Tribunal</button>
     <button class="nav-btn" onclick="go('comercios',this)">🏪 Comercios</button>
     <button class="nav-btn" onclick="go('redes',this)">📲 Redes</button>
     <button class="nav-btn" onclick="go('radio',this)">📻 Radio</button>
@@ -990,7 +990,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 // ============================================================
 // CONFIGURACIÓN — REEMPLAZÁ LA URL CUANDO PUBLIQUES EL SCRIPT
 // ============================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw-J6deJRbhgsTuLJbaZLCslpkzTI40oWlpL9-ErPTHD5jGWFP1Of9r9VtCYxF3_SMy/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6Pfakt3s8b_d4yWKeXQETt_hjwQQ9cCkw-UTuhPT7PtEhGGiINfooGSMts3sAY9yV/exec';
 var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m';
 var PASS = 'Reyazucar95';
 
@@ -1511,9 +1511,22 @@ function renderProximos(rows) {
   });
 
   var BADGE_CAT = {
-    'Primera Masculino':'','Primera Femenino':'pink',
-    'Sub 18 Femenino':'pink','Sub 14 Femenino':'pink'
+    '1° Masculino':'', 'Primera Masculino':'',
+    '1° Femenino':'pink', 'Primera Femenino':'pink',
+    'Sub 18 Femenino':'pink','Sub-18 Femenino':'pink',
+    'Sub 14 Femenino':'pink','Sub-14 Femenino':'pink'
   };
+
+  function getBadgeCat(cat) {
+    if (BADGE_CAT[cat] !== undefined) return BADGE_CAT[cat];
+    var cl = cat.toLowerCase();
+    if (cl.indexOf('femenino') > -1) return 'pink';
+    if (cl.indexOf('tercera') > -1 || cl.indexOf('3°') > -1) return 'blue';
+    if (cl.indexOf('cuarta') > -1  || cl.indexOf('4°') > -1) return 'blue';
+    if (cl.indexOf('quinta') > -1  || cl.indexOf('5°') > -1) return 'blue';
+    if (cl.indexOf('inf.') > -1 || cl.indexOf('categoria') > -1) return 'green';
+    return '';
+  }
 
   // Agrupar por categoría → fecha → dia → cancha
   var porCat = {};

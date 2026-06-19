@@ -333,44 +333,80 @@ function getVallas(ss) {
 // ── PRÓXIMOS PARTIDOS ─────────────────────────────────────────
 // Hoja: "proximos partidos"
 // ESTRUCTURA REAL: col A = categoria (sin header), col B = local, col C = visitante,
-//                  col D = horario_dia, col E = cancha, col F = num_fecha, col G = notificaciones
-// NOTA: la fila 1 tiene headers pero col A tiene None como header
+//                  col D = horario_dia (objeto Date de Sheets o texto), col E = cancha,
+//                  col F = num_fecha, col G = notificaciones
 function getProximos(ss) {
   var sheet = getSheet(ss, ['proximos partidos','proximos_partidos','Próximos Partidos','proximos']);
   if (!sheet) return [];
   var data = sheet.getDataRange().getValues();
   if (data.length < 2) return [];
 
-  // Leer headers de fila 1
   var headers = data[0].map(function(h){ return String(h||'').trim().toLowerCase().replace(/\s+/g,'_'); });
-  // Col 0 no tiene header (None) → es la división/categoría
-  var idxDiv     = 0; // siempre col A
-  var idxLocal   = headers.indexOf('local_') !== -1 ? headers.indexOf('local_') : headers.indexOf('local') !== -1 ? headers.indexOf('local') : 1;
-  var idxVisita  = headers.indexOf('visitante') !== -1 ? headers.indexOf('visitante') : 2;
-  var idxHora    = headers.indexOf('horario_dia') !== -1 ? headers.indexOf('horario_dia') : 3;
-  var idxCancha  = headers.indexOf('cancha') !== -1 ? headers.indexOf('cancha') : 4;
-  var idxFecha   = headers.indexOf('num_fecha') !== -1 ? headers.indexOf('num_fecha') : 5;
-  var idxNotif   = headers.indexOf('notificaciones_') !== -1 ? headers.indexOf('notificaciones_') : headers.indexOf('notificaciones') !== -1 ? headers.indexOf('notificaciones') : 6;
+  var idxDiv    = 0;
+  var idxLocal  = headers.indexOf('local_') !== -1 ? headers.indexOf('local_') : headers.indexOf('local') !== -1 ? headers.indexOf('local') : 1;
+  var idxVisita = headers.indexOf('visitante') !== -1 ? headers.indexOf('visitante') : 2;
+  var idxHora   = headers.indexOf('horario_dia') !== -1 ? headers.indexOf('horario_dia') : 3;
+  var idxCancha = headers.indexOf('cancha') !== -1 ? headers.indexOf('cancha') : 4;
+  var idxFecha  = headers.indexOf('num_fecha') !== -1 ? headers.indexOf('num_fecha') : 5;
+  var idxNotif  = headers.indexOf('notificaciones_') !== -1 ? headers.indexOf('notificaciones_') : headers.indexOf('notificaciones') !== -1 ? headers.indexOf('notificaciones') : 6;
+
+  var tz   = Session.getScriptTimeZone();
+  var ahora = new Date();
+
+  var DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
   var results = [];
   for (var i = 1; i < data.length; i++) {
-    var row = data[i];
+    var row    = data[i];
     var local  = String(row[idxLocal]  || '').trim();
     var visita = String(row[idxVisita] || '').trim();
     if (!local || !visita) continue;
 
-    var division = normalizarCategoria(String(row[idxDiv] || '').trim());
-    var hora     = row[idxHora] instanceof Date
-      ? Utilities.formatDate(row[idxHora], Session.getScriptTimeZone(), 'HH:mm yyyy-MM-dd')
-      : String(row[idxHora] || '').trim();
+    var division   = normalizarCategoria(String(row[idxDiv] || '').trim());
+    var rawHora    = row[idxHora];
+    var horaStr    = '';   // solo "HH:mm"
+    var diaLabel   = '';   // "Sábado 21/06"
+    var fechaISO   = '';   // "2026-06-21" para comparar con hoy
+    var jugado     = false;
+
+    if (rawHora instanceof Date && !isNaN(rawHora.getTime())) {
+      // Es un objeto Date de Sheets → tiene fecha Y hora reales
+      horaStr  = Utilities.formatDate(rawHora, tz, 'HH:mm');
+      fechaISO = Utilities.formatDate(rawHora, tz, 'yyyy-MM-dd');
+      var dd   = rawHora.getDate();
+      var mm   = rawHora.getMonth() + 1;
+      var diaSemana = DIAS[rawHora.getDay()];
+      diaLabel = diaSemana + ' ' + (dd < 10 ? '0'+dd : dd) + '/' + (mm < 10 ? '0'+mm : mm);
+      // Partido jugado si la fecha ya pasó Y ha transcurrido al menos 2 horas desde el inicio
+      var dosHorasDespues = new Date(rawHora.getTime() + 2 * 60 * 60 * 1000);
+      jugado = ahora > dosHorasDespues;
+    } else {
+      // Texto libre: "Sábado 21/6 15:30" o "15:30" o ""
+      var raw = String(rawHora || '').trim();
+      if (raw !== '') {
+        // Intentar extraer hora HH:mm
+        var mHora = raw.match(/(\d{1,2}):(\d{2})/);
+        if (mHora) horaStr = mHora[1].padStart(2,'0') + ':' + mHora[2];
+        // Intentar extraer día y mes dd/mm
+        var mFecha = raw.match(/(\d{1,2})\/(\d{1,2})/);
+        if (mFecha) {
+          diaLabel = raw; // usar texto completo como label
+        } else {
+          diaLabel = raw; // usar lo que haya
+        }
+      }
+    }
 
     results.push({
       division:     division,
       local:        local,
       visita:       visita,
-      hora:         hora,
+      hora:         horaStr,          // solo "HH:mm" o vacío si no confirmado
+      dia_label:    diaLabel,         // "Sábado 21/06" o vacío
+      fecha_iso:    fechaISO,
       cancha:       String(row[idxCancha] || '').trim(),
       fecha_label:  String(row[idxFecha]  || '').trim(),
+      estado:       jugado ? 'jugado' : 'programado',
       notificacion: String(row[idxNotif]  || '').trim().toLowerCase() === 'si',
       escudo_local: '',
       escudo_visita:'',
