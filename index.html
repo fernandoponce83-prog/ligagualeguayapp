@@ -404,7 +404,13 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
     <div id="inicio-fecha-fem-resultados"><div class="loading-state">Cargando...</div></div>
   </div>
 
-  <!-- 6. Ver en vivo -->
+  <!-- 6. Próximos partidos destacados en inicio -->
+  <div id="inicio-proximos-wrap" style="display:none">
+    <div class="sec-div"><h3>📅 Próximos Partidos</h3></div>
+    <div id="inicio-proximos-contenido"></div>
+  </div>
+
+  <!-- 7. Ver en vivo -->
   <div class="sec-div"><h3>📺 Ver en vivo</h3></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
     <a href="https://m.youtube.com/@eldebatepregon2384/shorts" target="_blank" style="text-decoration:none">
@@ -728,7 +734,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 
 <!-- ===================== PERFIL DE CLUB ===================== -->
 <section id="perfil-club" class="section">
-  <button class="club-back-btn" onclick="cerrarPerfilClub()">&#8592; Volver a Clubes</button>
+  <button class="club-back-btn" onclick="cerrarPerfilClub()">&#8592; Volver al Inicio</button>
 
   <!-- Hero: banner + escudo + nombre -->
   <div class="club-hero" id="club-hero">
@@ -792,6 +798,45 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
         <input class="panel-input" id="s-nombre" type="text" placeholder="Tu nombre completo">
         <input class="panel-input" id="s-tel" type="tel" placeholder="WhatsApp (ej: 3444-123456)">
         <input class="panel-input" id="s-email" type="email" placeholder="Email (opcional)">
+
+        <!-- Club hincha -->
+        <div style="margin-bottom:9px">
+          <div style="font-size:.68rem;color:var(--muted);margin-bottom:6px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">⚽ ¿DE QUÉ CLUB SOS HINCHA?</div>
+          <select id="s-club" class="panel-input" style="margin-bottom:0">
+            <option value="">Sin preferencia / Todos los equipos</option>
+            <option>Urquiza</option>
+            <option>Quilmes</option>
+            <option>Gualeguay Central</option>
+            <option>Libertad</option>
+            <option>Sportiva</option>
+            <option>Barrio Norte</option>
+            <option>El Progreso</option>
+            <option>Bancario</option>
+            <option>La Academia</option>
+            <option>Juventud Unida</option>
+            <option>Aldea Asuncion</option>
+          </select>
+        </div>
+
+        <!-- Notificaciones -->
+        <div style="background:var(--card2);border-radius:10px;padding:11px 12px;margin-bottom:9px;border:1px solid rgba(255,255,255,.08)">
+          <div style="font-size:.68rem;color:var(--muted);margin-bottom:8px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">🔔 NOTIFICACIONES (WhatsApp)</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:.7rem;cursor:pointer">
+              <input type="checkbox" id="s-notif-trans" style="width:15px;height:15px;accent-color:var(--red)">
+              📺 Transmisiones en vivo
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:.7rem;cursor:pointer">
+              <input type="checkbox" id="s-notif-resul" style="width:15px;height:15px;accent-color:var(--red)">
+              ⚽ Actualización de resultados y posiciones
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:.7rem;cursor:pointer">
+              <input type="checkbox" id="s-notif-prox" style="width:15px;height:15px;accent-color:var(--red)">
+              📅 Próximos partidos de mi equipo
+            </label>
+          </div>
+        </div>
+
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
           <input type="checkbox" id="s-ok" style="width:15px;height:15px;accent-color:var(--red)">
           <label for="s-ok" style="font-size:.66rem;color:var(--muted);cursor:pointer">Acepto recibir novedades de Pasión Azul / Fer News</label>
@@ -1349,10 +1394,29 @@ function mostrarResFecha(divId, fecha, btn) {
 }
 
 function renderInicioUltimaFecha(grupos) {
-  ['1° Masculino','1° Femenino'].forEach(function(div) {
-    var isMasc = div.indexOf('Masc') !== -1 || div.indexOf('Masculino') !== -1;
-    var sufijo = isMasc ? 'masc' : 'fem';
-    if (!grupos[div]) return;
+  // Mapear las claves reales que vienen del Sheets
+  var mapaDiv = {
+    masc: ['Primera Masculino','1° Masculino','1° masculino','primera masculino','Masculino','masculino'],
+    fem:  ['Primera Femenino ','Primera Femenino','1° Femenino','1° femenino','primera femenino','Femenino','femenino']
+  };
+  ['masc','fem'].forEach(function(sufijo) {
+    var isMasc = sufijo === 'masc';
+    var div = null;
+    // Buscar cuál clave existe en los grupos
+    mapaDiv[sufijo].forEach(function(cand){
+      if (!div && grupos[cand]) div = cand;
+    });
+    // También buscar cualquier clave que contenga las palabras clave
+    if (!div) {
+      Object.keys(grupos).forEach(function(k) {
+        if (!div) {
+          var kl = k.toLowerCase().trim();
+          if (isMasc && kl.indexOf('masculino') > -1 && kl.indexOf('primera') > -1) div = k;
+          if (!isMasc && kl.indexOf('femenino') > -1 && kl.indexOf('primera') > -1) div = k;
+        }
+      });
+    }
+    if (!div) return;
     var fechas = Object.keys(grupos[div]).sort(function(a,b){ return parseInt(a.slice(1))-parseInt(b.slice(1)); });
     var ultima = fechas[fechas.length - 1];
     var tituloEl = document.getElementById('inicio-fecha-' + sufijo + '-titulo');
@@ -1599,6 +1663,9 @@ function renderProximos(rows) {
   }).join('');
 
   cont.innerHTML = gridHtml + panelsHtml;
+
+  // También renderizar preview en inicio
+  renderInicioProximos(rows);
 }
 
 function abrirProxCat(catId) {
@@ -1608,6 +1675,53 @@ function abrirProxCat(catId) {
   });
   var el = document.getElementById('prox-cat-' + catId);
   if (el) { el.style.display = 'block'; window.scrollTo(0,0); }
+}
+
+function renderInicioProximos(rows) {
+  // Mostrar en inicio solo las divisiones clave con fecha/hora confirmada
+  var DIVS_DESTACADAS = ['Primera Masculino','Primera Femenino','Tercera División'];
+  var activos = (rows || []).filter(function(r){ return !r._jugado; });
+  // Filtrar solo los que tienen hora confirmada o son de divisiones principales
+  var filtrados = activos.filter(function(r){
+    var div = r.division || '';
+    return DIVS_DESTACADAS.some(function(d){ return div.toLowerCase().indexOf(d.toLowerCase()) > -1; });
+  });
+  var wrap = document.getElementById('inicio-proximos-wrap');
+  var cont = document.getElementById('inicio-proximos-contenido');
+  if (!wrap || !cont || !filtrados.length) { if(wrap) wrap.style.display = 'none'; return; }
+
+  // Agrupar por division
+  var grupos = {};
+  filtrados.forEach(function(r){
+    var d = r.division;
+    if (!grupos[d]) grupos[d] = [];
+    grupos[d].push(r);
+  });
+
+  var BADGE_MAP = { 'Primera Masculino':'', 'Primera Femenino':'pink', 'Tercera División':'blue' };
+  var html = '';
+  Object.keys(grupos).forEach(function(div){
+    var badge = '';
+    Object.keys(BADGE_MAP).forEach(function(k){ if(div.toLowerCase().indexOf(k.toLowerCase())>-1) badge = BADGE_MAP[k]; });
+    var partidos = grupos[div].slice(0,4); // máximo 4 por división
+    html += '<div class="card" style="margin-bottom:10px">' +
+      '<div class="card-header"><h3>' + div + '</h3><span class="badge ' + badge + '">PRÓXIMO</span></div>';
+    partidos.forEach(function(p){
+      html += '<div class="fixture-row" style="padding:7px 12px;display:flex;align-items:center;gap:8px">' +
+        '<div class="fixture-teams" style="flex:1;display:flex;align-items:center;gap:5px">' +
+        '<img src="' + escudoUrl(p.local,'') + '" onerror="escudoFallback(this)" style="width:18px;height:18px;object-fit:contain">' +
+        '<strong style="font-size:.72rem">' + p.local + '</strong>' +
+        '<span style="font-size:.6rem;color:var(--muted);margin:0 4px">vs</span>' +
+        '<strong style="font-size:.72rem">' + p.visita + '</strong>' +
+        '<img src="' + escudoUrl(p.visita,'') + '" onerror="escudoFallback(this)" style="width:18px;height:18px;object-fit:contain">' +
+        '</div>' +
+        (p.hora ? '<span class="fixture-hora">⏰ ' + p.hora + '</span>' : '<span class="fixture-hora" style="color:var(--muted);font-size:.58rem">TBC</span>') +
+        '</div>';
+    });
+    html += '</div>';
+  });
+  cont.innerHTML = html;
+  wrap.style.display = 'block';
 }
 
 function volverProxCats() {
@@ -2804,21 +2918,30 @@ function _esSI(v) {
 
 function renderMuroCards(items) {
   if (!items || !items.length) { console.warn('[Portada] Sin items'); return; }
-  console.log('[Portada] items recibidos:', items.length, items.map(function(i){return i.activo+'|'+i.tipo+'|'+i.titulo;}));
   var activos = items.filter(function(i){ return _esSI(i.activo); });
-  console.log('[Portada] activos tras filtro:', activos.length);
   activos.sort(function(a,b){ return (parseInt(a.orden)||99) - (parseInt(b.orden)||99); });
-  if (!activos.length) { console.warn('[Portada] Ningún item pasó el filtro activo'); return; }
+  if (!activos.length) return;
+
+  // Distribuir según etiquetas:
+  // - etiqueta_club definido → solo va a la sección del club (NO al muro inicio)
+  // - etiqueta === 'noticias' → va a sección noticias adicional
+  // - etiqueta === 'galeria' → va a sección galería adicional
+  // - sin etiqueta de club → va al muro de inicio
+  var paraMuro   = activos.filter(function(c){ return !c.etiqueta_club || String(c.etiqueta_club).trim() === ''; });
 
   var cont = document.getElementById('muro-cards-contenido');
   var wrap = document.getElementById('muro-cards-wrap');
-  if (!cont || !wrap) { console.warn('[Portada] No se encontró el contenedor muro-cards-contenido'); return; }
+  if (!cont || !wrap) return;
 
-  cont.innerHTML = activos.map(function(card) {
-    return renderMuroCard(card);
-  }).join('');
+  if (paraMuro.length) {
+    cont.innerHTML = paraMuro.map(function(card){ return renderMuroCard(card); }).join('');
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+  }
 
-  wrap.style.display = 'block';
+  // Guardar referencia global para usarla en perfiles de club y secciones
+  window._portadaCardsData = activos;
 }
 
 function renderMuroCard(card) {
@@ -2952,12 +3075,17 @@ function abrirPerfilClub(nombreClub) {
 
 function cerrarPerfilClub() {
   document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
-  document.getElementById('clubes').classList.add('active');
-  // Reactivar botón clubes en nav
+  document.getElementById('inicio').classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  // Marcar activo el botón de Inicio
   var navBtns = document.querySelectorAll('.nav-btn');
-  navBtns.forEach(function(b){ if(b.getAttribute('onclick') && b.getAttribute('onclick').indexOf('clubes') > -1) b.classList.add('active'); });
+  navBtns.forEach(function(b){ if(b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'inicio'") > -1) b.classList.add('active'); });
   window.scrollTo(0, 0);
+  // Scroll hasta la grilla de clubes en inicio
+  setTimeout(function(){
+    var g = document.getElementById('clubes-grid');
+    if (g) g.scrollIntoView({ behavior:'smooth', block:'center' });
+  }, 100);
 }
 
 function clubTab(id, btn) {
@@ -2969,20 +3097,21 @@ function clubTab(id, btn) {
 
 function renderClubPublicaciones(nombreClub) {
   var cont = document.getElementById('club-pub-contenido');
-  // Filtrar portada_cards por etiqueta_club
   var cards = [];
-  if (appData.portada_cards) {
-    cards = appData.portada_cards.filter(function(c){
-      return String(c.activo).toUpperCase() === 'SI' &&
-             (c.etiqueta_club || '').toLowerCase() === nombreClub.toLowerCase();
+  // 1. Publicaciones de portada_cards con etiqueta_club del club
+  var fuente = window._portadaCardsData || appData.portada_cards || [];
+  if (fuente.length) {
+    var dePortada = fuente.filter(function(c){
+      return _esSI(c.activo) &&
+             (c.etiqueta_club || '').trim().toLowerCase() === nombreClub.toLowerCase();
     });
+    cards = cards.concat(dePortada);
   }
-  // Tambien filtrar noticias por etiqueta_club si existe
+  // 2. Noticias etiquetadas con ese club
   if (appData.noticias) {
     var notis = appData.noticias.filter(function(n){
       return (n.etiqueta_club || '').toLowerCase() === nombreClub.toLowerCase();
     });
-    // Convertir noticias al formato de card para mostrarlas
     notis.forEach(function(n){
       cards.push({
         activo: 'SI', orden: 99, tipo: 'imagen',
@@ -2996,6 +3125,7 @@ function renderClubPublicaciones(nombreClub) {
     cont.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:.8rem">Sin publicaciones de este club por ahora.</div>';
     return;
   }
+  cards.sort(function(a,b){ return (parseInt(a.orden)||99) - (parseInt(b.orden)||99); });
   cont.innerHTML = cards.map(function(c){ return renderMuroCard(c); }).join('');
 }
 
