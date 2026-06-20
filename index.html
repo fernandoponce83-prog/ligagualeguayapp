@@ -344,10 +344,11 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
     <button class="nav-btn" onclick="go('resultados',this)">⚽ Resultados</button>
     <button class="nav-btn" onclick="go('goleadores',this)">🥅 Goleadores</button>
     <button class="nav-btn" onclick="go('proximos',this)">📅 Próximos</button>
+    <button class="nav-btn" onclick="goClubsLazy(this)">🛡️ Clubes</button>
     <button class="nav-btn" onclick="go('videos',this)">▶️ Videos</button>
-    <button class="nav-btn" onclick="go('galeria',this)">📷 Galería</button>
-    <button class="nav-btn" onclick="go('noticias',this)">📰 Noticias</button>
     <button class="nav-btn" onclick="go('tribunal',this)">⚖️ Tribunal</button>
+    <button class="nav-btn" onclick="go('noticias',this)">📰 Noticias</button>
+    <button class="nav-btn" onclick="go('galeria',this)">📷 Galería</button>
     <button class="nav-btn" onclick="go('comercios',this)">🏪 Comercios</button>
     <button class="nav-btn" onclick="go('redes',this)">📲 Redes</button>
     <button class="nav-btn" onclick="go('radio',this)">📻 Radio</button>
@@ -404,13 +405,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
     <div id="inicio-fecha-fem-resultados"><div class="loading-state">Cargando...</div></div>
   </div>
 
-  <!-- 6. Próximos partidos destacados en inicio -->
-  <div id="inicio-proximos-wrap" style="display:none">
-    <div class="sec-div"><h3>📅 Próximos Partidos</h3></div>
-    <div id="inicio-proximos-contenido"></div>
-  </div>
-
-  <!-- 7. Ver en vivo -->
+  <!-- 6. Ver en vivo -->
   <div class="sec-div"><h3>📺 Ver en vivo</h3></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
     <a href="https://m.youtube.com/@eldebatepregon2384/shorts" target="_blank" style="text-decoration:none">
@@ -429,13 +424,8 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
     </a>
   </div>
 
-  <!-- 7. Clubes — al final para que cargue rápido lo importante -->
-  <div class="sec-div"><h3>🛡️ Clubes · Liga Gualeguay 2026</h3></div>
-  <div class="card">
-    <div id="clubes-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px;padding:11px">
-      <div class="loading-state" style="grid-column:span 5;padding:15px">Cargando clubes...</div>
-    </div>
-  </div>
+  <!-- 7. Links externos en vivo -->
+  <div id="live-links-extra-inicio" style="display:none"></div>
 
 </section>
 
@@ -732,9 +722,19 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
   </div>
 </section>
 
+<!-- ===================== CLUBES ===================== -->
+<section id="clubes" class="section">
+  <div class="sec-div"><h3>🛡️ Clubes · Liga Gualeguay 2026</h3></div>
+  <div class="card">
+    <div id="clubes-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px;padding:11px">
+      <div class="loading-state" style="grid-column:span 5;padding:15px">Tocá para cargar clubes...</div>
+    </div>
+  </div>
+</section>
+
 <!-- ===================== PERFIL DE CLUB ===================== -->
 <section id="perfil-club" class="section">
-  <button class="club-back-btn" onclick="cerrarPerfilClub()">&#8592; Volver al Inicio</button>
+  <button class="club-back-btn" onclick="cerrarPerfilClub()">&#8592; Volver a Clubes</button>
 
   <!-- Hero: banner + escudo + nombre -->
   <div class="club-hero" id="club-hero">
@@ -787,6 +787,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
     <div class="panel-handle"></div>
     <div class="panel-tabs">
       <button class="ptab active" onclick="spt('sorteos',this)">🎁 Sorteos</button>
+      <button class="ptab" onclick="spt('perfil',this)">👤 Mi Perfil</button>
       <button class="ptab" onclick="spt('comercial',this)">📢 Publicidad</button>
       <button class="ptab" onclick="spt('admin',this)">🔐 Admin</button>
     </div>
@@ -798,12 +799,28 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
         <input class="panel-input" id="s-nombre" type="text" placeholder="Tu nombre completo">
         <input class="panel-input" id="s-tel" type="tel" placeholder="WhatsApp (ej: 3444-123456)">
         <input class="panel-input" id="s-email" type="email" placeholder="Email (opcional)">
-
-        <!-- Club hincha -->
-        <div style="margin-bottom:9px">
-          <div style="font-size:.68rem;color:var(--muted);margin-bottom:6px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">⚽ ¿DE QUÉ CLUB SOS HINCHA?</div>
-          <select id="s-club" class="panel-input" style="margin-bottom:0">
-            <option value="">Sin preferencia / Todos los equipos</option>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+          <input type="checkbox" id="s-ok" style="width:15px;height:15px;accent-color:var(--red)">
+          <label for="s-ok" style="font-size:.66rem;color:var(--muted);cursor:pointer">Acepto recibir novedades de Pasión Azul / Fer News</label>
+        </div>
+        <button class="panel-btn pri" onclick="regSorteo()">🎟️ PARTICIPAR EN EL SORTEO</button>
+        <div id="s-msg"></div>
+        <div id="s-lista-sec" style="display:none;margin-top:12px">
+          <div class="panel-title">Mis participaciones</div>
+          <div id="s-lista"></div>
+        </div>
+      </div>
+      <!-- Mi Perfil / Registro de usuario -->
+      <div id="panel-perfil" class="psec">
+        <div class="panel-title">👤 Mi Perfil</div>
+        <p class="panel-hint">Registrate para personalizar la app, participar en sorteos y recibir notificaciones de tu club.</p>
+        <div id="perfil-form-wrap">
+          <input class="panel-input" id="p-nombre" type="text" placeholder="Tu nombre completo">
+          <input class="panel-input" id="p-mail" type="email" placeholder="Email">
+          <input class="panel-input" id="p-tel" type="tel" placeholder="WhatsApp (ej: 3444-123456)">
+          <label style="font-size:.65rem;color:var(--muted);display:block;margin-bottom:5px">Club hincha</label>
+          <select id="p-club" class="panel-input">
+            <option value="">— Seleccioná tu club —</option>
             <option>Urquiza</option>
             <option>Quilmes</option>
             <option>Gualeguay Central</option>
@@ -815,37 +832,21 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
             <option>La Academia</option>
             <option>Juventud Unida</option>
             <option>Aldea Asuncion</option>
+            <option value="todos">Todos / Sin preferencia</option>
           </select>
-        </div>
-
-        <!-- Notificaciones -->
-        <div style="background:var(--card2);border-radius:10px;padding:11px 12px;margin-bottom:9px;border:1px solid rgba(255,255,255,.08)">
-          <div style="font-size:.68rem;color:var(--muted);margin-bottom:8px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">🔔 NOTIFICACIONES (WhatsApp)</div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <label style="display:flex;align-items:center;gap:8px;font-size:.7rem;cursor:pointer">
-              <input type="checkbox" id="s-notif-trans" style="width:15px;height:15px;accent-color:var(--red)">
-              📺 Transmisiones en vivo
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:.7rem;cursor:pointer">
-              <input type="checkbox" id="s-notif-resul" style="width:15px;height:15px;accent-color:var(--red)">
-              ⚽ Actualización de resultados y posiciones
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:.7rem;cursor:pointer">
-              <input type="checkbox" id="s-notif-prox" style="width:15px;height:15px;accent-color:var(--red)">
-              📅 Próximos partidos de mi equipo
-            </label>
+          <label style="font-size:.65rem;color:var(--muted);display:block;margin:8px 0 5px">¿Querés recibir notificaciones?</label>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button id="notif-si-btn" onclick="toggleNotifPref('si',this)" style="flex:1;background:var(--card2);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:1px;cursor:pointer;color:var(--text)">🔔 SÍ</button>
+            <button id="notif-no-btn" onclick="toggleNotifPref('no',this)" style="flex:1;background:var(--card2);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:1px;cursor:pointer;color:var(--text)">🔕 NO</button>
           </div>
+          <button class="panel-btn pri" onclick="guardarPerfil()">💾 GUARDAR PERFIL</button>
+          <div id="p-msg" style="margin-top:7px"></div>
         </div>
-
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
-          <input type="checkbox" id="s-ok" style="width:15px;height:15px;accent-color:var(--red)">
-          <label for="s-ok" style="font-size:.66rem;color:var(--muted);cursor:pointer">Acepto recibir novedades de Pasión Azul / Fer News</label>
-        </div>
-        <button class="panel-btn pri" onclick="regSorteo()">🎟️ PARTICIPAR EN EL SORTEO</button>
-        <div id="s-msg"></div>
-        <div id="s-lista-sec" style="display:none;margin-top:12px">
-          <div class="panel-title">Mis participaciones</div>
-          <div id="s-lista"></div>
+        <div id="perfil-datos-wrap" style="display:none">
+          <div style="background:var(--card);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.08);margin-bottom:12px">
+            <div id="perfil-resumen" style="font-size:.78rem;line-height:2;color:var(--text)"></div>
+          </div>
+          <button class="panel-btn sec" onclick="editarPerfil()">✏️ EDITAR PERFIL</button>
         </div>
       </div>
       <!-- Publicidad -->
@@ -889,33 +890,32 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
           <button class="panel-btn sec" onclick="recargarDatos()">🔄 FORZAR RECARGA DESDE SHEETS</button>
           <div id="adm-reload-r" style="margin-top:8px"></div>
 
-          <!-- ── PANEL PUBLICACIONES RECIENTES ── -->
-          <div class="panel-title" style="margin-top:14px">📰 Últimas Publicaciones</div>
-          <p class="panel-hint">Publicaciones activas en la portada y secciones de la app.</p>
-          <button class="panel-btn blu" onclick="admVerPublicaciones()">📋 VER PUBLICACIONES</button>
-          <div id="adm-publicaciones-r" style="margin-top:8px"></div>
-
-          <!-- ── NOTIFICACIONES ── -->
-          <div class="panel-title" style="margin-top:14px">🔔 Notificaciones a Hinchas</div>
-          <p class="panel-hint">Seleccioná a qué hinchas enviar notificación por WhatsApp o datos del grupo.</p>
-          <div style="background:var(--card2);border-radius:10px;padding:10px 12px;margin-bottom:9px;border:1px solid rgba(255,255,255,.08)">
-            <div style="font-size:.65rem;color:var(--muted);margin-bottom:7px">FILTRAR POR TIPO DE NOTIFICACIÓN</div>
-            <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">
-              <label style="display:flex;align-items:center;gap:8px;font-size:.7rem;cursor:pointer"><input type="checkbox" id="adm-notif-trans" style="accent-color:var(--red)"> 📺 Transmisiones en vivo</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.7rem;cursor:pointer"><input type="checkbox" id="adm-notif-resul" style="accent-color:var(--red)"> ⚽ Resultados y posiciones</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:.7rem;cursor:pointer"><input type="checkbox" id="adm-notif-prox" style="accent-color:var(--red)"> 📅 Próximos partidos</label>
-            </div>
-            <div style="font-size:.65rem;color:var(--muted);margin-bottom:5px">FILTRAR POR CLUB</div>
-            <select id="adm-notif-club" class="panel-input" style="margin-bottom:9px;font-size:.72rem">
-              <option value="">Todos los hinchas</option>
-              <option>Urquiza</option><option>Quilmes</option><option>Gualeguay Central</option>
-              <option>Libertad</option><option>Sportiva</option><option>Barrio Norte</option>
-              <option>El Progreso</option><option>Bancario</option><option>La Academia</option>
-              <option>Juventud Unida</option><option>Aldea Asuncion</option>
+          <!-- ── NOTIFICACIONES PUSH ── -->
+          <div class="panel-title" style="margin-top:14px">🔔 Notificaciones Push</div>
+          <p class="panel-hint">Enviá un mensaje a los usuarios. Se registra en Firebase. Requiere FCM configurado para la entrega real.</p>
+          <div style="margin-bottom:8px">
+            <label style="font-size:.65rem;color:var(--muted);display:block;margin-bottom:4px">Destinatarios</label>
+            <select id="notif-dest" class="panel-input" style="margin-bottom:0">
+              <option value="todos">Todos los usuarios</option>
+              <option value="notif_on">Solo con notificaciones ON</option>
+              <option value="club">Por club hincha (especificar abajo)</option>
             </select>
-            <button class="panel-btn blu" onclick="admVerDestinatarios()" style="margin-bottom:6px">👥 VER DESTINATARIOS</button>
-            <div id="adm-destinatarios-r" style="margin-top:6px"></div>
           </div>
+          <input id="notif-club" class="panel-input" type="text" placeholder="Club (solo si elegiste 'Por club')" style="display:none">
+          <textarea id="notif-msg" class="panel-input" rows="3" placeholder="Escribí el mensaje..."></textarea>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <button onclick="admNotifEnVivo()" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:1px;cursor:pointer">🔴 EN VIVO</button>
+            <button onclick="admEnviarNotif()" style="flex:1;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:1px;cursor:pointer">📤 ENVIAR</button>
+          </div>
+          <div id="adm-notif-r" style="margin-top:4px"></div>
+
+          <!-- Script para mostrar/ocultar campo club -->
+          <script>
+            document.getElementById('notif-dest').addEventListener('change', function() {
+              var clubInput = document.getElementById('notif-club');
+              if (clubInput) clubInput.style.display = this.value === 'club' ? 'block' : 'none';
+            });
+          </script>
 
           <!-- ── SUBIDOR DE FOTOS A IMGUR ── -->
           <div class="panel-title" style="margin-top:14px">📸 Subir fotos (carrusel)</div>
@@ -990,7 +990,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 // ============================================================
 // CONFIGURACIÓN — REEMPLAZÁ LA URL CUANDO PUBLIQUES EL SCRIPT
 // ============================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6Pfakt3s8b_d4yWKeXQETt_hjwQQ9cCkw-UTuhPT7PtEhGGiINfooGSMts3sAY9yV/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx7C40QXHP0cGy2otjF9U9PL3QnHs7QxHHiacauw7wd3LlMqJDRmFjzuVqaID4N3kqI/exec';
 var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m';
 var PASS = 'Reyazucar95';
 
@@ -1141,7 +1141,10 @@ function renderTodo() {
   if (d.galeria)         renderGaleria(d.galeria);
   if (d.sponsors)        renderSponsors(d.sponsors);
   if (d.portada_cards)   renderMuroCards(d.portada_cards);
-  if (d.slider_ads)      renderSliderPublicidades(d.slider_ads);
+  // slider_publicidades viene ya filtrado y ordenado desde el servidor
+  if (d.slider_publicidades) renderSliderPublicidades(d.slider_publicidades);
+  else if (d.slider_ads)     renderSliderPublicidades(d.slider_ads);
+  if (d.envivo_admin)    renderEnVivoAdmin(d.envivo_admin);
 }
 
 // ============================================================
@@ -1166,10 +1169,26 @@ function renderConfig(cfg) {
 // ============================================================
 function renderClubes(clubes) {
   // clubes: [{nombre, escudo_url, abrev}]
-  var grid = document.getElementById('clubes-grid');
-  if (!clubes.length) { grid.innerHTML = '<div class="error-state" style="grid-column:span 5">Sin datos</div>'; return; }
-  // Guardar referencia global para el perfil
+  // Guardar referencia global para lazy load y perfil
   window._clubesData = clubes;
+  var grid = document.getElementById('clubes-grid');
+  if (!grid) return;
+  // Solo renderizar si la sección ya fue visitada (grid no tiene el mensaje inicial)
+  // El goClubsLazy() se encarga de llamar pintarClubesGrid() al abrir la sección
+  // Pero si la sección ya estaba abierta, renderizar directamente
+  var section = document.getElementById('clubes');
+  if (section && section.classList.contains('active')) {
+    pintarClubesGrid(clubes);
+  }
+}
+
+function pintarClubesGrid(clubes) {
+  var grid = document.getElementById('clubes-grid');
+  if (!grid) return;
+  if (!clubes || !clubes.length) {
+    grid.innerHTML = '<div class="error-state" style="grid-column:span 5">Sin datos de clubes</div>';
+    return;
+  }
   grid.innerHTML = clubes.map(function(c) {
     var nombre = (c.nombre || '').replace(/'/g, "\\'");
     return '<div style="text-align:center;cursor:pointer" onclick="abrirPerfilClub(\'' + nombre + '\')">' +
@@ -1177,6 +1196,26 @@ function renderClubes(clubes) {
       '<span style="font-size:.5rem;color:var(--muted);font-family:\'Barlow Condensed\',sans-serif;display:block;margin-top:2px">' + (c.abrev || c.nombre).toUpperCase() + '</span>' +
       '</div>';
   }).join('');
+}
+
+function goClubsLazy(btn) {
+  // Navegar a sección clubes
+  document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('clubes').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  window.scrollTo(0, 0);
+  // Cargar datos lazy — solo si todavía no se pintó
+  var grid = document.getElementById('clubes-grid');
+  if (grid && grid.children.length <= 1 && grid.querySelector('.loading-state')) {
+    if (window._clubesData && window._clubesData.length) {
+      pintarClubesGrid(window._clubesData);
+    } else {
+      grid.innerHTML = '<div class="loading-state" style="grid-column:span 5;padding:20px">Cargando clubes...</div>';
+      // Forzar recarga si appData no tiene clubes aún
+      if (!appData.clubes) cargarDatos(false);
+    }
+  }
 }
 
 // ============================================================
@@ -1421,43 +1460,7 @@ function mostrarResFecha(divId, fecha, btn) {
   btn.classList.add('active');
 }
 
-function renderInicioUltimaFecha(grupos) {
-  // El Apps Script normaliza a "1° Masculino" y "1° Femenino"
-  // Esta función busca ambas formas por si acaso
-  var mapaDiv = {
-    masc: ['1° Masculino','Primera Masculino','primera masculino','Masculino'],
-    fem:  ['1° Femenino','1° Femenino ','Primera Femenino','primera femenino','Femenino']
-  };
-  ['masc','fem'].forEach(function(sufijo) {
-    var isMasc = sufijo === 'masc';
-    var div = null;
-    mapaDiv[sufijo].forEach(function(cand){ if (!div && grupos[cand]) div = cand; });
-    // Búsqueda flexible si no encontró exact match
-    if (!div) {
-      Object.keys(grupos).forEach(function(k) {
-        if (!div) {
-          var kl = k.toLowerCase().trim();
-          if (isMasc && kl.indexOf('masculino') > -1) div = k;
-          if (!isMasc && kl.indexOf('femenino') > -1) div = k;
-        }
-      });
-    }
-    if (!div) return;
-    var fechas = Object.keys(grupos[div]).sort(function(a,b){ return parseInt(a.slice(1))-parseInt(b.slice(1)); });
-    var ultima = fechas[fechas.length - 1];
-    var tituloEl = document.getElementById('inicio-fecha-' + sufijo + '-titulo');
-    var resEl = document.getElementById('inicio-fecha-' + sufijo + '-resultados');
-    var partidos = grupos[div][ultima];
-    if (tituloEl) tituloEl.textContent = ultima.slice(1) + 'ª Fecha · Torneo ' + (isMasc?'Oficial':'Femenino') + ' 2026';
-    if (resEl) resEl.innerHTML = partidos.map(function(p) {
-      return '<div class="match-row">' +
-        '<div class="match-team"><img src="' + escudoUrl(p.local, p.escudo_local) + '" onerror="escudoFallback(this)"><span class="team-name">' + p.local.toUpperCase() + '</span></div>' +
-        '<div class="match-score"><div class="score-box">' + p.goles_local + '</div><span class="score-vs">VS</span><div class="score-box">' + p.goles_visita + '</div></div>' +
-        '<div class="match-team away"><img src="' + escudoUrl(p.visita, p.escudo_visita) + '" onerror="escudoFallback(this)"><span class="team-name">' + p.visita.toUpperCase() + '</span></div>' +
-        '</div>';
-    }).join('');
-  });
-}
+// renderInicioUltimaFecha — redefinida más abajo con soporte de aliases CAT_MAP
 
 // ============================================================
 // GOLEADORES
@@ -1511,22 +1514,9 @@ function renderProximos(rows) {
   });
 
   var BADGE_CAT = {
-    '1° Masculino':'', 'Primera Masculino':'',
-    '1° Femenino':'pink', 'Primera Femenino':'pink',
-    'Sub 18 Femenino':'pink','Sub-18 Femenino':'pink',
-    'Sub 14 Femenino':'pink','Sub-14 Femenino':'pink'
+    'Primera Masculino':'','Primera Femenino':'pink',
+    'Sub 18 Femenino':'pink','Sub 14 Femenino':'pink'
   };
-
-  function getBadgeCat(cat) {
-    if (BADGE_CAT[cat] !== undefined) return BADGE_CAT[cat];
-    var cl = cat.toLowerCase();
-    if (cl.indexOf('femenino') > -1) return 'pink';
-    if (cl.indexOf('tercera') > -1 || cl.indexOf('3°') > -1) return 'blue';
-    if (cl.indexOf('cuarta') > -1  || cl.indexOf('4°') > -1) return 'blue';
-    if (cl.indexOf('quinta') > -1  || cl.indexOf('5°') > -1) return 'blue';
-    if (cl.indexOf('inf.') > -1 || cl.indexOf('categoria') > -1) return 'green';
-    return '';
-  }
 
   // Agrupar por categoría → fecha → dia → cancha
   var porCat = {};
@@ -1578,7 +1568,27 @@ function renderProximos(rows) {
       var ma = a.match(/(\d+)/); var mb = b.match(/(\d+)/);
       return (ma?parseInt(ma[1]):99) - (mb?parseInt(mb[1]):99);
     });
-    var ultimaFecha = fechas[fechas.length-1];
+
+    // Buscar la primera fecha que tenga al menos un partido programado (estado !== jugado)
+    // Si todas están jugadas, usar la última
+    var ultimaFecha = fechas[fechas.length-1]; // fallback
+    for (var fi = 0; fi < fechas.length; fi++) {
+      var fKey = fechas[fi];
+      var hayProgramado = false;
+      var diasF = Object.keys(porCat[cat][fKey]);
+      for (var di = 0; di < diasF.length; di++) {
+        var canchasF = Object.keys(porCat[cat][fKey][diasF[di]]);
+        for (var ci = 0; ci < canchasF.length; ci++) {
+          var pList = porCat[cat][fKey][diasF[di]][canchasF[ci]];
+          for (var pi = 0; pi < pList.length; pi++) {
+            if (!pList[pi]._jugado) { hayProgramado = true; break; }
+          }
+          if (hayProgramado) break;
+        }
+        if (hayProgramado) break;
+      }
+      if (hayProgramado) { ultimaFecha = fKey; break; }
+    }
 
     // Selector de fechas
     var fechaTabsHtml = '';
@@ -1703,9 +1713,6 @@ function renderProximos(rows) {
   }).join('');
 
   cont.innerHTML = gridHtml + panelsHtml;
-
-  // También renderizar preview en inicio
-  renderInicioProximos(rows);
 }
 
 function abrirProxCat(catId) {
@@ -1715,57 +1722,6 @@ function abrirProxCat(catId) {
   });
   var el = document.getElementById('prox-cat-' + catId);
   if (el) { el.style.display = 'block'; window.scrollTo(0,0); }
-}
-
-function renderInicioProximos(rows) {
-  // Apps Script normaliza divisiones a: "1° Masculino", "1° Femenino", "3° División"
-  // El HTML puede tener otras variantes — aceptamos ambas
-  var DIVS_CLAVE = ['masculino','femenino','tercera','3°'];
-  var activos = (rows || []).filter(function(r){ return !r._jugado; });
-  var filtrados = activos.filter(function(r){
-    var div = (r.division || '').toLowerCase();
-    return DIVS_CLAVE.some(function(d){ return div.indexOf(d) > -1; });
-  });
-  var wrap = document.getElementById('inicio-proximos-wrap');
-  var cont = document.getElementById('inicio-proximos-contenido');
-  if (!wrap || !cont || !filtrados.length) { if(wrap) wrap.style.display = 'none'; return; }
-
-  var grupos = {};
-  filtrados.forEach(function(r){
-    var d = r.division;
-    if (!grupos[d]) grupos[d] = [];
-    grupos[d].push(r);
-  });
-
-  function badgePorDiv(div) {
-    var dl = div.toLowerCase();
-    if (dl.indexOf('femenino') > -1) return 'pink';
-    if (dl.indexOf('tercera') > -1 || dl.indexOf('3°') > -1) return 'blue';
-    return '';
-  }
-
-  var html = '';
-  Object.keys(grupos).forEach(function(div){
-    var badge = badgePorDiv(div);
-    var partidos = grupos[div].slice(0, 5);
-    html += '<div class="card" style="margin-bottom:10px">' +
-      '<div class="card-header"><h3>' + div + '</h3><span class="badge ' + badge + '">PRÓXIMO</span></div>';
-    partidos.forEach(function(p){
-      html += '<div class="fixture-row" style="padding:7px 12px;display:flex;align-items:center;gap:8px">' +
-        '<div class="fixture-teams" style="flex:1;display:flex;align-items:center;gap:5px">' +
-        '<img src="' + escudoUrl(p.local,'') + '" onerror="escudoFallback(this)" style="width:18px;height:18px;object-fit:contain">' +
-        '<strong style="font-size:.72rem">' + p.local + '</strong>' +
-        '<span style="font-size:.6rem;color:var(--muted);margin:0 4px">vs</span>' +
-        '<strong style="font-size:.72rem">' + p.visita + '</strong>' +
-        '<img src="' + escudoUrl(p.visita,'') + '" onerror="escudoFallback(this)" style="width:18px;height:18px;object-fit:contain">' +
-        '</div>' +
-        (p.hora ? '<span class="fixture-hora">⏰ ' + p.hora + '</span>' : '<span class="fixture-hora" style="color:var(--muted);font-size:.58rem">TBC</span>') +
-        '</div>';
-    });
-    html += '</div>';
-  });
-  cont.innerHTML = html;
-  wrap.style.display = 'block';
 }
 
 function volverProxCats() {
@@ -1787,24 +1743,7 @@ function mostrarProxFecha(catId, fechaId, btn) {
 // ============================================================
 // VIDEOS
 // ============================================================
-function renderVideos(rows) {
-  // rows: [{titulo, youtube_id, descripcion}]
-  var grid = document.getElementById('videos-grid');
-  if (!rows || !rows.length) { grid.innerHTML = '<div class="error-state" style="grid-column:span 2">Sin videos</div>'; return; }
-  grid.innerHTML = rows.map(function(v) {
-    var id = v.youtube_id;
-    var thumb = 'https://img.youtube.com/vi/' + id + '/mqdefault.jpg';
-    var url   = 'https://www.youtube.com/watch?v=' + id;
-    return '<a href="' + url + '" target="_blank" class="video-card">' +
-      '<div style="position:relative;height:88px;overflow:hidden;background:#0d0d22">' +
-      '<img src="' + thumb + '" style="width:100%;height:100%;object-fit:cover;display:block">' +
-      '<div style="position:absolute;inset:0;background:rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center">' +
-      '<div style="width:28px;height:28px;background:rgba(232,0,28,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff">▶</div>' +
-      '</div></div>' +
-      '<div class="video-info"><h4>' + v.titulo + '</h4><p>📺 YouTube</p></div>' +
-      '</a>';
-  }).join('');
-}
+// renderVideos — redefinida más abajo con soporte de medio/canal y deep links
 
 // ============================================================
 // TRIBUNAL
@@ -2138,6 +2077,10 @@ function admActivarLive() {
     window._firebaseSet(window._firebaseRef(window._firebaseDB, 'live_config'), {
       activo: true, url: watchUrl, youtube_id: id, titulo: titulo
     });
+    // También guardar en /envivo/url para compatibilidad con envivo_admin
+    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'envivo'), {
+      activo: true, url: watchUrl, youtube_id: id, titulo: titulo
+    });
   }
   if (msg) msg.innerHTML = '<span style="color:var(--green)">✅ Transmisión activada</span>';
 }
@@ -2146,6 +2089,7 @@ function admDesactivarLive() {
   desactivarLive();
   if (window._firebaseSet && window._firebaseDB && window._firebaseRef) {
     window._firebaseSet(window._firebaseRef(window._firebaseDB, 'live_config'), { activo: false, url: '', titulo: '' });
+    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'envivo'), { activo: false, url: '', titulo: '' });
   }
   var msg = document.getElementById('adm-live-msg');
   if (msg) msg.innerHTML = '<span style="color:var(--muted)">⬛ Transmisión desactivada</span>';
@@ -2629,41 +2573,20 @@ function regSorteo() {
   var t   = document.getElementById('s-tel').value.trim();
   var e   = document.getElementById('s-email').value.trim();
   var ok  = document.getElementById('s-ok').checked;
-  var club = (document.getElementById('s-club') || {}).value || '';
   var msg = document.getElementById('s-msg');
   if (!n || !t) { msg.innerHTML = '<div class="msg-box err">⚠️ Ingresá nombre y WhatsApp</div>'; return; }
   if (!ok)      { msg.innerHTML = '<div class="msg-box err">⚠️ Aceptá los términos para participar</div>'; return; }
-
-  // Preferencias de notificación
-  var notif = {
-    transmisiones: !!(document.getElementById('s-notif-trans') || {}).checked,
-    resultados:    !!(document.getElementById('s-notif-resul') || {}).checked,
-    proximos:      !!(document.getElementById('s-notif-prox')  || {}).checked
-  };
-
   var ps = getSP();
   if (ps.find(function(p){ return p.tel === t; })) { msg.innerHTML = '<div class="msg-box err">ℹ️ Ya estás registrado con ese número</div>'; return; }
-
-  var entrada = { nombre:n, tel:t, email:e, club:club, notif:notif, fecha:new Date().toLocaleDateString('es-AR'), ganador:false };
-  ps.push(entrada);
+  ps.push({ nombre:n, tel:t, email:e, fecha:new Date().toLocaleDateString('es-AR'), ganador:false });
   saveSP(ps);
-
-  // Guardar en Firebase
   if (window._firebaseSet && window._firebaseDB && window._firebaseRef)
-    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'sorteos/p_' + Date.now()), {
-      nombre:n, tel:t, email:e, club:club, notif:notif,
-      fecha: new Date().toLocaleDateString('es-AR')
-    });
-
-  // También guardar preferencia de club en localStorage global
-  if (club) localStorage.setItem('clubHincha', club);
-
+    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'sorteos/p_'+Date.now()), {nombre:n,tel:t,email:e,fecha:new Date().toLocaleDateString('es-AR')});
   document.getElementById('s-nombre').value = '';
   document.getElementById('s-tel').value    = '';
   document.getElementById('s-email').value  = '';
-  if (document.getElementById('s-club')) document.getElementById('s-club').value = '';
   document.getElementById('s-ok').checked   = false;
-  msg.innerHTML = '<div class="msg-box ok">✅ ¡Registrado! ' + (club ? 'Hincha de ' + club + ' · ' : '') + 'Seguí @pasionazul para novedades.</div>';
+  msg.innerHTML = '<div class="msg-box ok">✅ ¡Registrado! Seguí @pasionazul para novedades.</div>';
   renderLista();
 }
 
@@ -2726,27 +2649,17 @@ function admSortear() {
   var idx = Math.floor(Math.random() * ps.length);
   ps[idx].ganador = true;
   saveSP(ps);
-  var ganador = ps[idx];
-  // Publicar ganador en Firebase para que aparezca en portada
+  // Publicar ganador en Firebase
   if (window._firebaseSet && window._firebaseDB && window._firebaseRef) {
     window._firebaseSet(window._firebaseRef(window._firebaseDB, 'sorteo_ganador'), {
       activo: true,
-      nombre: ganador.nombre,
-      tel:    ganador.tel,
-      fecha:  new Date().toLocaleDateString('es-AR'),
-      club:   ganador.club || ''
+      nombre: ps[idx].nombre,
+      tel: ps[idx].tel,
+      fecha: new Date().toLocaleDateString('es-AR')
     });
   }
-  document.getElementById('adm-sorteos-r').innerHTML =
-    '<div class="msg-box ok">🏆 ¡GANADOR SORTEADO Y PUBLICADO EN PORTADA!<br><strong>' + ganador.nombre + '</strong><br>📱 ' + ganador.tel + (ganador.club ? '<br>⚽ ' + ganador.club : '') + '</div>';
+  document.getElementById('adm-sorteos-r').innerHTML = '<div class="msg-box ok">🏆 ¡GANADOR SORTEADO!<br><strong>'+ps[idx].nombre+'</strong><br>📱 '+ps[idx].tel+'</div>';
   admVerSorteos();
-}
-function admOcultarGanador() {
-  if (!admOK) return;
-  if (window._firebaseSet && window._firebaseDB && window._firebaseRef) {
-    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'sorteo_ganador'), { activo: false });
-  }
-  document.getElementById('adm-sorteos-r').innerHTML = '<div class="msg-box">🙈 Ganador ocultado de la portada</div>';
 }
 function admVerConsultas() {
   if (!admOK) return;
@@ -2755,70 +2668,16 @@ function admVerConsultas() {
   document.getElementById('adm-consultas-r').innerHTML = cs.map(function(c,i){ return '<div class="sorteo-entry" style="font-size:.7rem"><div><strong>'+(i+1)+'. '+c.nombre+'</strong><span style="display:block">'+c.tel+(c.msg?'<br><em>'+c.msg+'</em>':'')+'</span><span>'+c.fecha+'</span></div></div>'; }).join('');
 }
 
-function admVerPublicaciones() {
+function admOcultarGanador() {
   if (!admOK) return;
-  var cont = document.getElementById('adm-publicaciones-r');
-  var cards = window._portadaCardsData || (appData && appData.portada_cards) || [];
-  if (!cards.length) {
-    cont.innerHTML = '<div class="msg-box">Sin publicaciones cargadas en el Sheets (hoja portada)</div>';
-    return;
-  }
-  var activos = cards.filter(function(c){ return _esSI(c.activo); });
-  cont.innerHTML = '<div style="font-size:.65rem;color:var(--muted);margin-bottom:6px">' + activos.length + ' publicación(es) activa(s)</div>' +
-    activos.map(function(c, i) {
-      var destino = c.etiqueta_club
-        ? '⚽ Club: ' + c.etiqueta_club
-        : (c.etiqueta === 'noticias' || c.etiqueta === 'galeria' ? '🏷 ' + c.etiqueta : '🏠 Portada inicio');
-      return '<div class="sorteo-entry" style="flex-direction:column;align-items:stretch;gap:3px">' +
-        '<strong style="font-family:Barlow Condensed,sans-serif;font-size:.82rem">' + (i+1) + '. ' + (c.titulo||'Sin título') + '</strong>' +
-        '<span style="font-size:.6rem;color:var(--muted)">' + (c.tipo||'texto').toUpperCase() + ' · ' + destino + '</span>' +
-        (c.etiqueta ? '<span style="font-size:.58rem;color:var(--gold)">Etiqueta: ' + c.etiqueta + '</span>' : '') +
-        '</div>';
-    }).join('');
-}
-
-function admVerDestinatarios() {
-  if (!admOK) return;
-  var cont = document.getElementById('adm-destinatarios-r');
-  var filtroClub  = (document.getElementById('adm-notif-club') || {}).value || '';
-  var filtroTrans = !!(document.getElementById('adm-notif-trans') || {}).checked;
-  var filtroResul = !!(document.getElementById('adm-notif-resul') || {}).checked;
-  var filtroProx  = !!(document.getElementById('adm-notif-prox')  || {}).checked;
-
   var ps = getSP();
-  var filtrados = ps.filter(function(p) {
-    // Filtrar por club
-    if (filtroClub && p.club && p.club !== filtroClub) return false;
-    // Filtrar por preferencias de notificación (si se marcó algún filtro)
-    if (filtroTrans || filtroResul || filtroProx) {
-      if (!p.notif) return false;
-      if (filtroTrans && !p.notif.transmisiones) return false;
-      if (filtroResul && !p.notif.resultados)    return false;
-      if (filtroProx  && !p.notif.proximos)      return false;
-    }
-    return true;
-  });
-
-  if (!filtrados.length) {
-    cont.innerHTML = '<div class="msg-box">Sin destinatarios para los filtros elegidos</div>';
-    return;
+  ps.forEach(function(p){ p.ganador = false; });
+  saveSP(ps);
+  // Limpiar ganador en Firebase
+  if (window._firebaseSet && window._firebaseDB && window._firebaseRef) {
+    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'sorteo_ganador'), { activo: false });
   }
-  cont.innerHTML = '<div style="font-size:.65rem;color:var(--green);margin-bottom:6px">👥 ' + filtrados.length + ' destinatario(s)</div>' +
-    filtrados.map(function(p, i) {
-      var notifLabels = [];
-      if (p.notif) {
-        if (p.notif.transmisiones) notifLabels.push('📺');
-        if (p.notif.resultados)    notifLabels.push('⚽');
-        if (p.notif.proximos)      notifLabels.push('📅');
-      }
-      return '<div class="sorteo-entry" style="font-size:.68rem">' +
-        '<div><strong>' + (i+1) + '. ' + p.nombre + '</strong>' +
-        '<span style="display:block">📱 ' + p.tel + (p.club ? ' · ⚽ ' + p.club : '') + '</span>' +
-        (notifLabels.length ? '<span style="color:var(--gold)">' + notifLabels.join(' ') + '</span>' : '') +
-        '</div>' +
-        '<a href="https://wa.me/54' + p.tel.replace(/[^0-9]/g,'') + '" target="_blank" style="background:var(--green);color:#fff;border-radius:6px;padding:4px 8px;font-family:Bebas Neue,sans-serif;font-size:.6rem;text-decoration:none">WA</a>' +
-        '</div>';
-    }).join('');
+  document.getElementById('adm-sorteos-r').innerHTML = '<div class="msg-box">🙈 Ganador ocultado</div>';
 }
 
 // ============================================================
@@ -3001,7 +2860,11 @@ var _pubTotal = 0;
 
 function renderSliderPublicidades(items) {
   if (!items || !items.length) return;
-  var activos = items.filter(function(i){ return _esSI(i.activo); });
+  // El Code.gs ya entrega los items filtrados (activo) y ordenados
+  // Si por algún motivo hay campo activo, igualmente filtramos como respaldo
+  var activos = items.filter(function(i){
+    return !i.activo || _esSI(i.activo);
+  });
   activos.sort(function(a,b){ return (parseInt(a.orden)||99) - (parseInt(b.orden)||99); });
   if (!activos.length) return;
 
@@ -3057,6 +2920,60 @@ function pubReanudar() {
 }
 
 // ============================================================
+// EN VIVO ADMIN — desde hoja envivo_admin del Sheets
+// ============================================================
+function renderEnVivoAdmin(cfg) {
+  if (!cfg) return;
+  var activo = _esSI(cfg.activo);
+  var url    = String(cfg.url_stream || '').trim();
+  var titulo = String(cfg.titulo_partido || 'Transmisión en vivo').trim();
+
+  if (activo && url) {
+    var id = null;
+    var m  = url.match(/(?:v=|youtu\.be\/)([\w-]{11})/);
+    if (m) id = m[1];
+    var banner   = document.getElementById('liveBanner');
+    var lTitle   = document.getElementById('liveTitle');
+    var lBtn     = document.getElementById('liveBannerBtn');
+    var envFrame  = document.getElementById('envivoFrame');
+    var envOff    = document.getElementById('envivoOff');
+    var envIframe = document.getElementById('envivoIframe');
+    if (banner) banner.classList.add('on');
+    if (lTitle) lTitle.textContent = titulo;
+    if (id) {
+      // Solo setear src si no hay uno activo ya (Firebase tiene prioridad)
+      if (envIframe && !envIframe.src) {
+        envIframe.src = 'https://www.youtube.com/embed/' + id + '?autoplay=0';
+      }
+      if (envFrame) envFrame.style.display = 'block';
+      if (envOff)   envOff.style.display   = 'none';
+      if (lBtn) {
+        var watchUrl = 'https://www.youtube.com/watch?v=' + id;
+        lBtn.href = watchUrl;
+        (function(ytId, wUrl) {
+          lBtn.onclick = function(e) {
+            e.preventDefault();
+            var isAndroid = /android/i.test(navigator.userAgent);
+            var isIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent);
+            if (isAndroid) window.location = 'intent://watch?v=' + ytId + '#Intent;scheme=vnd.youtube;package=com.google.android.youtube;end';
+            else if (isIOS) { window.location = 'youtube://watch?v=' + ytId; setTimeout(function(){ window.location = wUrl; }, 1400); }
+            else window.open(wUrl, '_blank');
+          };
+        })(id, watchUrl);
+      }
+    } else if (url) {
+      if (lBtn) lBtn.href = url;
+    }
+  }
+
+  // Pre-llenar campos del panel admin de En Vivo
+  var admUrl = document.getElementById('adm-live-url');
+  var admTit = document.getElementById('adm-live-titulo');
+  if (admUrl && url && !admUrl.value) admUrl.value = url;
+  if (admTit && titulo && !admTit.value) admTit.value = titulo;
+}
+
+// ============================================================
 // MURO DE CARDS DINAMICO (inicio — hoja portada)
 // ============================================================
 function _esSI(v) {
@@ -3068,30 +2985,21 @@ function _esSI(v) {
 
 function renderMuroCards(items) {
   if (!items || !items.length) { console.warn('[Portada] Sin items'); return; }
-  var activos = items.filter(function(i){ return _esSI(i.activo); });
+  // El Code.gs ya entrega solo los activos (activo:'si'), filtrados
+  // Ordenamos por campo orden por si acaso
+  var activos = items.slice();
   activos.sort(function(a,b){ return (parseInt(a.orden)||99) - (parseInt(b.orden)||99); });
-  if (!activos.length) return;
-
-  // Distribuir según etiquetas:
-  // - etiqueta_club definido → solo va a la sección del club (NO al muro inicio)
-  // - etiqueta === 'noticias' → va a sección noticias adicional
-  // - etiqueta === 'galeria' → va a sección galería adicional
-  // - sin etiqueta de club → va al muro de inicio
-  var paraMuro   = activos.filter(function(c){ return !c.etiqueta_club || String(c.etiqueta_club).trim() === ''; });
+  if (!activos.length) { console.warn('[Portada] Array vacío'); return; }
 
   var cont = document.getElementById('muro-cards-contenido');
   var wrap = document.getElementById('muro-cards-wrap');
-  if (!cont || !wrap) return;
+  if (!cont || !wrap) { console.warn('[Portada] No se encontró el contenedor muro-cards-contenido'); return; }
 
-  if (paraMuro.length) {
-    cont.innerHTML = paraMuro.map(function(card){ return renderMuroCard(card); }).join('');
-    wrap.style.display = 'block';
-  } else {
-    wrap.style.display = 'none';
-  }
+  cont.innerHTML = activos.map(function(card) {
+    return renderMuroCard(card);
+  }).join('');
 
-  // Guardar referencia global para usarla en perfiles de club y secciones
-  window._portadaCardsData = activos;
+  wrap.style.display = 'block';
 }
 
 function renderMuroCard(card) {
@@ -3225,17 +3133,12 @@ function abrirPerfilClub(nombreClub) {
 
 function cerrarPerfilClub() {
   document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
-  document.getElementById('inicio').classList.add('active');
+  document.getElementById('clubes').classList.add('active');
+  // Reactivar botón clubes en nav
   document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
-  // Marcar activo el botón de Inicio
   var navBtns = document.querySelectorAll('.nav-btn');
-  navBtns.forEach(function(b){ if(b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'inicio'") > -1) b.classList.add('active'); });
+  navBtns.forEach(function(b){ if(b.getAttribute('onclick') && b.getAttribute('onclick').indexOf('clubes') > -1) b.classList.add('active'); });
   window.scrollTo(0, 0);
-  // Scroll hasta la grilla de clubes en inicio
-  setTimeout(function(){
-    var g = document.getElementById('clubes-grid');
-    if (g) g.scrollIntoView({ behavior:'smooth', block:'center' });
-  }, 100);
 }
 
 function clubTab(id, btn) {
@@ -3247,21 +3150,20 @@ function clubTab(id, btn) {
 
 function renderClubPublicaciones(nombreClub) {
   var cont = document.getElementById('club-pub-contenido');
+  // Filtrar portada_cards por etiqueta_club
   var cards = [];
-  // 1. Publicaciones de portada_cards con etiqueta_club del club
-  var fuente = window._portadaCardsData || appData.portada_cards || [];
-  if (fuente.length) {
-    var dePortada = fuente.filter(function(c){
+  if (appData.portada_cards) {
+    cards = appData.portada_cards.filter(function(c){
       return _esSI(c.activo) &&
-             (c.etiqueta_club || '').trim().toLowerCase() === nombreClub.toLowerCase();
+             (c.etiqueta_club || '').toLowerCase() === nombreClub.toLowerCase();
     });
-    cards = cards.concat(dePortada);
   }
-  // 2. Noticias etiquetadas con ese club
+  // Tambien filtrar noticias por etiqueta_club si existe
   if (appData.noticias) {
     var notis = appData.noticias.filter(function(n){
       return (n.etiqueta_club || '').toLowerCase() === nombreClub.toLowerCase();
     });
+    // Convertir noticias al formato de card para mostrarlas
     notis.forEach(function(n){
       cards.push({
         activo: 'SI', orden: 99, tipo: 'imagen',
@@ -3275,7 +3177,6 @@ function renderClubPublicaciones(nombreClub) {
     cont.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:.8rem">Sin publicaciones de este club por ahora.</div>';
     return;
   }
-  cards.sort(function(a,b){ return (parseInt(a.orden)||99) - (parseInt(b.orden)||99); });
   cont.innerHTML = cards.map(function(c){ return renderMuroCard(c); }).join('');
 }
 
@@ -3412,10 +3313,8 @@ function renderVideoCard(v) {
 window.addEventListener('load', function() {
   renderLista();
   cargarDatos(false);
-  // Mostrar popup de club si nunca eligió
-  setTimeout(function() {
-    if (!localStorage.getItem('clubHincha')) mostrarPopupClub();
-  }, 2500);
+  // Cargar perfil guardado si existe
+  cargarPerfilGuardado();
 });
 
 // ============================================================
@@ -3466,6 +3365,179 @@ function cambiarClubHincha() {
   mostrarPopupClub();
 }
 
+// ============================================================
+// PERFIL DE USUARIO — registro completo en Firebase /usuarios
+// ============================================================
+var _notifPref = 'no';
+
+function toggleNotifPref(val, btn) {
+  _notifPref = val;
+  var si = document.getElementById('notif-si-btn');
+  var no = document.getElementById('notif-no-btn');
+  if (si && no) {
+    si.style.background = val === 'si' ? 'var(--green)' : 'var(--card2)';
+    si.style.borderColor = val === 'si' ? 'var(--green)' : 'rgba(255,255,255,.12)';
+    no.style.background = val === 'no' ? 'var(--red)' : 'var(--card2)';
+    no.style.borderColor = val === 'no' ? 'var(--red)' : 'rgba(255,255,255,.12)';
+  }
+}
+
+function guardarPerfil() {
+  var nombre = (document.getElementById('p-nombre') || {}).value || '';
+  var mail   = (document.getElementById('p-mail')   || {}).value || '';
+  var tel    = (document.getElementById('p-tel')    || {}).value || '';
+  var club   = (document.getElementById('p-club')   || {}).value || '';
+  var msg    = document.getElementById('p-msg');
+  nombre = nombre.trim(); mail = mail.trim(); tel = tel.trim();
+  if (!nombre) { if(msg) msg.innerHTML = '<div class="msg-box err">⚠️ Ingresá tu nombre</div>'; return; }
+  var uid = getUserId();
+  var datos = {
+    nombre: nombre, mail: mail, tel: tel,
+    club: club, notificaciones: _notifPref,
+    registrado: new Date().toLocaleDateString('es-AR'),
+    uid: uid
+  };
+  // Guardar en localStorage
+  try { localStorage.setItem('fn_perfil', JSON.stringify(datos)); } catch(e) {}
+  // Guardar club hincha para compatibilidad
+  if (club) localStorage.setItem('clubHincha', club);
+  // Guardar en Firebase /usuarios
+  if (window._firebaseSet && window._firebaseDB && window._firebaseRef) {
+    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'usuarios/' + uid), datos)
+      .then(function(){ console.log('Perfil guardado en Firebase'); })
+      .catch(function(e){ console.warn('Firebase perfil error:', e); });
+  }
+  if (msg) msg.innerHTML = '<div class="msg-box ok">✅ Perfil guardado correctamente</div>';
+  setTimeout(function(){ mostrarPerfilGuardado(datos); }, 800);
+}
+
+function cargarPerfilGuardado() {
+  try {
+    var raw = localStorage.getItem('fn_perfil');
+    if (raw) {
+      var datos = JSON.parse(raw);
+      // Pre-llenar campos
+      if (datos.nombre) { var el = document.getElementById('p-nombre'); if(el) el.value = datos.nombre; }
+      if (datos.mail)   { var el = document.getElementById('p-mail');   if(el) el.value = datos.mail;   }
+      if (datos.tel)    { var el = document.getElementById('p-tel');     if(el) el.value = datos.tel;    }
+      if (datos.club)   { var el = document.getElementById('p-club');    if(el) el.value = datos.club;   }
+      if (datos.notificaciones) toggleNotifPref(datos.notificaciones, null);
+      mostrarPerfilGuardado(datos);
+    }
+  } catch(e) {}
+}
+
+function mostrarPerfilGuardado(datos) {
+  var form = document.getElementById('perfil-form-wrap');
+  var visor = document.getElementById('perfil-datos-wrap');
+  var resumen = document.getElementById('perfil-resumen');
+  if (!datos || !datos.nombre) return;
+  if (form) form.style.display = 'none';
+  if (visor) visor.style.display = 'block';
+  if (resumen) {
+    var notifIcon = datos.notificaciones === 'si' ? '🔔' : '🔕';
+    resumen.innerHTML =
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+      '<span style="font-size:1.4rem">👤</span>' +
+      '<div><strong style="font-family:Barlow Condensed,sans-serif;font-size:.95rem">' + datos.nombre + '</strong>' +
+      (datos.club ? '<div style="font-size:.65rem;color:var(--muted)">' + datos.club + '</div>' : '') +
+      '</div></div>' +
+      (datos.tel  ? '📱 ' + datos.tel  + '<br>' : '') +
+      (datos.mail ? '✉️ ' + datos.mail + '<br>' : '') +
+      notifIcon + ' Notificaciones: ' + (datos.notificaciones === 'si' ? 'Activadas' : 'Desactivadas') +
+      '<br><span style="font-size:.58rem;color:var(--muted)">Registrado: ' + (datos.registrado||'') + '</span>';
+  }
+}
+
+function editarPerfil() {
+  var form = document.getElementById('perfil-form-wrap');
+  var visor = document.getElementById('perfil-datos-wrap');
+  var msg = document.getElementById('p-msg');
+  if (form) form.style.display = 'block';
+  if (visor) visor.style.display = 'none';
+  if (msg) msg.innerHTML = '';
+}
+
+// ============================================================
+// NOTIFICACIONES PUSH — admin
+// ============================================================
+function admNotifEnVivo() {
+  var url   = (document.getElementById('adm-live-url')    || {}).value || '';
+  var titulo = (document.getElementById('adm-live-titulo') || {}).value || 'Partido en vivo';
+  var msgEl  = document.getElementById('notif-msg');
+  if (msgEl) msgEl.value = '🔴 EN VIVO: ' + titulo + (url ? ' → ' + url : '');
+  var destEl = document.getElementById('notif-dest');
+  if (destEl) destEl.value = 'todos';
+}
+
+function admEnviarNotif() {
+  if (!admOK) return;
+  var texto  = (document.getElementById('notif-msg')  || {}).value || '';
+  var dest   = (document.getElementById('notif-dest') || {}).value || 'todos';
+  var club   = (document.getElementById('notif-club') || {}).value || '';
+  var msgEl  = document.getElementById('adm-notif-r');
+  texto = texto.trim();
+  if (!texto) { if(msgEl) msgEl.innerHTML = '<div class="msg-box err">⚠️ Escribí un mensaje</div>'; return; }
+  if (dest === 'club' && !club.trim()) { if(msgEl) msgEl.innerHTML = '<div class="msg-box err">⚠️ Especificá el club</div>'; return; }
+  if (!window._firebaseSet || !window._firebaseDB || !window._firebaseRef) {
+    if(msgEl) msgEl.innerHTML = '<div class="msg-box err">⚠️ Firebase no disponible</div>'; return;
+  }
+  var payload = {
+    mensaje: texto, destinatarios: dest,
+    club: dest === 'club' ? club.trim() : '',
+    ts: Date.now(),
+    fecha: new Date().toLocaleDateString('es-AR', {day:'numeric',month:'short',year:'numeric'}),
+    enviado_por: 'admin'
+  };
+  var key = 'notif_' + Date.now();
+  window._firebaseSet(window._firebaseRef(window._firebaseDB, 'notificaciones_enviadas/' + key), payload)
+    .then(function() {
+      if(msgEl) msgEl.innerHTML = '<div class="msg-box ok">✅ Notificación registrada en Firebase<br><span style="font-size:.62rem;color:var(--muted)">Requiere FCM para entrega push real</span></div>';
+      var notifMsgEl = document.getElementById('notif-msg');
+      if (notifMsgEl) notifMsgEl.value = '';
+    })
+    .catch(function(e){
+      if(msgEl) msgEl.innerHTML = '<div class="msg-box err">❌ Error: ' + e.message + '</div>';
+    });
+}
+
+// ============================================================
+// FIX renderInicioUltimaFecha — usar nombres exactos del CAT_MAP
+// ============================================================
+// La función original busca '1° Masculino' etc pero el backend ahora
+// devuelve 'Primera Masculino' / 'Primera Femenino'
+// Sobreescribimos para buscar por ambos nombres
+function renderInicioUltimaFecha(grupos) {
+  var pares = [
+    { div: 'Primera Masculino', aliases: ['1° Masculino','1°Masculino','primera masculino'], sufijo: 'masc', label: 'Torneo Oficial 2026' },
+    { div: 'Primera Femenino',  aliases: ['1° Femenino','1°Femenino','primera femenino'],   sufijo: 'fem',  label: 'Torneo Femenino 2026' }
+  ];
+  pares.forEach(function(par) {
+    var divKey = null;
+    // Buscar la clave en grupos usando nombre exacto o alias
+    if (grupos[par.div]) {
+      divKey = par.div;
+    } else {
+      par.aliases.forEach(function(a) {
+        if (!divKey && grupos[a]) divKey = a;
+      });
+    }
+    if (!divKey) return;
+    var fechas = Object.keys(grupos[divKey]).sort(function(a,b){ return parseInt(a.slice(1))-parseInt(b.slice(1)); });
+    var ultima = fechas[fechas.length - 1];
+    var tituloEl = document.getElementById('inicio-fecha-' + par.sufijo + '-titulo');
+    var resEl    = document.getElementById('inicio-fecha-' + par.sufijo + '-resultados');
+    if (tituloEl) tituloEl.textContent = ultima.slice(1) + 'ª Fecha · ' + par.label;
+    if (resEl) resEl.innerHTML = grupos[divKey][ultima].map(function(p) {
+      return '<div class="match-row">' +
+        '<div class="match-team"><img src="' + escudoUrl(p.local, p.escudo_local) + '" onerror="escudoFallback(this)"><span class="team-name">' + p.local.toUpperCase() + '</span></div>' +
+        '<div class="match-score"><div class="score-box">' + p.goles_local + '</div><span class="score-vs">VS</span><div class="score-box">' + p.goles_visita + '</div></div>' +
+        '<div class="match-team away"><img src="' + escudoUrl(p.visita, p.escudo_visita) + '" onerror="escudoFallback(this)"><span class="team-name">' + p.visita.toUpperCase() + '</span></div>' +
+        '</div>';
+    }).join('');
+  });
+}
+
 // Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js')
@@ -3512,6 +3584,35 @@ if ('serviceWorker' in navigator) {
         document.getElementById('liveBanner').classList.add('on');
         document.getElementById('liveBannerBtn').href = url;
       }
+    }
+  });
+
+  // En vivo desde Firebase /envivo (escrito por el panel admin)
+  onValue(ref(db, 'envivo'), function(snapshot) {
+    var data = snapshot.val();
+    if (!data) return;
+    var banner   = document.getElementById('liveBanner');
+    var lTitle   = document.getElementById('liveTitle');
+    var lBtn     = document.getElementById('liveBannerBtn');
+    var envFrame  = document.getElementById('envivoFrame');
+    var envOff    = document.getElementById('envivoOff');
+    var envIframe = document.getElementById('envivoIframe');
+    if (data.activo && data.url) {
+      var m = data.url.match(/(?:v=|youtu\.be\/)([\w-]{11})/);
+      var ytId = m ? m[1] : null;
+      if (banner) banner.classList.add('on');
+      if (lTitle) lTitle.textContent = data.titulo || 'Transmisión en vivo';
+      if (ytId) {
+        if (envIframe) envIframe.src = 'https://www.youtube.com/embed/' + ytId + '?autoplay=1';
+        if (envFrame) envFrame.style.display = 'block';
+        if (envOff)   envOff.style.display   = 'none';
+        if (lBtn)     lBtn.href = data.url;
+      }
+    } else {
+      if (banner) banner.classList.remove('on');
+      if (envIframe) envIframe.src = '';
+      if (envFrame) envFrame.style.display = 'none';
+      if (envOff)   envOff.style.display   = 'block';
     }
   });
 
