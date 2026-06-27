@@ -1188,15 +1188,17 @@ function go(id, btn) {
   btn.classList.add('active');
   window.scrollTo(0, 0);
   // Actualizar header-banner según la sección activa
-  if (appData.recursos) {
-    var hdr = document.getElementById('header-banner');
-    if (hdr) {
-      var bannerKey = (id === 'inicio') ? 'banner_inicio' : ('banner_' + id);
-      var bannerSrc = appData.recursos[bannerKey] || appData.recursos['banner_inicio'] || '';
-      if (bannerSrc) { hdr.src = bannerSrc; hdr.style.display = 'block'; }
-      else { hdr.style.display = 'none'; }
+  try {
+    if (appData && appData.recursos) {
+      var hdr = document.getElementById('header-banner');
+      if (hdr) {
+        var bannerKey = (id === 'inicio') ? 'banner_inicio' : ('banner_' + id);
+        var bannerSrc = appData.recursos[bannerKey] || appData.recursos['banner_inicio'] || '';
+        if (bannerSrc) { hdr.src = bannerSrc; hdr.style.display = 'block'; }
+        else { hdr.style.display = 'none'; }
+      }
     }
-  }
+  } catch(e) {}
   // Iniciar carga del Mundial al entrar por primera vez
   if (id === 'mundial' && !_mundialInit) {
     _mundialInit = true;
@@ -1280,12 +1282,13 @@ function cargarDatos(forzar) {
     return;
   }
   // Versión del caché — cambiar cuando el Code.gs agrega campos nuevos
-  var CACHE_VER = 'v4';
+  var CACHE_VER = 'v5';
   var cacheKey = 'appDataCache_' + CACHE_VER;
   var cacheTs  = 'appDataTs_'   + CACHE_VER;
   // Limpiar versiones viejas del caché automáticamente
   ['appDataCache','appDataTs','appDataCache_v1','appDataTs_v1',
-   'appDataCache_v2','appDataTs_v2','appDataCache_v3','appDataTs_v3'].forEach(function(k){
+   'appDataCache_v2','appDataTs_v2','appDataCache_v3','appDataTs_v3',
+   'appDataCache_v4','appDataTs_v4'].forEach(function(k){
     try { localStorage.removeItem(k); } catch(e) {}
   });
   var ahora = Date.now();
@@ -1310,7 +1313,7 @@ function cargarDatos(forzar) {
     } catch(e) {}
   }
 
-  fetch(APPS_SCRIPT_URL + '?action=getData&token=' + APPS_SCRIPT_TOKEN)
+  fetch(APPS_SCRIPT_URL + '?token=' + APPS_SCRIPT_TOKEN)
     .then(function(r) { return r.json(); })
     .then(function(data) {
         appData = data;
