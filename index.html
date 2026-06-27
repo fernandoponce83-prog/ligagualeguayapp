@@ -445,6 +445,7 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
   <div class="cat-tabs" style="margin-bottom:10px">
     <button class="ct active" onclick="switchLive('video1',this)">📺 Video 1</button>
     <button class="ct" onclick="switchLive('video2',this)">📺 Video 2</button>
+    <button class="ct" onclick="switchLive('femenino',this)">⚽ Femenino</button>
     <button class="ct" onclick="switchLive('radio',this)">📻 Radio</button>
   </div>
 
@@ -479,6 +480,46 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
       </div>
       <span style="margin-left:auto;background:linear-gradient(135deg,#e1306c,#833ab4);color:#fff;border-radius:20px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:1px">VER →</span>
     </a>
+  </div>
+
+  <!-- Femenino: Pasión Azul -->
+  <div id="live-femenino" style="display:none">
+    <!-- Partido en vivo -->
+    <div style="background:rgba(0,87,184,.06);border:1px solid rgba(0,87,184,.18);border-radius:10px;padding:14px;margin-bottom:10px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:.68rem;letter-spacing:2px;color:var(--blue);margin-bottom:10px">📺 EN VIVO · PRIMERA FEMENINO</div>
+      <a href="https://m.youtube.com/@Pasi%C3%B3nAzul.larroque" target="_blank" style="display:flex;align-items:center;gap:10px;background:rgba(0,87,184,.08);border:1px solid rgba(0,87,184,.2);border-radius:8px;padding:14px;text-decoration:none;margin-bottom:8px">
+        <span style="font-size:2rem">📺</span>
+        <div>
+          <strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:1px">PASIÓN AZUL</strong>
+          <span style="font-size:.65rem;color:var(--muted)">YouTube · Transmisión en vivo del partido femenino</span>
+        </div>
+        <span style="margin-left:auto;background:var(--blue);color:#fff;border-radius:20px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:1px">VER →</span>
+      </a>
+      <!-- Notificaciones para partido femenino -->
+      <div id="fem-notif-panel" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:1.4rem">🔔</span>
+          <div style="flex:1">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem">Notificaciones · Partido Femenino</div>
+            <div style="font-size:.65rem;color:var(--muted);margin-top:2px">Avisate cuando empiece el partido</div>
+          </div>
+          <button id="fem-notif-btn" onclick="toggleNotifFemenino(this)" style="background:var(--blue);border:none;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:1px;color:#fff;cursor:pointer">ACTIVAR</button>
+        </div>
+        <div id="fem-notif-status" style="font-size:.62rem;color:var(--muted);margin-top:8px;display:none">✅ Notificaciones activadas para el partido femenino</div>
+      </div>
+    </div>
+    <!-- Videos en diferido -->
+    <div style="margin-bottom:6px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:.68rem;letter-spacing:2px;color:var(--muted);margin-bottom:8px">📼 VER EN DIFERIDO</div>
+      <a href="https://www.youtube.com/@Pasi%C3%B3nAzul.larroque/videos" target="_blank" style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px;text-decoration:none">
+        <span style="font-size:1.6rem">▶️</span>
+        <div>
+          <strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:.88rem;letter-spacing:.5px">Canal Pasión Azul</strong>
+          <span style="font-size:.62rem;color:var(--muted)">Todos los videos y partidos grabados</span>
+        </div>
+        <span style="margin-left:auto;background:rgba(255,255,255,.08);color:var(--text);border-radius:20px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:.72rem">VER →</span>
+      </a>
+    </div>
   </div>
 
   <!-- Radio en vivo -->
@@ -615,6 +656,8 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 <!-- ===================== COMERCIOS ===================== -->
 <section id="comercios" class="section">
   <img id="banner-comercios" src="" style="display:none;width:100%;border-radius:10px;margin-bottom:10px;object-fit:cover;max-height:120px">
+  <!-- Slider de publicidades en comercios -->
+  <div id="slider-comercios" style="display:none;margin-bottom:12px"></div>
   <div style="background:var(--card);border-radius:10px;padding:13px;margin-bottom:10px;border:1px solid rgba(255,255,255,.06);text-align:center">
     <div style="font-size:1.6rem;margin-bottom:5px">🏪</div>
     <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.88rem">¡Publicite su comercio aquí!</div>
@@ -1107,7 +1150,7 @@ function safeImg(str,fallback){
 // ============================================================
 // CONFIGURACIÓN — URLs de conexión
 // ============================================================
-var API_BASE_URL = 'https://script.google.com/macros/s/AKfycbwQZIUri0XZ3fTkMzLmbmW4nK1QDRkh0bkNNPqK9CwTN5jUX-8C-gw-gj0iVmN7Re23/exec';
+var API_BASE_URL = 'https://script.google.com/macros/s/AKfycbx59Apbf5o3HsSh1VGAA0s4V7Hjz5J73EGYNJ8WsGZKjf6QndIfdphnDGCWZYg_u4Br/exec';
 var API_TOKEN    = 'pA_LigaGualeguay_2026_xK9m';
 var LIGA_URL     = API_BASE_URL + '?token=' + API_TOKEN;
 // Alias de compatibilidad (las funciones internas usan estos nombres)
@@ -1173,10 +1216,49 @@ function sc(prefix, id, btn) {
 }
 
 function switchLive(tab, btn) {
-  document.querySelectorAll('#live-video1,#live-video2,#live-radio').forEach(function(el){ el.style.display = 'none'; });
+  document.querySelectorAll('#live-video1,#live-video2,#live-femenino,#live-radio').forEach(function(el){ el.style.display = 'none'; });
   document.getElementById('live-' + tab).style.display = 'block';
   btn.closest('.cat-tabs').querySelectorAll('.ct').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
+}
+
+function toggleNotifFemenino(btn) {
+  var status = document.getElementById('fem-notif-status');
+  var activo = btn.dataset.activo === '1';
+  if (!activo) {
+    // Activar: pedir permiso de notificaciones y capturar token FCM
+    if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+      Notification.requestPermission().then(function(perm) {
+        if (perm === 'granted') {
+          if (typeof window._fcmCapturarToken === 'function') window._fcmCapturarToken();
+          btn.dataset.activo = '1';
+          btn.textContent = 'ACTIVADAS ✓';
+          btn.style.background = 'var(--green)';
+          if (status) { status.textContent = '✅ Notificaciones activadas para el partido femenino'; status.style.display = 'block'; }
+          // Guardar preferencia en Firebase
+          try {
+            var uid = window._fbUser && window._fbUser.uid;
+            if (uid && window._firebaseSet && window._firebaseRef && window._firebaseDB) {
+              window._firebaseSet(window._firebaseRef(window._firebaseDB, 'usuarios/' + uid + '/notif_femenino'), true);
+            }
+          } catch(e) {}
+        } else {
+          if (status) { status.textContent = '⚠️ Permiso denegado. Habilitá las notificaciones en tu navegador.'; status.style.display = 'block'; }
+        }
+      });
+    } else {
+      if (typeof window._fcmCapturarToken === 'function') window._fcmCapturarToken();
+      btn.dataset.activo = '1';
+      btn.textContent = 'ACTIVADAS ✓';
+      btn.style.background = 'var(--green)';
+      if (status) { status.textContent = '✅ Notificaciones activadas para el partido femenino'; status.style.display = 'block'; }
+    }
+  } else {
+    btn.dataset.activo = '0';
+    btn.textContent = 'ACTIVAR';
+    btn.style.background = 'var(--blue)';
+    if (status) status.style.display = 'none';
+  }
 }
 
 function toggleGolVallas(tipo, btn) {
@@ -1290,8 +1372,8 @@ function renderTodo() {
   if (d.sponsors)        renderSponsors(d.sponsors);
   if (d.portada_cards)   renderMuroCards(d.portada_cards);
   // slider_publicidades viene ya filtrado y ordenado desde el servidor
-  if (d.slider_publicidades) renderSliderPublicidades(d.slider_publicidades);
-  else if (d.slider_ads)     renderSliderPublicidades(d.slider_ads);
+  if (d.slider_publicidades) { window._lastSliderData = d.slider_publicidades; renderSliderPublicidades(d.slider_publicidades); }
+  else if (d.slider_ads)     { window._lastSliderData = d.slider_ads; renderSliderPublicidades(d.slider_ads); }
   if (d.envivo_admin)    renderEnVivoAdmin(d.envivo_admin);
 }
 
@@ -1654,9 +1736,14 @@ function renderProximos(rows) {
     // Estado: jugado / programado (vacío = programado)
     var est = String(r.estado || '').trim().toLowerCase()
               .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    r._jugado = (est === 'jugado' || est === 'disputado' || est === 'finalizado');
-    r.goles_local  = r.goles_local  !== undefined && r.goles_local  !== '' ? String(r.goles_local).trim()  : null;
-    r.goles_visita = r.goles_visita !== undefined && r.goles_visita !== '' ? String(r.goles_visita).trim() : null;
+    // Parsear goles antes de decidir si está jugado
+    var gl = (r.goles_local  !== undefined && r.goles_local  !== null && r.goles_local  !== '') ? String(r.goles_local).trim()  : null;
+    var gv = (r.goles_visita !== undefined && r.goles_visita !== null && r.goles_visita !== '') ? String(r.goles_visita).trim() : null;
+    r.goles_local  = gl;
+    r.goles_visita = gv;
+    // Jugado si: campo estado lo dice, O si tiene goles cargados en ambos lados
+    r._jugado = (est === 'jugado' || est === 'disputado' || est === 'finalizado')
+                || (gl !== null && gv !== null && gl !== '' && gv !== '');
     var m = r.fecha_label.match(/(\d+)/);
     r._fechaN = m ? parseInt(m[1]) : 99;
   });
@@ -1955,6 +2042,48 @@ function togglePDF(id, url) {
 // ============================================================
 // COMERCIOS
 // ============================================================
+function renderSliderEnSeccion(containerId, items) {
+  var wrap = document.getElementById(containerId);
+  if (!wrap || !items || !items.length) return;
+  var activos = items.filter(function(i){ return !i.activo || _esSI(i.activo); });
+  activos.sort(function(a,b){ return (parseInt(a.orden)||99)-(parseInt(b.orden)||99); });
+  if (!activos.length) { wrap.style.display='none'; return; }
+  var trackId = containerId+'-track';
+  var dotsId  = containerId+'-dots';
+  var total   = activos.length;
+  var idx     = 0;
+  wrap.innerHTML = '<div style="position:relative;border-radius:10px;overflow:hidden;background:#0d0d22;border:1px solid rgba(255,255,255,.06)">' +
+    '<div id="'+trackId+'" style="display:flex;transition:transform .5s ease;will-change:transform">' +
+    activos.map(function(p){
+      var src  = String(p.imagen_url||'').trim();
+      var link = String(p.link_externo||'').trim();
+      var alt  = String(p.alt_texto||'Publicidad').trim();
+      var click = link ? ' onclick="window.open(''+link+'','_blank')"' : '';
+      return '<div style="min-width:100%;cursor:'+(link?'pointer':'default')+'"'+click+'><img src="'+src+'" alt="'+alt+'" style="width:100%;max-height:130px;object-fit:cover;display:block" onerror="this.parentNode.style.display='none'"></div>';
+    }).join('') +
+    '</div>' +
+    (total>1 ? '<div id="'+dotsId+'" style="position:absolute;bottom:5px;left:0;right:0;display:flex;justify-content:center;gap:4px;z-index:2">'+
+    activos.map(function(_,i){ return '<div style="width:6px;height:6px;border-radius:50%;background:'+(i===0?'#fff':'rgba(255,255,255,.4)')+';cursor:pointer" onclick="secSliderIr(''+trackId+'',''+dotsId+'','+total+','+i+')"></div>'; }).join('')+
+    '</div>' : '') +
+    '</div>';
+  wrap.style.display = 'block';
+  if (total > 1) {
+    var timer = setInterval(function(){
+      idx = (idx+1)%total;
+      secSliderIr(trackId, dotsId, total, idx);
+    }, 4000);
+    wrap.dataset.timer = timer;
+  }
+}
+function secSliderIr(trackId, dotsId, total, newIdx) {
+  var track = document.getElementById(trackId);
+  if (track) track.style.transform = 'translateX(-'+(newIdx*100)+'%)';
+  var dots = document.getElementById(dotsId);
+  if (dots) Array.prototype.forEach.call(dots.children, function(d,i){
+    d.style.background = i===newIdx ? '#fff' : 'rgba(255,255,255,.4)';
+  });
+}
+
 function renderComercios(rows) {
   var cont = document.getElementById('comercios-contenido');
   if (!rows || !rows.length) { cont.innerHTML = ''; return; }
@@ -2000,6 +2129,8 @@ function renderComercios(rows) {
     }).join('');
   }
   cont.innerHTML = html;
+  // Mostrar slider de publicidades en la sección de comercios
+  if (window._lastSliderData) renderSliderEnSeccion('slider-comercios', window._lastSliderData);
 }
 
 // ============================================================
