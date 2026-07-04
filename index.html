@@ -442,84 +442,14 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
     <p style="font-size:.7rem;color:var(--muted);margin-top:5px">Cuando haya partido en vivo, aparecerá aquí</p>
   </div>
 
-  <div class="cat-tabs" style="margin-bottom:10px">
-    <button class="ct active" onclick="switchLive('video1',this)">📺 Video 1</button>
-    <button class="ct" onclick="switchLive('video2',this)">📺 Video 2</button>
-    <button class="ct" onclick="switchLive('femenino',this)">⚽ Femenino</button>
+  <div class="cat-tabs" id="envivo-tabs" style="margin-bottom:10px">
     <button class="ct" onclick="switchLive('radio',this)">📻 Radio</button>
   </div>
 
-  <!-- Video 1: El Debate Pregón -->
-  <div id="live-video1">
-    <a href="https://m.youtube.com/@eldebatepregon2384/shorts" target="_blank" style="display:flex;align-items:center;gap:10px;background:rgba(255,0,0,.08);border:1px solid rgba(255,0,0,.2);border-radius:8px;padding:14px;text-decoration:none;margin-bottom:10px">
-      <span style="font-size:2rem">📺</span>
-      <div>
-        <strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:1px">EL DEBATE PREGÓN</strong>
-        <span style="font-size:.65rem;color:var(--muted)">YouTube · En vivo durante los partidos</span>
-      </div>
-      <span style="margin-left:auto;background:var(--red);color:#fff;border-radius:20px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:1px">VER →</span>
-    </a>
-    <div id="live-links-extra"></div>
-  </div>
+  <div id="envivo-paneles"></div>
 
-  <!-- Video 2: Pasión Azul + Fer News -->
-  <div id="live-video2" style="display:none">
-    <a href="https://m.youtube.com/@Pasi%C3%B3nAzul.larroque" target="_blank" style="display:flex;align-items:center;gap:10px;background:rgba(0,87,184,.08);border:1px solid rgba(0,87,184,.2);border-radius:8px;padding:14px;text-decoration:none;margin-bottom:10px">
-      <span style="font-size:2rem">📺</span>
-      <div>
-        <strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:1px">PASIÓN AZUL</strong>
-        <span style="font-size:.65rem;color:var(--muted)">YouTube · Transmisiones en vivo</span>
-      </div>
-      <span style="margin-left:auto;background:var(--blue);color:#fff;border-radius:20px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:1px">VER →</span>
-    </a>
-    <a href="https://www.instagram.com/jferponce" target="_blank" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(225,48,108,.08),rgba(120,60,200,.08));border:1px solid rgba(225,48,108,.2);border-radius:8px;padding:14px;text-decoration:none">
-      <span style="font-size:2rem">📸</span>
-      <div>
-        <strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:1px">FER NEWS</strong>
-        <span style="font-size:.65rem;color:var(--muted)">@jferponce · Instagram Live</span>
-      </div>
-      <span style="margin-left:auto;background:linear-gradient(135deg,#e1306c,#833ab4);color:#fff;border-radius:20px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:1px">VER →</span>
-    </a>
-  </div>
-
-  <!-- Femenino: Pasión Azul -->
-  <div id="live-femenino" style="display:none">
-    <!-- Partido en vivo -->
-    <div style="background:rgba(0,87,184,.06);border:1px solid rgba(0,87,184,.18);border-radius:10px;padding:14px;margin-bottom:10px">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:.68rem;letter-spacing:2px;color:var(--blue);margin-bottom:10px">📺 EN VIVO · PRIMERA FEMENINO</div>
-      <a href="https://m.youtube.com/@Pasi%C3%B3nAzul.larroque" target="_blank" style="display:flex;align-items:center;gap:10px;background:rgba(0,87,184,.08);border:1px solid rgba(0,87,184,.2);border-radius:8px;padding:14px;text-decoration:none;margin-bottom:8px">
-        <span style="font-size:2rem">📺</span>
-        <div>
-          <strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:1px">PASIÓN AZUL</strong>
-          <span style="font-size:.65rem;color:var(--muted)">YouTube · Transmisión en vivo del partido femenino</span>
-        </div>
-        <span style="margin-left:auto;background:var(--blue);color:#fff;border-radius:20px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:1px">VER →</span>
-      </a>
-      <!-- Notificaciones para partido femenino -->
-      <div id="fem-notif-panel" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:1.4rem">🔔</span>
-          <div style="flex:1">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem">Notificaciones · Partido Femenino</div>
-            <div style="font-size:.65rem;color:var(--muted);margin-top:2px">Avisate cuando empiece el partido</div>
-          </div>
-          <button id="fem-notif-btn" onclick="toggleNotifFemenino(this)" style="background:var(--blue);border:none;border-radius:20px;padding:7px 14px;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:1px;color:#fff;cursor:pointer">ACTIVAR</button>
-        </div>
-        <div id="fem-notif-status" style="font-size:.62rem;color:var(--muted);margin-top:8px;display:none">✅ Notificaciones activadas para el partido femenino</div>
-      </div>
-    </div>
-    <!-- Videos en diferido -->
-    <div style="margin-bottom:6px">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:.68rem;letter-spacing:2px;color:var(--muted);margin-bottom:8px">📼 VER EN DIFERIDO</div>
-      <a href="https://www.youtube.com/@Pasi%C3%B3nAzul.larroque/videos" target="_blank" style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px;text-decoration:none">
-        <span style="font-size:1.6rem">▶️</span>
-        <div>
-          <strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:.88rem;letter-spacing:.5px">Canal Pasión Azul</strong>
-          <span style="font-size:.62rem;color:var(--muted)">Todos los videos y partidos grabados</span>
-        </div>
-        <span style="margin-left:auto;background:rgba(255,255,255,.08);color:var(--text);border-radius:20px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:.72rem">VER →</span>
-      </a>
-    </div>
+  <div id="envivo-sin-datos" style="display:block;text-align:center;padding:20px;color:var(--muted);font-size:.75rem">
+    Cargando transmisiones...
   </div>
 
   <!-- Radio en vivo -->
@@ -1150,7 +1080,7 @@ function safeImg(str,fallback){
 // ============================================================
 // CONFIGURACIÓN — URLs de conexión
 // ============================================================
-var API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxx491fxfOn3OO4lCh7BYqsSJml8XzaRSNyTkDkGSsuRuAEYOnLVIBMQKt8pYJiFVmF/exec';
+var API_BASE_URL = 'https://script.google.com/macros/s/AKfycbwNdic-uELIL1y3JLf2sgPkL0H0WOZqeXWDA27WlZ5Lz3Gefd1AhiHTIbzH1EWYQbzj/exec';
 var API_TOKEN    = 'pA_LigaGualeguay_2026_xK9m';
 var LIGA_URL     = API_BASE_URL + '?token=' + API_TOKEN;
 // Alias de compatibilidad (las funciones internas usan estos nombres)
@@ -1218,50 +1148,19 @@ function sc(prefix, id, btn) {
 }
 
 function switchLive(tab, btn) {
-  document.querySelectorAll('#live-video1,#live-video2,#live-femenino,#live-radio').forEach(function(el){ el.style.display = 'none'; });
-  document.getElementById('live-' + tab).style.display = 'block';
-  btn.closest('.cat-tabs').querySelectorAll('.ct').forEach(function(t){ t.classList.remove('active'); });
-  btn.classList.add('active');
+  document.querySelectorAll('#envivo-paneles > div, #live-radio').forEach(function(el){ el.style.display = 'none'; });
+  var target = document.getElementById('live-' + tab);
+  if (target) target.style.display = 'block';
+  if (btn) {
+    var tabsWrap = btn.closest('.cat-tabs');
+    if (tabsWrap) tabsWrap.querySelectorAll('.ct').forEach(function(t){ t.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+  // Si el usuario elige un partido a mano, detenemos la rotación automática del banner
+  _envivoRotacionParar();
 }
 
-function toggleNotifFemenino(btn) {
-  var status = document.getElementById('fem-notif-status');
-  var activo = btn.dataset.activo === '1';
-  if (!activo) {
-    // Activar: pedir permiso de notificaciones y capturar token FCM
-    if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
-      Notification.requestPermission().then(function(perm) {
-        if (perm === 'granted') {
-          if (typeof window._fcmCapturarToken === 'function') window._fcmCapturarToken();
-          btn.dataset.activo = '1';
-          btn.textContent = 'ACTIVADAS ✓';
-          btn.style.background = 'var(--green)';
-          if (status) { status.textContent = '✅ Notificaciones activadas para el partido femenino'; status.style.display = 'block'; }
-          // Guardar preferencia en Firebase
-          try {
-            var uid = window._fbUser && window._fbUser.uid;
-            if (uid && window._firebaseSet && window._firebaseRef && window._firebaseDB) {
-              window._firebaseSet(window._firebaseRef(window._firebaseDB, 'usuarios/' + uid + '/notif_femenino'), true);
-            }
-          } catch(e) {}
-        } else {
-          if (status) { status.textContent = '⚠️ Permiso denegado. Habilitá las notificaciones en tu navegador.'; status.style.display = 'block'; }
-        }
-      });
-    } else {
-      if (typeof window._fcmCapturarToken === 'function') window._fcmCapturarToken();
-      btn.dataset.activo = '1';
-      btn.textContent = 'ACTIVADAS ✓';
-      btn.style.background = 'var(--green)';
-      if (status) { status.textContent = '✅ Notificaciones activadas para el partido femenino'; status.style.display = 'block'; }
-    }
-  } else {
-    btn.dataset.activo = '0';
-    btn.textContent = 'ACTIVAR';
-    btn.style.background = 'var(--blue)';
-    if (status) status.style.display = 'none';
-  }
-}
+
 
 function toggleGolVallas(tipo, btn) {
   document.getElementById('gol-contenido').style.display = tipo === 'gol' ? 'block' : 'none';
@@ -2162,37 +2061,10 @@ function renderComercios(rows) {
 // TRANSMISIONES EN VIVO
 // ============================================================
 function renderTransmisiones(rows) {
-  // rows: [{url, titulo, activo}]  — activo: SI/NO
-  var activas = rows.filter(function(r){ return String(r.activo).toUpperCase() === 'SI'; });
-  if (activas.length > 0) {
-    var primera = activas[0];
-    var url = primera.url;
-    var id = getYTId(url);
-    if (id) {
-      document.getElementById('envivoIframe').src = 'https://www.youtube.com/embed/' + id + '?autoplay=1';
-      document.getElementById('envivoFrame').style.display = 'block';
-      document.getElementById('envivoOff').style.display   = 'none';
-      document.getElementById('liveBanner').classList.add('on');
-      document.getElementById('liveBannerBtn').href = url;
-      if (primera.titulo) document.getElementById('liveTitle').textContent = primera.titulo + ' — En vivo ahora';
-    }
-    // Links extra en video1
-    var extra = activas.slice(1);
-    if (extra.length) {
-      document.getElementById('live-links-extra').innerHTML = extra.map(function(t) {
-        return '<a href="' + t.url + '" target="_blank" style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:12px;text-decoration:none;margin-bottom:8px">' +
-          '<span style="font-size:1.5rem">📺</span>' +
-          '<div><strong style="display:block;font-family:\'Barlow Condensed\',sans-serif;font-size:.9rem">' + (t.titulo||'Transmisión alternativa') + '</strong></div>' +
-          '<span style="margin-left:auto;background:var(--red);color:#fff;border-radius:20px;padding:3px 9px;font-family:\'Bebas Neue\',sans-serif;font-size:.7rem">VER →</span></a>';
-      }).join('');
-    }
-  } else {
-    document.getElementById('envivoIframe').src = '';
-    document.getElementById('envivoFrame').style.display = 'none';
-    document.getElementById('envivoOff').style.display   = 'block';
-    document.getElementById('liveBanner').classList.remove('on');
-  }
-  // Mostrar próximas transmisiones programadas
+  // NEUTRALIZADO: esta función ya NO controla el banner/iframe central
+  // ni el banner superior — de eso se encarga renderEnVivoAdmin() (hoja envivo_admin),
+  // y la activación manual vía Firebase (panel admin). Acá solo mostramos
+  // la lista de transmisiones programadas / repeticiones (hoja "transmisiones").
   renderProximasTransmisiones(rows);
 }
 
@@ -3224,57 +3096,117 @@ function pubReanudar() {
 }
 
 // ============================================================
-// EN VIVO ADMIN — desde hoja envivo_admin del Sheets
+// EN VIVO ADMIN — desde hoja envivo_admin del Sheets (multi-stream)
 // ============================================================
-function renderEnVivoAdmin(cfg) {
-  if (!cfg) return;
-  var activo = _esSI(cfg.activo);
-  var url    = String(cfg.url_stream || '').trim();
-  var titulo = String(cfg.titulo_partido || 'Transmisión en vivo').trim();
+// NOTA: el "envivoFrame/envivoIframe/envivoOff" (vista principal dentro de
+// la sección En Vivo) queda reservado para la activación manual vía Firebase
+// (panel admin ⚡ "Activar En Vivo"), que sigue teniendo prioridad y no se toca acá.
+// Esta función solo maneja los TABS dinámicos por partido (envivo_admin) y
+// la rotación del banner superior sitewide (liveBanner).
+var _envivoMatches = [];
+var _envivoTimer   = null;
+var _envivoIdx     = 0;
 
-  if (activo && url) {
-    var id = null;
-    var m  = url.match(/(?:v=|youtu\.be\/)([\w-]{11})/);
-    if (m) id = m[1];
-    var banner   = document.getElementById('liveBanner');
-    var lTitle   = document.getElementById('liveTitle');
-    var lBtn     = document.getElementById('liveBannerBtn');
-    var envFrame  = document.getElementById('envivoFrame');
-    var envOff    = document.getElementById('envivoOff');
-    var envIframe = document.getElementById('envivoIframe');
-    if (banner) banner.classList.add('on');
-    if (lTitle) lTitle.textContent = titulo;
-    if (id) {
-      // Solo setear src si no hay uno activo ya (Firebase tiene prioridad)
-      if (envIframe && !envIframe.src) {
-        envIframe.src = 'https://www.youtube.com/embed/' + id + '?autoplay=0';
-      }
-      if (envFrame) envFrame.style.display = 'block';
-      if (envOff)   envOff.style.display   = 'none';
-      if (lBtn) {
-        var watchUrl = 'https://www.youtube.com/watch?v=' + id;
-        lBtn.href = watchUrl;
-        (function(ytId, wUrl) {
-          lBtn.onclick = function(e) {
-            e.preventDefault();
-            var isAndroid = /android/i.test(navigator.userAgent);
-            var isIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent);
-            if (isAndroid) window.location = 'intent://watch?v=' + ytId + '#Intent;scheme=vnd.youtube;package=com.google.android.youtube;end';
-            else if (isIOS) { window.location = 'youtube://watch?v=' + ytId; setTimeout(function(){ window.location = wUrl; }, 1400); }
-            else window.open(wUrl, '_blank');
-          };
-        })(id, watchUrl);
-      }
-    } else if (url) {
-      if (lBtn) lBtn.href = url;
+function renderEnVivoAdmin(matches) {
+  var tabsWrap = document.getElementById('envivo-tabs');
+  var paneles  = document.getElementById('envivo-paneles');
+  var sinDatos = document.getElementById('envivo-sin-datos');
+  if (!tabsWrap || !paneles) return;
+
+  _envivoMatches = Array.isArray(matches) ? matches : [];
+
+  // Limpiar tabs dinámicos y paneles previos (el tab de Radio es fijo y no se toca)
+  tabsWrap.querySelectorAll('.ct[data-dynamic="1"]').forEach(function(b){ b.remove(); });
+  paneles.innerHTML = '';
+  _envivoRotacionParar();
+
+  if (!_envivoMatches.length) {
+    if (sinDatos) { sinDatos.textContent = 'No hay transmisiones activas en este momento.'; sinDatos.style.display = 'block'; }
+    return;
+  }
+  if (sinDatos) sinDatos.style.display = 'none';
+
+  var radioBtn = tabsWrap.querySelector('.ct');
+  _envivoMatches.forEach(function(m, i) {
+    var btn = document.createElement('button');
+    btn.className = 'ct';
+    btn.setAttribute('data-dynamic', '1');
+    btn.textContent = (m.es_vivo ? '🔴 ' : '📼 ') + (m.titulo_partido || ('Partido ' + (i + 1)));
+    btn.addEventListener('click', function(){ switchLive('partido-' + i, btn); });
+    tabsWrap.insertBefore(btn, radioBtn);
+
+    var panel = document.createElement('div');
+    panel.id = 'live-partido-' + i;
+    panel.style.display = 'none';
+    if (m.youtube_id) {
+      panel.innerHTML =
+        '<div class="envivo-frame" style="margin-bottom:8px">' +
+          '<iframe src="https://www.youtube.com/embed/' + m.youtube_id + '?autoplay=0" allowfullscreen allow="autoplay"></iframe>' +
+        '</div>' +
+        '<div style="font-size:.68rem;color:var(--muted);text-align:center">' +
+          (m.canal ? san(m.canal) + ' · ' : '') + (m.es_vivo ? '🔴 EN VIVO' : '📼 DIFERIDO') +
+        '</div>';
+    } else if (m.url_stream) {
+      panel.innerHTML =
+        '<a href="' + safeUrl(m.url_stream) + '" target="_blank" style="display:flex;align-items:center;gap:10px;background:rgba(255,0,0,.08);border:1px solid rgba(255,0,0,.2);border-radius:8px;padding:14px;text-decoration:none">' +
+          '<span style="font-size:2rem">📺</span>' +
+          '<div><strong style="display:block;font-family:\'Barlow Condensed\',sans-serif;font-size:1rem">' + san(m.titulo_partido || 'Transmisión') + '</strong>' +
+          '<span style="font-size:.65rem;color:var(--muted)">' + san(m.canal || '') + '</span></div>' +
+          '<span style="margin-left:auto;background:var(--red);color:#fff;border-radius:20px;padding:4px 10px;font-family:\'Bebas Neue\',sans-serif;font-size:.75rem">VER →</span>' +
+        '</a>';
+    } else {
+      panel.innerHTML = '<p style="text-align:center;color:var(--muted);font-size:.7rem">Transmisión sin URL configurada.</p>';
     }
+    paneles.appendChild(panel);
+  });
+
+  // Activar el primer partido por defecto
+  var firstBtn = tabsWrap.querySelector('.ct[data-dynamic="1"]');
+  if (firstBtn) switchLive('partido-0', firstBtn);
+
+  // Banner superior (sitewide): mostrar el primer partido y, si hay más de uno, rotar cada 6s
+  _envivoIdx = 0;
+  _envivoActualizarBanner(0);
+  if (_envivoMatches.length > 1) {
+    _envivoTimer = setInterval(function() {
+      _envivoIdx = (_envivoIdx + 1) % _envivoMatches.length;
+      _envivoActualizarBanner(_envivoIdx);
+    }, 6000);
   }
 
-  // Pre-llenar campos del panel admin de En Vivo
+  // Pre-llenar campos del panel admin de En Vivo con el primer partido (compatibilidad)
   var admUrl = document.getElementById('adm-live-url');
   var admTit = document.getElementById('adm-live-titulo');
-  if (admUrl && url && !admUrl.value) admUrl.value = url;
-  if (admTit && titulo && !admTit.value) admTit.value = titulo;
+  var primero = _envivoMatches[0];
+  if (admUrl && primero.url_stream && !admUrl.value) admUrl.value = primero.url_stream;
+  if (admTit && primero.titulo_partido && !admTit.value) admTit.value = primero.titulo_partido;
+}
+
+function _envivoActualizarBanner(idx) {
+  var m = _envivoMatches[idx];
+  if (!m) return;
+  var banner = document.getElementById('liveBanner');
+  var lTitle = document.getElementById('liveTitle');
+  var lBtn   = document.getElementById('liveBannerBtn');
+  if (banner) banner.classList.add('on');
+  if (lTitle) lTitle.textContent = (m.titulo_partido || 'Transmisión en vivo') + (m.es_vivo ? ' — En vivo ahora' : ' — Diferido');
+  if (!lBtn) return;
+  var watchUrl = m.youtube_id ? ('https://www.youtube.com/watch?v=' + m.youtube_id) : (m.url_stream || '#');
+  lBtn.href = watchUrl;
+  var ytId = m.youtube_id;
+  lBtn.onclick = function(e) {
+    if (!ytId) return; // sin youtube id: dejamos el link normal
+    e.preventDefault();
+    var isAndroid = /android/i.test(navigator.userAgent);
+    var isIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (isAndroid) window.location = 'intent://watch?v=' + ytId + '#Intent;scheme=vnd.youtube;package=com.google.android.youtube;end';
+    else if (isIOS) { window.location = 'youtube://watch?v=' + ytId; setTimeout(function(){ window.location = watchUrl; }, 1400); }
+    else window.open(watchUrl, '_blank');
+  };
+}
+
+function _envivoRotacionParar() {
+  if (_envivoTimer) { clearInterval(_envivoTimer); _envivoTimer = null; }
 }
 
 // ============================================================

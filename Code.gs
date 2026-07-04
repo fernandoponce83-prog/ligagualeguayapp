@@ -142,7 +142,7 @@ function normalizarCategoria(str) {
 // ── HELPERS ──────────────────────────────────────────────────
 function strVal(v) {
   if (v === null || v === undefined) return '';
-  if (v instanceof Date) return Utilities.formatDate(v, 'America/Argentina/Buenos_Aires', 'yyyy-MM-dd HH:mm');
+  if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
   return String(v).trim();
 }
 function numVal(v) {
@@ -253,7 +253,7 @@ function getAllData(sheetMap, resultados) {
     noticias:             getNoticias(sheetMap),
     sponsors:             getSponsors(sheetMap),
     portada_cards:        getPortadaCards(sheetMap),
-    galeria:              getGaleria(sheetMap),
+    galeria:              getSliderPublicidades(sheetMap),
     slider_publicidades:  getSliderPublicidades(sheetMap),
     envivo_admin:         getEnVivoAdmin(sheetMap),
   };
@@ -423,14 +423,10 @@ function getProximos(map) {
   var idxDiv    = 0;
   var idxLocal  = headers.indexOf('local_') !== -1 ? headers.indexOf('local_') : headers.indexOf('local') !== -1 ? headers.indexOf('local') : 1;
   var idxVisita = headers.indexOf('visitante') !== -1 ? headers.indexOf('visitante') : 2;
-  var idxHora   = headers.indexOf('fecha_hora') !== -1 ? headers.indexOf('fecha_hora') : headers.indexOf('horario_dia') !== -1 ? headers.indexOf('horario_dia') : 3;
+  var idxHora   = headers.indexOf('horario_dia') !== -1 ? headers.indexOf('horario_dia') : 3;
   var idxCancha = headers.indexOf('cancha') !== -1 ? headers.indexOf('cancha') : 4;
   var idxFecha  = headers.indexOf('num_fecha') !== -1 ? headers.indexOf('num_fecha') : 5;
   var idxNotif  = headers.indexOf('notificaciones_') !== -1 ? headers.indexOf('notificaciones_') : headers.indexOf('notificaciones') !== -1 ? headers.indexOf('notificaciones') : 6;
-  var idxUrlVivo   = headers.indexOf('url_vivo') !== -1 ? headers.indexOf('url_vivo') : -1;
-  var idxEstado    = headers.indexOf('estado_') !== -1 ? headers.indexOf('estado_') : headers.indexOf('estado') !== -1 ? headers.indexOf('estado') : -1;
-  var idxGolesL    = headers.indexOf('goles_local') !== -1 ? headers.indexOf('goles_local') : -1;
-  var idxGolesV    = headers.indexOf('goles_visita') !== -1 ? headers.indexOf('goles_visita') : -1;
 
   var tz    = 'America/Argentina/Buenos_Aires';
   var ahora = new Date();
@@ -468,22 +464,6 @@ function getProximos(map) {
       }
     }
 
-    // Leer goles y estado desde la hoja
-    var glRaw = idxGolesL >= 0 ? row[idxGolesL] : '';
-    var gvRaw = idxGolesV >= 0 ? row[idxGolesV] : '';
-    var golesLocal  = (glRaw !== '' && glRaw !== null && glRaw !== undefined) ? String(glRaw).trim() : null;
-    var golesVisita = (gvRaw !== '' && gvRaw !== null && gvRaw !== undefined) ? String(gvRaw).trim() : null;
-
-    // Leer estado explícito de la hoja (puede decir "jugado", "programado", etc.)
-    var estadoHoja = idxEstado >= 0 ? String(row[idxEstado] || '').trim().toLowerCase() : '';
-
-    // Jugado si: el campo estado dice jugado/disputado/finalizado,
-    // O si el reloj pasó la hora del partido (jugado por tiempo),
-    // O si hay goles cargados en ambos lados
-    var esJugado = jugado
-      || (estadoHoja === 'jugado' || estadoHoja === 'disputado' || estadoHoja === 'finalizado')
-      || (golesLocal !== null && golesVisita !== null && golesLocal !== '' && golesVisita !== '');
-
     results.push({
       division:      division,
       local:         local,
@@ -493,11 +473,8 @@ function getProximos(map) {
       fecha_iso:     fechaISO,
       cancha:        String(row[idxCancha] || '').trim(),
       fecha_label:   String(row[idxFecha]  || '').trim(),
-      estado:        esJugado ? 'jugado' : 'programado',
+      estado:        jugado ? 'jugado' : 'programado',
       notificacion:  String(row[idxNotif]  || '').trim().toLowerCase() === 'si',
-      url_vivo:      idxUrlVivo >= 0 ? String(row[idxUrlVivo] || '').trim() : '',
-      goles_local:   golesLocal,
-      goles_visita:  golesVisita,
       escudo_local:  '',
       escudo_visita: '',
     });
@@ -531,37 +508,11 @@ function getVideos(map) {
         tipo:         tipo,
         es_en_vivo:   tipo.indexOf('vivo') !== -1 || tipo.indexOf('live') !== -1,
         es_resumen:   tipo.indexOf('resumen') !== -1,
-        es_externo:   ytId === '' && url !== '',
         thumb:        ytId ? 'https://img.youtube.com/vi/' + ytId + '/mqdefault.jpg' : '',
       };
     })
-    // Mantener tanto videos de YouTube como links externos (stream, etc.)
-    .filter(function(r){ return r.youtube_id !== '' || r.url_original !== ''; })
+    .filter(function(r){ return r.youtube_id !== ''; })
     .sort(function(a,b){ return b.id - a.id; });
-}
-
-// ── GALERÍA ───────────────────────────────────────────────────
-function getGaleria(map) {
-  var sheet = getSheetByMap(map, ['galeria','Galeria','Galería']);
-  if (!sheet) return [];
-  var rows = getRows(sheet);
-  return rows
-    .filter(function(r) {
-      var a = r['activo_'] || r['activo '] || r['activo'];
-      return (a === '' || a === null || a === undefined) ? true : boolVal(a);
-    })
-    .map(function(r) {
-      return {
-        // frontend usa "nombre" pero la hoja tiene "titulo"
-        nombre:       strVal(r['titulo'] || r['nombre'] || ''),
-        url_foto:     normalizarUrlGithub(strVal(r['url_foto'] || r['url'] || '')),
-        descripcion:  strVal(r['descripcion'] || r['descripción'] || ''),
-        categoria:    strVal(r['categoria'] || ''),
-        url_externo:  strVal(r['url_externo'] || r['link_externo'] || ''),
-        escudo_url:   normalizarUrlGithub(strVal(r['url_escudos'] || r['escudo_url'] || '')),
-      };
-    })
-    .filter(function(r){ return r.nombre !== '' || r.url_foto !== ''; });
 }
 
 // ── TRIBUNAL ──────────────────────────────────────────────────
@@ -588,9 +539,7 @@ function getTribunal(map) {
 
 // ── COMERCIOS ─────────────────────────────────────────────────
 function getComercios(map) {
-  // Busca primero hoja 'comercios'; si no existe, usa 'sponsors_tabla'
-  var sheet = getSheetByMap(map, ['comercios','Comercios','sponsors_tabla','sponsors tabla']);
-  if (!sheet) return [];
+  var sheet = getSheetByMap(map, ['comercios','Comercios']);
   var rows  = getRows(sheet);
   return rows
     .filter(function(r){ return boolVal(r['activo'] !== undefined ? r['activo'] : 'si'); })
@@ -600,13 +549,12 @@ function getComercios(map) {
         rubro:        strVal(r['rubro'] || ''),
         mensaje:      strVal(r['mensaje'] || ''),
         whatsapp:     strVal(r['whatsapp'] || ''),
-        instagram:    strVal(r['instagram_'] || r['instagram '] || r['instagram'] || ''),
+        instagram:    strVal(r['instagram'] || ''),
         tiktok:       strVal(r['tik_tok'] || r['tiktok'] || ''),
         boton_texto:  strVal(r['boton_texto'] || ''),
         link_externo: strVal(r['link_externo'] || ''),
         destacado:    boolVal(r['destacado'] || 'no'),
-        // sponsors_tabla puede tener 'imagen ' (con espacio) como header
-        imagen_url:   normalizarUrlGithub(strVal(r['imagen_'] || r['imagen '] || r['imagen'] || r['logo_url'] || '')),
+        imagen_url:   normalizarUrlGithub(strVal(r['imagen'] || r['imagen_'] || r['logo_url'] || '')),
       };
     })
     .filter(function(r){ return r.nombre !== ''; });
@@ -714,22 +662,28 @@ function getSliderPublicidades(map) {
 }
 
 // ── EN VIVO ADMIN ─────────────────────────────────────────────
+// Devuelve un ARRAY con todos los partidos activos (multi-stream).
+// Antes devolvía solo el primer activo como objeto único.
 function getEnVivoAdmin(map) {
   var sheet = getSheetByMap(map, ['envivo_admin','en_vivo_admin','envivo admin','En Vivo Admin']);
-  if (!sheet) return null;
+  if (!sheet) return [];
   var rows = getRows(sheet);
   var activos = rows.filter(function(r){ return boolVal(r['activo'] || 'no'); });
-  if (!activos.length) return null;
-  var r   = activos[0];
-  var url = strVal(r['url_stream'] || r['url'] || '');
-  return {
-    activo:         true,
-    url_stream:     url,
-    youtube_id:     extraerYoutubeId(url),
-    titulo_partido: strVal(r['titulo_partido'] || r['titulo'] || ''),
-    canal:          strVal(r['canal'] || ''),
-    notas:          strVal(r['notas'] || ''),
-  };
+  if (!activos.length) return [];
+  return activos.map(function(r, i) {
+    var url   = strVal(r['url_stream'] || r['url'] || '');
+    var notas = strVal(r['notas'] || '').trim().toLowerCase();
+    return {
+      activo:         true,
+      url_stream:     url,
+      youtube_id:     extraerYoutubeId(url),
+      titulo_partido: strVal(r['titulo_partido'] || r['titulo'] || ''),
+      canal:          strVal(r['canal'] || ''),
+      notas:          strVal(r['notas'] || ''),
+      es_vivo:        notas.indexOf('vivo') !== -1 && notas.indexOf('diferido') === -1,
+      orden:          numVal(r['orden'] || (i + 1)),
+    };
+  }).sort(function(a, b){ return a.orden - b.orden; });
 }
 
 // ── PORTADA CARDS ────────────────────────────────────────────
