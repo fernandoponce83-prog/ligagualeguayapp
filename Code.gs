@@ -5,33 +5,6 @@
 
 var TOKEN_SECRETO = 'pA_LigaGualeguay_2026_xK9m';
 
-// ── API-FOOTBALL (Mundial 2026) ──────────────────────────────
-var MUNDIAL_LEAGUE_ID = 1;
-var MUNDIAL_SEASON    = 2026;
-var API_BASE          = 'https://v3.football.api-sports.io';
-var MUNDIAL_CACHE_TTL = 300; // segundos
-
-// ── CACHE (persiste entre ejecuciones) ───────────────────────
-function apiCacheGet(key) {
-  var raw = CacheService.getScriptCache().get(key);
-  if (!raw) return null;
-  try { return JSON.parse(raw); } catch(e) { return null; }
-}
-
-function apiCacheSet(key, value) {
-  try {
-    CacheService.getScriptCache().put(key, JSON.stringify(value), MUNDIAL_CACHE_TTL);
-  } catch(e) {
-    Logger.log('Cache write error: ' + e.message);
-  }
-}
-
-// ── CONFIGURAR API KEY (ejecutar UNA vez) ───────────────────
-function configurarApiKeyFootball() {
-  PropertiesService.getScriptProperties().setProperty('API_FOOTBALL_KEY', 'ab9be1a59cb81afbd99b937a60994aee');
-  Logger.log('✅ API_FOOTBALL_KEY guardada en Script Properties');
-}
-
 // ── NORMALIZAR URLs DE GITHUB ────────────────────────────────
 function normalizarUrlGithub(url) {
   if (!url || String(url).trim() === '' || url === 'null' || url === 'undefined') return '';
@@ -209,9 +182,9 @@ function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : '';
 
   // Routing por action
-  if (action === 'mundial') {
-    var tab = e.parameter.tab || 'hoy';
-    return responder(getMundialData(tab));
+  if (action === 'ligaprofesional') {
+    var tab = e.parameter.tab || 'zonas';
+    return responder(getLigaProfesionalData(tab));
   } else if (action === 'enviarNotif') {
     var titulo  = e.parameter.titulo  || 'Liga Gualeguay';
     var mensaje = e.parameter.mensaje || '';
@@ -309,7 +282,11 @@ function getClubes(map) {
     .filter(function(c){ return c.nombre !== ''; });
 }
 
-// ── POSICIONES + FORMA RECIENTE ───────────────────────────────
+// ── POSICIONES + FORMA RECIENTE + AUTOCÁLCULO ─────────────────
+// Cualquier categoría con resultados cargados en la hoja "resultados" se
+// recalcula sola (tabla, pts, pj, gf, gc, dg, forma, estado en vivo).
+// Las categorías SIN resultados cargados siguen usando la hoja manual
+// "tabla posiciones" como respaldo. Supercopa se suma sola (ver abajo).
 function getPosiciones(map, resultados) {
   var sheet = getSheetByMap(map, ['tabla posiciones','tabla_posiciones','posiciones','Posiciones','Tabla de Posiciones']);
   var rows  = getRows(sheet);
@@ -328,9 +305,12 @@ function getPosiciones(map, resultados) {
       dg:         numVal(r['dg']),
       escudo_url: '',
       forma:      [],
+      en_vivo:    false,
+      vivo:       null,
     };
   }).filter(function(r){ return r.club !== ''; });
 
+  // ── Forma reciente manual (para las categorías que NO se autocalculan) ──
   if (resultados && resultados.length) {
     filas.forEach(function(fila) {
       var partidos = resultados.filter(function(res) {
@@ -349,24 +329,147 @@ function getPosiciones(map, resultados) {
       }).reverse();
     });
   }
+
+  // ── Autocálculo desde "resultados": cualquier categoría con al menos
+  //    un resultado cargado se recalcula sola y pisa la fila manual ──────
+  var CATS_AUTO = [];
+  if (resultados && resultados.length) {
+    var vistos = {};
+    resultados.forEach(function(res) {
+      if (res.division && res.division !== 'Supercopa' && !vistos[res.division]) {
+        vistos[res.division] = true;
+        CATS_AUTO.push(res.division);
+      }
+    });
+  }
+
+  CATS_AUTO.forEach(function(catAuto) {
+    var resCategoria = resultados.filter(function(res) { return res.division === catAuto; });
+    if (!resCategoria.length) return;
+
+    var tabla = {};
+    resCategoria.forEach(function(res) {
+      var local  = res.local.trim();
+      var visita = res.visita.trim();
+      var gl     = res.goles_local;
+      var gv     = res.goles_visita;
+      if (!local || !visita) return;
+      if (!tabla[local])  tabla[local]  = {pts:0,pj:0,g:0,e:0,p:0,gf:0,gc:0,partidos:[],vivo:null};
+      if (!tabla[visita]) tabla[visita] = {pts:0,pj:0,g:0,e:0,p:0,gf:0,gc:0,partidos:[],vivo:null};
+
+      // Los goles/puntos del partido EN VIVO se suman igual que uno finalizado,
+      // así la tabla refleja el parcial apenas se actualiza gl/gv en la hoja.
+      tabla[local].pj++;  tabla[visita].pj++;
+      tabla[local].gf  += gl; tabla[local].gc  += gv;
+      tabla[visita].gf += gv; tabla[visita].gc += gl;
+      if (gl > gv)       { tabla[local].g++;  tabla[local].pts  += 3; tabla[visita].p++; }
+      else if (gl === gv){ tabla[local].e++;  tabla[local].pts  += 1; tabla[visita].e++; tabla[visita].pts += 1; }
+      else               { tabla[visita].g++; tabla[visita].pts += 3; tabla[local].p++; }
+      tabla[local].partidos.push({esLocal:true,  gl:gl, gv:gv, en_vivo:res.en_vivo});
+      tabla[visita].partidos.push({esLocal:false, gl:gl, gv:gv, en_vivo:res.en_vivo});
+
+      if (res.en_vivo) {
+        var resLocal  = gl > gv ? 'G' : (gl === gv ? 'E' : 'P');
+        var resVisita = gv > gl ? 'G' : (gl === gv ? 'E' : 'P');
+        tabla[local].vivo  = {rival: visita, gf: gl, gc: gv, resultado: resLocal};
+        tabla[visita].vivo = {rival: local,  gf: gv, gc: gl, resultado: resVisita};
+      }
+    });
+
+    filas = filas.filter(function(f){ return f.division !== catAuto; });
+
+    var pos = 1;
+    var nuevas = Object.keys(tabla).map(function(club) {
+      var t  = tabla[club];
+      var dg = t.gf - t.gc;
+      var completos = t.partidos.filter(function(p){ return !p.en_vivo; });
+      var forma = completos.slice(-5).map(function(p) {
+        var gf = p.esLocal ? p.gl : p.gv;
+        var gc = p.esLocal ? p.gv : p.gl;
+        if (gf > gc) return 'G'; if (gf === gc) return 'E'; return 'P';
+      });
+      return {division:catAuto, club:club, pts:t.pts, pj:t.pj, g:t.g, e:t.e, p:t.p,
+              gf:t.gf, gc:t.gc, dg:dg, escudo_url:'', forma:forma,
+              en_vivo: !!t.vivo, vivo: t.vivo, pos: 0};
+    }).sort(function(a,b){
+      if (b.pts !== a.pts) return b.pts - a.pts;
+      if (b.dg  !== a.dg)  return b.dg  - a.dg;
+      return b.gf - a.gf;
+    });
+    nuevas.forEach(function(r){ r.pos = pos++; });
+    filas = filas.concat(nuevas);
+  });
+
+  // ── SUPERCOPA — se calcula sola sumando Primera Masculino + 3° + 4° ──
+  var supercopaCalc = calcularSupercopa(filas);
+  if (supercopaCalc.length) {
+    filas = filas.filter(function(f){ return f.division !== 'Supercopa'; });
+    filas = filas.concat(supercopaCalc);
+  }
+
   return filas;
 }
 
+// Suma pts, pj, gf, gc por club a través de Primera Masculino + 3° + 4° División
+function calcularSupercopa(filas) {
+  var DIVS_SUPERCOPA = ['Primera Masculino', 'Tercera División', 'Cuarta División'];
+  var mapa = {};
+  filas.forEach(function(f) {
+    if (DIVS_SUPERCOPA.indexOf(f.division) === -1) return;
+    if (!mapa[f.club]) mapa[f.club] = {pts:0, pj:0, gf:0, gc:0, en_vivo:false, divisiones:0};
+    mapa[f.club].pts += f.pts;
+    mapa[f.club].pj  += f.pj;
+    mapa[f.club].gf  += f.gf;
+    mapa[f.club].gc  += f.gc;
+    mapa[f.club].divisiones++;
+    if (f.en_vivo) mapa[f.club].en_vivo = true;
+  });
+  var clubes = Object.keys(mapa);
+  if (!clubes.length) return [];
+  var filasSuper = clubes.map(function(club) {
+    var t = mapa[club];
+    return {
+      division: 'Supercopa', club: club, pts: t.pts, pj: t.pj,
+      g: null, e: null, p: null,
+      gf: t.gf, gc: t.gc, dg: t.gf - t.gc,
+      escudo_url: '', forma: [], en_vivo: t.en_vivo, vivo: null,
+      divisiones_computadas: t.divisiones
+    };
+  }).sort(function(a,b){
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    if (b.dg  !== a.dg)  return b.dg  - a.dg;
+    return b.gf - a.gf;
+  });
+  var pos = 1;
+  filasSuper.forEach(function(r){ r.pos = pos++; });
+  return filasSuper;
+}
+
 // ── RESULTADOS ────────────────────────────────────────────────
+// "estado" es OPCIONAL y retrocompatible: vacío = finalizado (igual que antes).
+// Valores esperados: "en_curso" / "en vivo" → marca el partido como EN VIVO.
 function getResultados(map) {
   var sheet = getSheetByMap(map, ['resultados','Resultados']);
   var rows  = getRows(sheet);
   return rows.map(function(r) {
     var fechaStr = strVal(r['resultados'] || r['fecha'] || '');
-    var m = fechaStr.match(/(\d+)/);
+    var sF = fechaStr.toLowerCase().replace(/[áàä]/g,'a').replace(/[éèë]/g,'e');
+    var mR = sF.match(/ronda\s*(\d+)/), mFe = sF.match(/fecha\s*(\d+)/);
+    var ordenGlobal = (mR || mFe)
+      ? (mR ? parseInt(mR[1]) : 0) * 100 + (mFe ? parseInt(mFe[1]) : 0)
+      : (fechaStr.match(/(\d+)/) ? parseInt(fechaStr.match(/(\d+)/)[1]) : 0);
+    var estadoRaw = strVal(r['estado'] || '').toLowerCase()
+      .replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i').replace(/[óòö]/g,'o').replace(/[úùü]/g,'u');
+    var enVivo = estadoRaw.indexOf('curso') !== -1 || estadoRaw.indexOf('vivo') !== -1;
     return {
-      fecha_num:    m ? parseInt(m[1]) : 0,
+      fecha_num:    ordenGlobal,
       fecha_label:  fechaStr,
       division:     normalizarCategoria(strVal(r['categoria'] || r['categoría'] || '')),
       local:        strVal(r['local']),
       goles_local:  numVal(r['gl']),
       visita:       strVal(r['visitante']),
       goles_visita: numVal(r['gv']),
+      en_vivo:      enVivo,
     };
   }).filter(function(r){ return r.local !== '' && r.visita !== ''; });
 }
@@ -416,7 +519,8 @@ function getVallas(map) {
 function getProximos(map) {
   var sheet = getSheetByMap(map, ['proximos partidos','proximos_partidos','Próximos Partidos','proximos']);
   if (!sheet) return [];
-  var data = sheet.getDataRange().getValues();
+  var data    = sheet.getDataRange().getValues();
+  var display = sheet.getDataRange().getDisplayValues(); // texto tal cual se ve en la celda, sin conversión de timezone
   if (data.length < 2) return [];
 
   var headers = data[0].map(function(h){ return String(h||'').trim().toLowerCase().replace(/\s+/g,'_'); });
@@ -434,20 +538,29 @@ function getProximos(map) {
 
   var results = [];
   for (var i = 1; i < data.length; i++) {
-    var row    = data[i];
+    var row        = data[i];
+    var rowDisplay = display[i];
     var local  = String(row[idxLocal]  || '').trim();
     var visita = String(row[idxVisita] || '').trim();
     if (!local || !visita) continue;
 
-    var division = normalizarCategoria(String(row[idxDiv] || '').trim());
-    var rawHora  = row[idxHora];
+    var division    = normalizarCategoria(String(row[idxDiv] || '').trim());
+    var rawHora      = row[idxHora];
+    var horaDisplay  = String(rowDisplay[idxHora] || '').trim(); // "15:00" tal cual está escrito en Sheets
     var horaStr  = '';
     var diaLabel = '';
     var fechaISO = '';
     var jugado   = false;
 
     if (rawHora instanceof Date && !isNaN(rawHora.getTime())) {
-      horaStr  = Utilities.formatDate(rawHora, tz, 'HH:mm');
+      // La HORA se toma del texto mostrado en la celda (nunca del objeto Date
+      // convertido) — así evitamos el desfasaje horario según el timezone
+      // configurado en el archivo de Sheets.
+      var mHoraDisp = horaDisplay.match(/(\d{1,2}):(\d{2})/);
+      horaStr = mHoraDisp
+        ? (mHoraDisp[1].length < 2 ? '0' + mHoraDisp[1] : mHoraDisp[1]) + ':' + mHoraDisp[2]
+        : Utilities.formatDate(rawHora, tz, 'HH:mm');
+
       fechaISO = Utilities.formatDate(rawHora, tz, 'yyyy-MM-dd');
       var dd   = rawHora.getDate();
       var mm   = rawHora.getMonth() + 1;
@@ -663,7 +776,6 @@ function getSliderPublicidades(map) {
 
 // ── EN VIVO ADMIN ─────────────────────────────────────────────
 // Devuelve un ARRAY con todos los partidos activos (multi-stream).
-// Antes devolvía solo el primer activo como objeto único.
 function getEnVivoAdmin(map) {
   var sheet = getSheetByMap(map, ['envivo_admin','en_vivo_admin','envivo admin','En Vivo Admin']);
   if (!sheet) return [];
@@ -712,317 +824,10 @@ function getPortadaCards(map) {
   return out.sort(function(a,b){ return a.orden - b.orden; });
 }
 
-
-// ============================================================
-//  MUNDIAL 2026 — football-data.org (reemplaza el bloque anterior)
-// ============================================================
-
-var FD_BASE    = 'https://api.football-data.org/v4';
-var FD_COMP    = 'WC';  // código del Mundial en football-data.org
-var FD_CACHE_TTL = 300; // segundos
-
-// ── Guardar API Key (ejecutar UNA vez) ───────────────────────
-function configurarApiKeyFD() {
-  PropertiesService.getScriptProperties()
-    .setProperty('FD_API_KEY', '0f88d266174340268bfd85539f4d0df4');
-  Logger.log('✅ FD_API_KEY guardada en Script Properties');
-}
-
-// ── Helper: llamada a football-data.org ──────────────────────
-function apiFD(endpoint) {
-  var cacheKey = 'fd_' + endpoint;
-  var cached   = apiCacheGet(cacheKey);
-  if (cached !== null) return cached;
-
-  var apiKey = PropertiesService.getScriptProperties().getProperty('FD_API_KEY');
-  if (!apiKey) {
-    Logger.log('FD_API_KEY no configurada. Ejecutá configurarApiKeyFD()');
-    return null;
-  }
-
-  var url = FD_BASE + endpoint;
-  var options = {
-    method: 'GET',
-    headers: { 'X-Auth-Token': apiKey },
-    muteHttpExceptions: true,
-    timeout: 10000
-  };
-
-  try {
-    var resp = UrlFetchApp.fetch(url, options);
-    var code = resp.getResponseCode();
-    if (code !== 200) {
-      Logger.log('FD API error HTTP ' + code + ': ' + resp.getContentText());
-      return null;
-    }
-    var json = JSON.parse(resp.getContentText());
-    apiCacheSet(cacheKey, json);
-    return json;
-  } catch(e) {
-    Logger.log('FD fetch error: ' + e.message);
-    return null;
-  }
-}
-
-// ── Traducir status de football-data.org → códigos cortos ───
-function traducirStatusFD(status, minute) {
-  var map = {
-    'SCHEDULED':   'NS',
-    'TIMED':       'NS',
-    'IN_PLAY':     '1H',
-    'PAUSED':      'HT',
-    'FINISHED':    'FT',
-    'AWARDED':     'FT',
-    'POSTPONED':   'PST',
-    'CANCELLED':   'CANC',
-    'SUSPENDED':   'SUSP'
-  };
-  var s = map[status] || status || 'NS';
-  // Si está en juego y tenemos minuto, devolvemos el minuto
-  if (status === 'IN_PLAY' && minute) s = minute + "'";
-  return s;
-}
-
-function traducirStatusTextoFD(status) {
-  var map = {
-    'SCHEDULED': 'No comenzado',
-    'TIMED':     'No comenzado',
-    'IN_PLAY':   'En juego',
-    'PAUSED':    'Entretiempo',
-    'FINISHED':  'Finalizado',
-    'AWARDED':   'Finalizado',
-    'POSTPONED': 'Postergado',
-    'CANCELLED': 'Cancelado',
-    'SUSPENDED': 'Suspendido'
-  };
-  return map[status] || status || '';
-}
-
-function esEnVivoFD(status) {
-  return status === 'IN_PLAY' || status === 'PAUSED';
-}
-
-function esFinalizadoFD(status) {
-  return status === 'FINISHED' || status === 'AWARDED';
-}
-
-// ── Traducir rondas al español ───────────────────────────────
-function traducirRondaFD(stage) {
-  var map = {
-    'GROUP_STAGE':   'Fase de Grupos',
-    'LAST_32':       'Ronda de 32',
-    'LAST_16':       'Octavos de Final',
-    'QUARTER_FINALS':'Cuartos de Final',
-    'SEMI_FINALS':   'Semifinales',
-    'THIRD_PLACE':   '3° y 4° Puesto',
-    'FINAL':         'FINAL'
-  };
-  return map[stage] || stage || '';
-}
-
-// ── Formatear un partido al esquema que espera el frontend ───
-function formatMatchFD(m) {
-  var status  = m.status || 'SCHEDULED';
-  var minute  = m.minute || null;
-  var sCorto  = traducirStatusFD(status, minute);
-  var vivo    = esEnVivoFD(status);
-  var fin     = esFinalizadoFD(status);
-
-  // Banderas: football-data.org provee crest (escudo) por equipo
-  // Las banderas por ISO2 las construimos con flagcdn.com (gratis, sin key)
-  var homeCrest = (m.homeTeam && m.homeTeam.crest) ? m.homeTeam.crest : '';
-  var awayCrest = (m.awayTeam && m.awayTeam.crest) ? m.awayTeam.crest : '';
-
-  var homeScore = null;
-  var awayScore = null;
-  if (m.score) {
-    if (fin && m.score.fullTime) {
-      homeScore = m.score.fullTime.home;
-      awayScore = m.score.fullTime.away;
-    } else if (vivo && m.score.halfTime) {
-      homeScore = m.score.halfTime.home;
-      awayScore = m.score.halfTime.away;
-    }
-  }
-
-  return {
-    fixture: {
-      id:          m.id,
-      date:        m.utcDate,
-      status:      sCorto,
-      status_text: traducirStatusTextoFD(status),
-      en_vivo:     vivo,
-      finalizado:  fin,
-      elapsed:     minute,
-      venue:       (m.venue || ''),
-      venue_city:  ''
-    },
-    league: {
-      round: traducirRondaFD(m.stage),
-      group: m.group || '',
-      name:  'FIFA World Cup 2026',
-      flag:  ''
-    },
-    teams: {
-      home: {
-        name:   (m.homeTeam && m.homeTeam.name)      ? m.homeTeam.name      : 'Por definir',
-        code:   (m.homeTeam && m.homeTeam.tla)       ? m.homeTeam.tla       : '',
-        logo:   homeCrest,
-        winner: (m.score && m.score.winner === 'HOME_TEAM')
-      },
-      away: {
-        name:   (m.awayTeam && m.awayTeam.name)      ? m.awayTeam.name      : 'Por definir',
-        code:   (m.awayTeam && m.awayTeam.tla)       ? m.awayTeam.tla       : '',
-        logo:   awayCrest,
-        winner: (m.score && m.score.winner === 'AWAY_TEAM')
-      }
-    },
-    goals: {
-      home: homeScore,
-      away: awayScore
-    },
-    score: {
-      halftime: {
-        home: m.score && m.score.halfTime  ? m.score.halfTime.home  : null,
-        away: m.score && m.score.halfTime  ? m.score.halfTime.away  : null
-      },
-      fulltime: {
-        home: m.score && m.score.fullTime  ? m.score.fullTime.home  : null,
-        away: m.score && m.score.fullTime  ? m.score.fullTime.away  : null
-      },
-      extratime: {
-        home: m.score && m.score.extraTime ? m.score.extraTime.home : null,
-        away: m.score && m.score.extraTime ? m.score.extraTime.away : null
-      },
-      penalty: {
-        home: m.score && m.score.penalties ? m.score.penalties.home : null,
-        away: m.score && m.score.penalties ? m.score.penalties.away : null
-      }
-    }
-  };
-}
-
-// ── getMundialData (router) ──────────────────────────────────
-function getMundialData(tab) {
-  switch(tab) {
-    case 'hoy':      return getMundialHoy();
-    case 'fixture':  return getMundialFixture();
-    case 'grupos':   return getMundialGrupos();
-    case 'knockout': return getMundialKnockout();
-    default:         return { error: 'Tab desconocida: ' + tab };
-  }
-}
-
-// ── HOY ─────────────────────────────────────────────────────
-function getMundialHoy() {
-  var hoy  = Utilities.formatDate(
-    new Date(), 'America/Argentina/Buenos_Aires', 'yyyy-MM-dd'
-  );
-  var data = apiFD('/competitions/' + FD_COMP + '/matches?dateFrom=' + hoy + '&dateTo=' + hoy);
-  if (!data || !data.matches) return { fecha: hoy, matches: [], argentina: null };
-
-  var matches    = data.matches.map(formatMatchFD);
-  var argentina  = matches.filter(function(m) {
-    return m.teams.home.name === 'Argentina' || m.teams.away.name === 'Argentina';
-  });
-
-  return {
-    fecha:     hoy,
-    matches:   matches,
-    argentina: argentina.length ? argentina : null
-  };
-}
-
-// ── FIXTURE COMPLETO ────────────────────────────────────────
-function getMundialFixture() {
-  var data = apiFD('/competitions/' + FD_COMP + '/matches');
-  if (!data || !data.matches) return { matches: [] };
-
-  var matches = data.matches.map(formatMatchFD);
-  matches.sort(function(a, b) {
-    return (a.fixture.date || '').localeCompare(b.fixture.date || '');
-  });
-  return { matches: matches };
-}
-
-// ── GRUPOS ──────────────────────────────────────────────────
-function getMundialGrupos() {
-  var data = apiFD('/competitions/' + FD_COMP + '/standings');
-  if (!data || !data.standings) return { groups: {} };
-
-  var grupos = {};
-  data.standings.forEach(function(standing) {
-    // football-data.org devuelve type: TOTAL / HOME / AWAY
-    // Solo queremos TOTAL
-    if (standing.type !== 'TOTAL') return;
-    var grupo = standing.group || 'Grupo';
-    // Normalizar nombre: "GROUP_A" → "Grupo A"
-    var nombreGrupo = grupo.replace('GROUP_', 'Grupo ');
-
-    grupos[nombreGrupo] = (standing.table || []).map(function(eq) {
-      return {
-        rank:   eq.position,
-        team:   eq.team ? eq.team.name  : '',
-        logo:   eq.team ? (eq.team.crest || '') : '',
-        played: eq.playedGames,
-        won:    eq.won,
-        draw:   eq.draw,
-        lost:   eq.lost,
-        gf:     eq.goalsFor,
-        gc:     eq.goalsAgainst,
-        dg:     eq.goalDifference,
-        points: eq.points,
-        form:   eq.form || '',
-        desc:   eq.description || ''
-      };
-    });
-  });
-  return { groups: grupos };
-}
-
-// ── ELIMINACIÓN DIRECTA ─────────────────────────────────────
-function getMundialKnockout() {
-  var data = apiFD('/competitions/' + FD_COMP + '/matches');
-  if (!data || !data.matches) return { knockout: [] };
-
- var rondasOrden = [
-  'LAST_32',
-  'LAST_16', 
-  'QUARTER_FINALS',
-  'SEMI_FINALS',
-  'THIRD_PLACE',
-  'FINAL'
-]; var rondasOrden = [
-    'ROUND_OF_32', 'ROUND_OF_16', 'QUARTER_FINALS',
-    'SEMI_FINALS', 'THIRD_PLACE', 'FINAL'
-  ];
-
-  var porRonda = {};
-  data.matches.forEach(function(m) {
-    var stage = m.stage || '';
-    if (rondasOrden.indexOf(stage) === -1) return;
-    if (!porRonda[stage]) porRonda[stage] = [];
-    porRonda[stage].push(formatMatchFD(m));
-  });
-
-  var result = [];
-  rondasOrden.forEach(function(ronda) {
-    if (porRonda[ronda] && porRonda[ronda].length) {
-      result.push({
-        name:    traducirRondaFD(ronda),
-        matches: porRonda[ronda]
-      });
-    }
-  });
-
-  return { knockout: result };
-}
-
 // ============================================================
 //  NOTIFICACIONES PUSH — FCM HTTP v1
 // ============================================================
 function enviarNotifFCM(titulo, mensaje, dest, club) {
-  // Leer tokens desde Firebase REST API
   var dbUrl = 'https://liga-gualeguay-default-rtdb.firebaseio.com/usuarios.json';
   var token = ScriptApp.getOAuthToken();
 
@@ -1033,7 +838,6 @@ function enviarNotifFCM(titulo, mensaje, dest, club) {
     var usuarios = JSON.parse(resp.getContentText());
     if (!usuarios) return { enviados: 0, errores: 0 };
 
-    // Recolectar tokens según destinatario
     var tokens = [];
     Object.keys(usuarios).forEach(function(uid) {
       var u = usuarios[uid];
@@ -1044,7 +848,6 @@ function enviarNotifFCM(titulo, mensaje, dest, club) {
 
     if (!tokens.length) return { enviados: 0, errores: 0, msg: 'Sin tokens registrados' };
 
-    // Enviar via FCM HTTP v1
     var projectId = 'liga-gualeguay';
     var fcmUrl = 'https://fcm.googleapis.com/v1/projects/' + projectId + '/messages:send';
     var oauthToken = ScriptApp.getOAuthToken();
@@ -1097,36 +900,212 @@ function enviarNotifFCM(titulo, mensaje, dest, club) {
     return { error: e.message };
   }
 }
+// ============================================================
+//  LIGA PROFESIONAL ARGENTINA + COPA ARGENTINA — API-Football
+//  Reemplaza todo el bloque anterior de "Mundial" (API-Football
+//  viejo Y el bloque de football-data.org).
+// ============================================================
+var LPF_LEAGUE_ID      = 128; // Liga Profesional Argentina
+var COPA_ARG_LEAGUE_ID = 130; // Copa Argentina
+var AFA_SEASON         = 2026;
+var AFA_BASE           = 'https://v3.football.api-sports.io';
 
-// ── DIAGNÓSTICO actualizado ──────────────────────────────────
-function diagnosticCompleto() {
-  Logger.log('=== DIAGNÓSTICO ===');
+// Snapshot guardado en Script Properties — lo llena el trigger cada 15 min.
+// doGet SOLO lee esto, nunca llama a la API en el momento que alguien abre la app.
+var AFA_PROP_KEY_LPF  = 'afa_snapshot_lpf';
+var AFA_PROP_KEY_COPA = 'afa_snapshot_copa';
+var AFA_PROP_KEY_TS   = 'afa_snapshot_ts';
 
-  var fdKey = PropertiesService.getScriptProperties().getProperty('FD_API_KEY');
-  Logger.log('FD API Key: ' + (fdKey ? 'SÍ' : 'NO — ejecutá configurarApiKeyFD()'));
-
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var m  = buildSheetMap(ss);
-  ['configuración','recursos','clubes','tabla posiciones','resultados','goleadores',
-   'vallas','proximos partidos','videos','tribunal','comercios','transmisiones',
-   'noticias','sponsors_tabla','slider_publicidades','envivo_admin','portada'
-  ].forEach(function(h) {
-    Logger.log((m[h] ? '✅' : '❌') + ' ' + h);
-  });
-
-  if (fdKey) {
-    try {
-      var r = UrlFetchApp.fetch(FD_BASE + '/competitions/' + FD_COMP, {
-        method: 'GET',
-        headers: { 'X-Auth-Token': fdKey },
-        muteHttpExceptions: true
-      });
-      var st = JSON.parse(r.getContentText());
-      Logger.log('Mundial WC: ' + (st.name ? '✅ ' + st.name : '❌ no encontrado'));
-    } catch(e) {
-      Logger.log('❌ FD API error: ' + e.message);
+// ── Helper: llamada a API-Football — SOLO la usa el trigger ──
+function apiFootballFetch(endpoint) {
+  var apiKey = PropertiesService.getScriptProperties().getProperty('API_FOOTBALL_KEY');
+  if (!apiKey) { Logger.log('API_FOOTBALL_KEY no configurada'); return null; }
+  var url = AFA_BASE + endpoint;
+  var options = {
+    method: 'GET',
+    headers: { 'x-apisports-key': apiKey },
+    muteHttpExceptions: true,
+    timeout: 10000
+  };
+  try {
+    var resp = UrlFetchApp.fetch(url, options);
+    if (resp.getResponseCode() !== 200) {
+      Logger.log('API-Football error HTTP ' + resp.getResponseCode() + ': ' + resp.getContentText());
+      return null;
     }
+    return JSON.parse(resp.getContentText());
+  } catch(e) {
+    Logger.log('API-Football fetch error: ' + e.message);
+    return null;
   }
-  Logger.log('=== FIN ===');
+}
+
+// ── TRIGGER — configurar UNA vez ──────────────────────────────
+// Editor de Apps Script → ⏰ Activadores (panel izquierdo) → Agregar activador
+//   Función a ejecutar: actualizarSnapshotAFA
+//   Fuente del evento: Basado en tiempo
+//   Tipo: Temporizador de minutos → Cada 45 minutos ✅ (confirmado con Fer:
+//   3 llamadas por ejecución × 32 ejecuciones/día = 96/día, justo debajo
+//   del límite de 100/día del plan free)
+function actualizarSnapshotAFA() {
+  var props = PropertiesService.getScriptProperties();
+
+  // Liga Profesional: standings (Zona A/B) + fixtures
+  var standingsLPF = apiFootballFetch('/standings?league=' + LPF_LEAGUE_ID + '&season=' + AFA_SEASON);
+  var fixturesLPF  = apiFootballFetch('/fixtures?league=' + LPF_LEAGUE_ID + '&season=' + AFA_SEASON);
+  if (standingsLPF && fixturesLPF) {
+    props.setProperty(AFA_PROP_KEY_LPF, JSON.stringify({ standings: standingsLPF, fixtures: fixturesLPF }));
+  } else {
+    Logger.log('⚠️ No se pudo actualizar snapshot Liga Profesional — se mantiene el anterior');
+  }
+
+  // Copa Argentina: solo fixtures (formato copa, sin tabla de posiciones)
+  var fixturesCopa = apiFootballFetch('/fixtures?league=' + COPA_ARG_LEAGUE_ID + '&season=' + AFA_SEASON);
+  if (fixturesCopa) {
+    props.setProperty(AFA_PROP_KEY_COPA, JSON.stringify({ fixtures: fixturesCopa }));
+  } else {
+    Logger.log('⚠️ No se pudo actualizar snapshot Copa Argentina — se mantiene el anterior');
+  }
+
+  props.setProperty(AFA_PROP_KEY_TS, String(Date.now()));
+  Logger.log('✅ Snapshot AFA actualizado ' + new Date());
+}
+
+// Con el trigger cada 45 min: 3 llamadas × 32/día = 96/día — justo debajo
+// del límite free. Si ves en el dashboard que sobra margen, podés bajar a
+// cada 30 min los fines de semana (día de partido) más adelante.
+
+// ── Lectura del snapshot (esto es lo que llama doGet) ─────────
+function leerSnapshotAFA(key) {
+  var raw = PropertiesService.getScriptProperties().getProperty(key);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch(e) { return null; }
+}
+
+// ── Router (reemplaza a getMundialData) ────────────────────────
+function getLigaProfesionalData(tab) {
+  switch(tab) {
+    case 'zonas':   return getLPFZonas();
+    case 'anual':   return getLPFAnual();
+    case 'fixture': return getLPFFixture();
+    case 'copa':    return getCopaArgentina();
+    default:        return { error: 'Tab desconocida: ' + tab };
+  }
+}
+
+// ── ZONA A / ZONA B ─────────────────────────────────────────────
+function getLPFZonas() {
+  var snap = leerSnapshotAFA(AFA_PROP_KEY_LPF);
+  if (!snap || !snap.standings || !snap.standings.response || !snap.standings.response.length) {
+    return { zonas: {}, actualizado: null };
+  }
+  var tablas = snap.standings.response[0].league.standings || [];
+  var zonas = {};
+  tablas.forEach(function(zona, idx) {
+    // API-Football suele traer el nombre de zona en cada equipo (group).
+    // Si no viene, se lo asignamos por orden: Zona A, Zona B...
+    var nombreZona = (zona[0] && zona[0].group) ? zona[0].group : 'Zona ' + String.fromCharCode(65 + idx);
+    zonas[nombreZona] = zona.map(function(eq) {
+      return {
+        rank:   eq.rank,
+        team:   eq.team.name,
+        logo:   eq.team.logo,
+        played: eq.all.played,
+        won:    eq.all.win,
+        draw:   eq.all.draw,
+        lost:   eq.all.lose,
+        gf:     eq.all.goals.for,
+        gc:     eq.all.goals.against,
+        dg:     eq.goalsDiff,
+        points: eq.points,
+        form:   eq.form || ''
+      };
+    });
+  });
+  return { zonas: zonas, actualizado: leerTimestampAFA() };
+}
+
+// ── TABLA ANUAL / ACUMULADA (Zona A + Zona B combinadas) ────────
+function getLPFAnual() {
+  var z = getLPFZonas().zonas;
+  var todos = [];
+  Object.keys(z).forEach(function(k){ todos = todos.concat(z[k]); });
+  todos.sort(function(a,b){
+    if (b.points !== a.points) return b.points - a.points;
+    if (b.dg     !== a.dg)     return b.dg     - a.dg;
+    return b.gf - a.gf;
+  });
+  todos.forEach(function(r, i){ r.rank = i + 1; });
+  return { tabla: todos, actualizado: leerTimestampAFA() };
+}
+
+// ── FIXTURE COMPLETO LIGA PROFESIONAL ───────────────────────────
+function getLPFFixture() {
+  var snap = leerSnapshotAFA(AFA_PROP_KEY_LPF);
+  if (!snap || !snap.fixtures || !snap.fixtures.response) return { matches: [] };
+  var matches = snap.fixtures.response.map(formatMatchAFA);
+  matches.sort(function(a, b){ return (a.fixture.date || '').localeCompare(b.fixture.date || ''); });
+  return { matches: matches, actualizado: leerTimestampAFA() };
+}
+
+// ── COPA ARGENTINA (por rondas, formato eliminación) ────────────
+function getCopaArgentina() {
+  var snap = leerSnapshotAFA(AFA_PROP_KEY_COPA);
+  if (!snap || !snap.fixtures || !snap.fixtures.response) return { rondas: [] };
+  var porRonda = {};
+  snap.fixtures.response.forEach(function(m) {
+    var ronda = (m.league && m.league.round) ? m.league.round : 'Sin ronda';
+    if (!porRonda[ronda]) porRonda[ronda] = [];
+    porRonda[ronda].push(formatMatchAFA(m));
+  });
+  var rondas = Object.keys(porRonda).map(function(r) {
+    return { name: r, matches: porRonda[r] };
+  });
+  return { rondas: rondas, actualizado: leerTimestampAFA() };
+}
+
+function leerTimestampAFA() {
+  var ts = PropertiesService.getScriptProperties().getProperty(AFA_PROP_KEY_TS);
+  return ts ? parseInt(ts) : null;
+}
+
+// ── Traducción de status de API-Football (ya vienen en códigos cortos) ──
+function esEnVivoAFA(status) {
+  return ['1H','HT','2H','ET','BT','P','LIVE','SUSP','INT'].indexOf(status) !== -1;
+}
+function esFinalizadoAFA(status) {
+  return ['FT','AET','PEN'].indexOf(status) !== -1;
+}
+
+// ── Formatear un partido: API-Football ya viene casi en el formato
+//    que espera el frontend (por eso el bloque de football-data.org
+//    lo traducía A este mismo esquema). Acá solo normalizamos. ──────
+function formatMatchAFA(m) {
+  var statusShort = m.fixture.status.short;
+  return {
+    fixture: {
+      id:          m.fixture.id,
+      date:        m.fixture.date,
+      status:      statusShort,
+      status_text: m.fixture.status.long || '',
+      en_vivo:     esEnVivoAFA(statusShort),
+      finalizado:  esFinalizadoAFA(statusShort),
+      elapsed:     m.fixture.status.elapsed,
+      venue:       (m.fixture.venue && m.fixture.venue.name) || '',
+      venue_city:  (m.fixture.venue && m.fixture.venue.city) || ''
+    },
+    league: {
+      round: (m.league && m.league.round) || '',
+      group: '',
+      name:  (m.league && m.league.name)  || '',
+      flag:  (m.league && m.league.flag)  || ''
+    },
+    teams: {
+      home: { name: m.teams.home.name, code: '', logo: m.teams.home.logo, winner: m.teams.home.winner },
+      away: { name: m.teams.away.name, code: '', logo: m.teams.away.logo, winner: m.teams.away.winner }
+    },
+    goals: { home: m.goals.home, away: m.goals.away },
+    score: m.score
+  };
 }
 
