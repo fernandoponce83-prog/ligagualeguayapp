@@ -31,8 +31,6 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 .header-title h1{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;line-height:1}
 .header-title p{font-family:'Barlow Condensed',sans-serif;font-size:.56rem;color:var(--muted);letter-spacing:1px;margin-top:2px}
 .user-btn{background:none;border:none;color:rgba(255,255,255,.85);font-size:1.4rem;cursor:pointer;padding:4px;border-radius:50%;line-height:1}
-.user-btn.spinning{animation:spin360 .7s linear infinite}
-@keyframes spin360{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
 /* LIVE BANNER */
 .live-banner{background:linear-gradient(135deg,#1a0005,#2d0010);border-bottom:2px solid var(--red);padding:8px 16px;display:none}
@@ -89,18 +87,6 @@ body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;mi
 .zona-petit td:first-child{border-left:3px solid #aaa}
 .zona-repechaje td:first-child{border-left:3px solid var(--red)}
 .zona-semis td:first-child{border-left:3px solid var(--pink)}
-
-/* ── PARTIDO EN VIVO (posiciones) ── */
-tr.fila-vivo{animation:pulseVivo 1.6s ease-in-out infinite}
-tr.fila-vivo.v-win{background:rgba(0,166,81,.16) !important}
-tr.fila-vivo.v-draw{background:rgba(245,197,24,.16) !important}
-tr.fila-vivo.v-loss{background:rgba(230,57,70,.16) !important}
-tr.fila-vivo td:first-child{border-left:3px solid currentColor}
-@keyframes pulseVivo{0%,100%{opacity:1}50%{opacity:.72}}
-.vivo-tag{display:inline-block;margin-top:2px;font-size:.56rem;font-weight:700;letter-spacing:.3px;padding:1px 7px;border-radius:20px;white-space:nowrap}
-.vivo-tag.v-win{background:#00a651;color:#fff}
-.vivo-tag.v-draw{background:#f5c518;color:#111}
-.vivo-tag.v-loss{background:#e63946;color:#fff}
 .zona-legend{display:flex;gap:10px;padding:6px 12px;font-size:.58rem;font-family:'Barlow Condensed',sans-serif;color:var(--muted)}
 .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
 
@@ -331,13 +317,11 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
       <h1 id="app-titulo">FÚTBOL GUALEGUAY</h1>
       <p id="app-subtitulo">Fer News · Pasión Azul · El Debate Pregón</p>
     </div>
-    <div style="position:relative;z-index:1;display:flex;align-items:center;gap:6px">
-      <button class="user-btn" id="refresh-btn" onclick="manualRefresh(this)" title="Actualizar datos">🔄</button>
+    <div style="position:relative;z-index:1">
       <button class="user-btn" onclick="openPanel()" title="Usuario">👤</button>
     </div>
   </div>
 </header>
-<div id="refresh-toast" style="position:fixed;top:8px;left:50%;transform:translateX(-50%) translateY(-140%);z-index:999;background:var(--green);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.5px;padding:7px 16px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,.35);transition:transform .3s ease">✅ Actualizado</div>
  
 <!-- ===================== LIVE BANNER ===================== -->
 <div class="live-banner" id="liveBanner">
@@ -356,8 +340,6 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
   <div class="nav-inner">
     <button class="nav-btn active" onclick="go('inicio',this)">🏠 Inicio</button>
     <button class="nav-btn" onclick="go('envivo',this)">🔴 En Vivo</button>
-    <button class="nav-btn" onclick="go('ligaprofesional',this)">🇦🇷 Liga AFA</button>
-    <button class="nav-btn" onclick="go('clubes',this)">🛡️ Clubes</button>
     <button class="nav-btn" onclick="go('posiciones',this)">📊 Posiciones</button>
     <button class="nav-btn" onclick="go('resultados',this)">⚽ Resultados</button>
     <button class="nav-btn" onclick="go('goleadores',this)">🥅 Goleadores</button>
@@ -380,7 +362,7 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
   <!-- 1. Banner principal panorámico — se adapta sin recortar -->
   <div id="inicio-banner-wrap" style="border-radius:12px;overflow:hidden;margin-bottom:12px;border:1px solid rgba(255,255,255,.08);background:#020b1a;position:relative">
     <img id="inicio-banner-img" src="https://raw.githubusercontent.com/fernandoponce83-prog/ligagualeguayapp/refs/heads/main/imagenes/banner_inicio.png" alt="Liga Gualeguay"
-      style="width:100%;max-height:140px;display:block;object-fit:cover;transition:opacity .4s"
+      style="width:100%;height:auto;display:block;object-fit:contain;transition:opacity .4s"
       onerror="this.style.display='none';document.getElementById('inicio-banner-fallback').style.display='flex'">
     <div id="inicio-banner-fallback" style="display:none;padding:28px 0;align-items:center;justify-content:center;flex-direction:column;gap:4px;background:linear-gradient(135deg,#0d0d2b,#1a0a20)">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)">⚽ LIGA GUALEGUAY 2026</div>
@@ -422,32 +404,31 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
     <div id="inicio-fecha-fem-resultados"><div class="loading-state">Cargando...</div></div>
   </div>
 
-  <!-- 6. Ver en vivo + Radio -->
+  <!-- 6. Ver en vivo -->
   <div class="sec-div"><h3>📺 Ver en vivo</h3></div>
-  <div style="display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:8px;margin-bottom:12px;align-items:stretch">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
     <a href="https://m.youtube.com/@eldebatepregon2384/shorts" target="_blank" style="text-decoration:none">
-      <div style="background:linear-gradient(135deg,rgba(255,0,0,.12),transparent);border:1px solid rgba(255,0,0,.25);border-radius:10px;padding:12px;text-align:center;height:100%;display:flex;flex-direction:column;justify-content:center">
+      <div style="background:linear-gradient(135deg,rgba(255,0,0,.12),transparent);border:1px solid rgba(255,0,0,.25);border-radius:10px;padding:12px;text-align:center">
         <div style="font-size:1.6rem;margin-bottom:3px">📺</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1px">EL DEBATE</div>
         <div style="font-size:.56rem;color:var(--muted)">PREGÓN</div>
       </div>
     </a>
-
-    <!-- Mini reproductor de radio — acceso rápido desde Inicio -->
-    <div style="background:linear-gradient(160deg,rgba(232,0,28,.14),rgba(20,20,40,.5));border:1px solid rgba(232,0,28,.3);border-radius:10px;padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px">
-      <div id="home-radio-badge" style="font-size:.52rem;font-weight:700;letter-spacing:1px;background:var(--muted);color:#fff;border-radius:10px;padding:1px 7px">OFFLINE</div>
-      <button id="home-radio-play-btn" onclick="toggleRadio()" style="background:var(--red);border:none;border-radius:50%;width:46px;height:46px;font-size:1.15rem;cursor:pointer;color:#fff;box-shadow:0 3px 10px rgba(232,0,28,.4);transition:all .2s">▶</button>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:.68rem;letter-spacing:1px;margin-top:1px">FM TRADICIÓN 97.1</div>
-      <input type="range" id="home-radio-vol-slider" min="0" max="1" step="0.05" value="0.8" oninput="setRadioVol(this.value)" style="width:80%;accent-color:var(--red);height:3px;cursor:pointer;margin-top:2px">
-    </div>
-
     <a href="https://m.youtube.com/@Pasi%C3%B3nAzul.larroque" target="_blank" style="text-decoration:none">
-      <div style="background:linear-gradient(135deg,rgba(0,87,184,.12),transparent);border:1px solid rgba(0,87,184,.25);border-radius:10px;padding:12px;text-align:center;height:100%;display:flex;flex-direction:column;justify-content:center">
+      <div style="background:linear-gradient(135deg,rgba(0,87,184,.12),transparent);border:1px solid rgba(0,87,184,.25);border-radius:10px;padding:12px;text-align:center">
         <div style="font-size:1.6rem;margin-bottom:3px">📺</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1px">PASIÓN</div>
         <div style="font-size:.56rem;color:var(--muted)">AZUL</div>
       </div>
     </a>
+  </div>
+
+  <!-- 7. Clubes — al final para que cargue rápido lo importante -->
+  <div class="sec-div"><h3>🛡️ Clubes · Liga Gualeguay 2026</h3></div>
+  <div class="card">
+    <div id="clubes-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px;padding:11px">
+      <div class="loading-state" style="grid-column:span 5;padding:15px">Cargando clubes...</div>
+    </div>
   </div>
 
 </section>
@@ -561,26 +542,6 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
 </section>
 
 <!-- ===================== POSICIONES ===================== -->
-<section id="clubes" class="section">
-  <div class="sec-div"><h3>🛡️ Clubes · Liga Gualeguay 2026</h3></div>
-  <div class="card">
-    <div id="clubes-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px;padding:11px">
-      <div class="loading-state" style="grid-column:span 5;padding:15px">Cargando clubes...</div>
-    </div>
-  </div>
-</section>
-
-<section id="ligaprofesional" class="section">
-  <div class="sec-div"><h3>🇦🇷 Liga Profesional Argentina</h3></div>
-  <div id="lpf-tabs" class="cat-tabs">
-    <button class="ct active" onclick="switchLPF('zonas',this)">Zona A / B</button>
-    <button class="ct" onclick="switchLPF('anual',this)">Tabla Anual</button>
-    <button class="ct" onclick="switchLPF('copa',this)">🏆 Copa Argentina</button>
-  </div>
-  <div id="lpf-actualizado" style="font-size:.6rem;color:var(--muted);margin-bottom:8px;text-align:right"></div>
-  <div id="lpf-contenido" class="loading-state">Cargando datos de AFA...</div>
-</section>
-
 <section id="posiciones" class="section">
   <img id="banner-posiciones" src="" style="display:none;width:100%;border-radius:10px;margin-bottom:10px;object-fit:cover;max-height:120px">
   <div id="sponsor-posiciones_masc" style="display:none;align-items:center;background:var(--card);border-radius:8px;padding:7px 12px;margin-bottom:8px;border:1px solid rgba(245,197,24,.2)"></div>
@@ -956,7 +917,7 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
 // ============================================================
 // CONFIGURACIÓN — REEMPLAZÁ LA URL CUANDO PUBLIQUES EL SCRIPT
 // ============================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw1M_mfAqZ6E_uX7pIaWzP-Nl-UnPyt16ced9dT1K-E942PpBLZV3_jHuwi3IvuB90x/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZSATQOlYucutSPtDDCGb27PRMwrX3NaibUH23Gvu3-E2qJCi1N5ROfMx5mDSmikGB/exec';
 var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m';
 var PASS = 'Reyazucar95';
 
@@ -977,7 +938,6 @@ function go(id, btn) {
   document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
   window.scrollTo(0, 0);
-  if (id === 'ligaprofesional' && !lpfCache[lpfTabActual]) cargarLPF(lpfTabActual);
   // Actualizar header-banner según la sección activa
   if (appData.recursos) {
     var hdr = document.getElementById('header-banner');
@@ -1019,16 +979,12 @@ function toggleGolVallas(tipo, btn) {
 // CARGA DE DATOS DESDE APPS SCRIPT
 // ============================================================
 function cargarDatos(forzar) {
-  cargarDatosPromise(forzar);
-} // fin cargarDatos (wrapper retrocompatible, ignora el valor de retorno)
-
-function cargarDatosPromise(forzar) {
   if (APPS_SCRIPT_URL === 'PENDIENTE' || APPS_SCRIPT_URL.indexOf('PENDIENTE') !== -1) {
     document.querySelectorAll('.loading-state').forEach(function(el){
       el.className = 'error-state';
       el.innerHTML = '⚙️ Configuración pendiente — falta la URL del Apps Script';
     });
-    return Promise.resolve();
+    return;
   }
   var cacheKey = 'appDataCache';
   var cacheTs  = 'appDataTs';
@@ -1043,13 +999,13 @@ function cargarDatosPromise(forzar) {
         if (cached) {
           appData = JSON.parse(cached);
           renderTodo();
-          return Promise.resolve();
+          return;
         }
       }
     } catch(e) {}
   }
 
-  return fetch(APPS_SCRIPT_URL + '?action=getData&token=' + APPS_SCRIPT_TOKEN)
+  fetch(APPS_SCRIPT_URL + '?action=getData&token=' + APPS_SCRIPT_TOKEN)
     .then(function(r) { return r.json(); })
     .then(function(data) {
         appData = data;
@@ -1062,39 +1018,8 @@ function cargarDatosPromise(forzar) {
     .catch(function(err) {
         console.error('Error cargando datos:', err);
         mostrarErrorGeneral();
-        throw err;
     });
-}
-
-// Recarga automática adaptativa: más seguido mientras hay partidos EN VIVO
-function hayPartidoEnVivo() {
-  var pos = (appData && appData.posiciones) || [];
-  return pos.some(function(r){ return r.en_vivo; });
-}
-function scheduleAutoRefresh() {
-  var espera = hayPartidoEnVivo() ? 20000 : 60000;
-  setTimeout(function(){
-    cargarDatosPromise(true).then(scheduleAutoRefresh).catch(scheduleAutoRefresh);
-  }, espera);
-}
-
-// Botón de recarga manual visible para todos los usuarios (header)
-function manualRefresh(btn) {
-  if (btn) btn.classList.add('spinning');
-  cargarDatosPromise(true).then(function(){
-    if (btn) btn.classList.remove('spinning');
-    mostrarToastRefresh();
-  }).catch(function(){
-    if (btn) btn.classList.remove('spinning');
-  });
-}
-
-function mostrarToastRefresh() {
-  var t = document.getElementById('refresh-toast');
-  if (!t) return;
-  t.style.transform = 'translateX(-50%) translateY(0)';
-  setTimeout(function(){ t.style.transform = 'translateX(-50%) translateY(-140%)'; }, 1600);
-}
+} // fin cargarDatos
 
 function recargarDatos() {
   var r = document.getElementById('adm-reload-r');
@@ -1133,7 +1058,7 @@ function renderTodo() {
   if (d.galeria)         renderGaleria(d.galeria);
   if (d.sponsors)        renderSponsors(d.sponsors);
   if (d.portada_cards)   renderMuroCards(d.portada_cards);
-  if (d.slider_publicidades) renderSliderPublicidades(d.slider_publicidades);
+  if (d.slider_ads)      renderSliderPublicidades(d.slider_ads);
 }
 
 // ============================================================
@@ -1286,27 +1211,17 @@ function renderPosiciones(rows) {
       } else if (zonas[posInt]) {
         rowStyle = ' style="background:rgba(0,166,81,.08)"';
       }
-      // Partido EN VIVO: pisa el estilo de la fila con el color del resultado parcial
-      var vivoCls = '', vivoTag = '';
-      if (e.en_vivo && e.vivo) {
-        var vClase = e.vivo.resultado === 'G' ? 'v-win' : (e.vivo.resultado === 'E' ? 'v-draw' : 'v-loss');
-        vivoCls   = ' fila-vivo ' + vClase;
-        rowStyle  = ''; // el color de zona no aplica mientras está en vivo
-        vivoTag   = '<div class="vivo-tag ' + vClase + '">🔴 EN VIVO · vs ' + e.vivo.rival.toUpperCase() + ' &nbsp;' + e.vivo.gf + '-' + e.vivo.gc + '</div>';
-      }
-      var esSuper = d === 'Supercopa';
-      return '<tr class="' + cls + vivoCls + '"' + rowStyle + '>' +
+      return '<tr class="' + cls + '"' + rowStyle + '>' +
         '<td class="pos-num">' + e.pos + '</td>' +
-        '<td><div class="td-club"><img class="escudo" src="' + escudoUrl(e.club, e.escudo_url) + '" onerror="escudoFallback(this)"><div><span class="club-name">' + e.club.toUpperCase() + '</span>' + vivoTag + '</div></div></td>' +
+        '<td><div class="td-club"><img class="escudo" src="' + escudoUrl(e.club, e.escudo_url) + '" onerror="escudoFallback(this)"><span class="club-name">' + e.club.toUpperCase() + '</span></div></td>' +
         '<td class="pts">' + e.pts + '</td>' +
         '<td>' + e.pj + '</td>' +
-        '<td>' + (esSuper ? '—' : e.g) + '</td>' +
-        '<td>' + (esSuper ? '—' : e.e) + '</td>' +
-        '<td>' + (esSuper ? '—' : e.p) + '</td>' +
+        '<td>' + e.g + '</td>' +
+        '<td>' + e.e + '</td>' +
+        '<td>' + e.p + '</td>' +
         '<td>' + e.gf + '</td>' +
         '<td>' + e.gc + '</td>' +
         '<td>' + e.dg + '</td>' +
-        '<td>' + (esSuper ? '<span style="color:rgba(255,255,255,.2);font-size:.6rem">—</span>' : renderForma(e.forma)) + '</td>' +
         '</tr>';
     }).join('');
     var tituloCard = d === 'Supercopa' ? '🏆 SUPERCOPA 2026' : d + ' · 2026';
@@ -1315,141 +1230,11 @@ function renderPosiciones(rows) {
     return '<div id="pos-panel-' + sanitizeId(d) + '" style="display:' + (i===0?'block':'none') + '">' +
       '<div class="card">' +
       '<div class="card-header"><h3>' + tituloCard + '</h3><span' + badgeCls + '>' + equi.length + ' EQUIPOS</span></div>' +
-      '<table class="tabla"><thead><tr><th>#</th><th>Club</th><th>Pts</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th style="min-width:72px">Forma</th></tr></thead>' +
+      '<table class="tabla"><thead><tr><th>#</th><th>Club</th><th>Pts</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th></tr></thead>' +
       '<tbody>' + filas + '</tbody></table>' +
       leyendaZona(zonas, d) +
       '</div></div>';
   }).join('');
-}
-
-// Renderiza los círculos de forma reciente (últimos 5 partidos)
-function renderForma(forma) {
-  if (!forma || !forma.length) return '<span style="color:rgba(255,255,255,.2);font-size:.6rem">—</span>';
-  return forma.map(function(r) {
-    var color = r === 'G' ? '#00a651' : r === 'E' ? '#f5c518' : '#e63946';
-    var title = r === 'G' ? 'Victoria' : r === 'E' ? 'Empate' : 'Derrota';
-    return '<span title="' + title + '" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + color + ';margin:0 1px;vertical-align:middle"></span>';
-  }).join('');
-}
-
-// ============================================================
-//  LIGA PROFESIONAL ARGENTINA + COPA ARGENTINA
-// ============================================================
-var lpfCache      = {};
-var lpfTabActual  = 'zonas';
-
-function switchLPF(tab, btn) {
-  lpfTabActual = tab;
-  document.querySelectorAll('#lpf-tabs .ct').forEach(function(b){ b.classList.remove('active'); });
-  if (btn) btn.classList.add('active');
-  cargarLPF(tab);
-}
-
-function cargarLPF(tab) {
-  var cont = document.getElementById('lpf-contenido');
-  if (lpfCache[tab]) { renderLPF(tab, lpfCache[tab]); return; }
-  cont.className = 'loading-state';
-  cont.innerHTML = 'Cargando datos de AFA...';
-  fetch(APPS_SCRIPT_URL + '?action=ligaprofesional&tab=' + tab + '&token=' + APPS_SCRIPT_TOKEN)
-    .then(function(r){ return r.json(); })
-    .then(function(data) {
-      lpfCache[tab] = data;
-      renderLPF(tab, data);
-    })
-    .catch(function(err) {
-      console.error('Error cargando Liga Profesional:', err);
-      cont.className = 'error-state';
-      cont.innerHTML = '⚠️ No se pudo cargar la información de AFA';
-    });
-}
-
-function renderLPF(tab, data) {
-  var cont = document.getElementById('lpf-contenido');
-  if (!data || data.error) {
-    cont.className = 'error-state';
-    cont.innerHTML = '⚠️ ' + (data && data.error ? data.error : 'Sin datos disponibles');
-    return;
-  }
-  cont.className = '';
-  var actEl = document.getElementById('lpf-actualizado');
-  if (actEl) actEl.textContent = data.actualizado ? 'Actualizado: ' + formatearHoraAFA(data.actualizado) : '';
-
-  if (tab === 'zonas')      cont.innerHTML = renderZonasLPF(data.zonas);
-  else if (tab === 'anual') cont.innerHTML = renderTablaLPF(data.tabla, 'TABLA ANUAL', data.tabla ? data.tabla.length : 0);
-  else if (tab === 'copa')  cont.innerHTML = renderCopaLPF(data.rondas);
-}
-
-function formatearHoraAFA(ts) {
-  try {
-    var d = new Date(ts);
-    return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-  } catch(e) { return ''; }
-}
-
-function renderZonasLPF(zonas) {
-  if (!zonas || !Object.keys(zonas).length) {
-    return '<div class="error-state">Sin datos de zonas todavía</div>';
-  }
-  return Object.keys(zonas).map(function(nombreZona) {
-    return renderTablaLPF(zonas[nombreZona], nombreZona.toUpperCase(), zonas[nombreZona].length);
-  }).join('');
-}
-
-function renderTablaLPF(equipos, titulo, cantidad) {
-  if (!equipos || !equipos.length) return '<div class="error-state">Sin datos todavía</div>';
-  var filas = equipos.map(function(e) {
-    return '<tr>' +
-      '<td class="pos-num">' + e.rank + '</td>' +
-      '<td><div class="td-club"><img class="escudo" src="' + (e.logo || '') + '" onerror="escudoFallback(this)"><span class="club-name">' + String(e.team || '').toUpperCase() + '</span></div></td>' +
-      '<td class="pts">' + e.points + '</td>' +
-      '<td>' + e.played + '</td>' +
-      '<td>' + e.won + '</td>' +
-      '<td>' + e.draw + '</td>' +
-      '<td>' + e.lost + '</td>' +
-      '<td>' + e.gf + '</td>' +
-      '<td>' + e.gc + '</td>' +
-      '<td>' + e.dg + '</td>' +
-      '</tr>';
-  }).join('');
-  return '<div class="card" style="margin-bottom:12px">' +
-    '<div class="card-header"><h3>' + titulo + '</h3><span class="badge">' + cantidad + ' EQUIPOS</span></div>' +
-    '<table class="tabla"><thead><tr><th>#</th><th>Club</th><th>Pts</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th></tr></thead>' +
-    '<tbody>' + filas + '</tbody></table>' +
-    '</div>';
-}
-
-function renderCopaLPF(rondas) {
-  if (!rondas || !rondas.length) return '<div class="error-state">Sin fixture de Copa Argentina todavía</div>';
-  return rondas.map(function(ronda) {
-    var partidos = ronda.matches.map(function(m) {
-      var enVivo = m.fixture.en_vivo;
-      var fin    = m.fixture.finalizado;
-      var golHome = (m.goals.home !== null && m.goals.home !== undefined) ? m.goals.home : '-';
-      var golAway = (m.goals.away !== null && m.goals.away !== undefined) ? m.goals.away : '-';
-      var estadoTxt = enVivo ? '🔴 ' + (m.fixture.elapsed ? m.fixture.elapsed + "'" : 'EN VIVO')
-                    : fin ? 'FINAL'
-                    : formatearFechaPartidoAFA(m.fixture.date);
-      return '<div class="card" style="margin-bottom:8px;padding:10px 14px">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;font-size:.6rem;color:var(--muted);margin-bottom:6px">' +
-          '<span>' + estadoTxt + '</span>' +
-        '</div>' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
-          '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0"><img src="' + (m.teams.home.logo||'') + '" style="width:22px;height:22px;object-fit:contain" onerror="this.style.display=\'none\'"><span style="font-size:.75rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + m.teams.home.name + '</span></div>' +
-          '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;padding:2px 10px;background:var(--card2);border-radius:6px">' + golHome + ' - ' + golAway + '</div>' +
-          '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;justify-content:flex-end"><span style="font-size:.75rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right">' + m.teams.away.name + '</span><img src="' + (m.teams.away.logo||'') + '" style="width:22px;height:22px;object-fit:contain" onerror="this.style.display=\'none\'"></div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-    return '<div class="sec-div"><h3>' + ronda.name + '</h3></div>' + partidos;
-  }).join('');
-}
-
-function formatearFechaPartidoAFA(iso) {
-  if (!iso) return '';
-  try {
-    var d = new Date(iso);
-    return d.toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-  } catch(e) { return ''; }
 }
 
 function mostrarPosDiv(division, btn) {
@@ -1874,8 +1659,6 @@ function syncRadioUI(playing) {
   var evBadge  = document.getElementById('evivo-radio-badge');
   var evStatus = document.getElementById('evivo-radio-status');
   var evVisual = document.getElementById('evivo-radio-visual');
-  var hmBtn    = document.getElementById('home-radio-play-btn');
-  var hmBadge  = document.getElementById('home-radio-badge');
   if (playing) {
     if (btn)    { btn.textContent = '⏹'; btn.style.background = 'var(--green)'; btn.style.boxShadow = '0 4px 16px rgba(0,166,81,.4)'; }
     if (badge)  { badge.textContent = 'EN VIVO'; badge.style.background = 'var(--red)'; }
@@ -1884,8 +1667,6 @@ function syncRadioUI(playing) {
     if (evBadge)  { evBadge.textContent = 'EN VIVO'; evBadge.style.background = 'var(--red)'; }
     if (evStatus) evStatus.textContent = '🎵 Escuchando FM Tradición 97.1...';
     if (evVisual) evVisual.style.opacity = '1';
-    if (hmBtn)   { hmBtn.textContent = '⏹'; hmBtn.style.background = 'var(--green)'; hmBtn.style.boxShadow = '0 3px 10px rgba(0,166,81,.4)'; }
-    if (hmBadge) { hmBadge.textContent = 'EN VIVO'; hmBadge.style.background = 'var(--red)'; }
   } else {
     if (btn)    { btn.textContent = '▶'; btn.style.background = 'var(--red)'; btn.style.boxShadow = '0 4px 16px rgba(232,0,28,.4)'; }
     if (badge)  { badge.textContent = 'OFFLINE'; badge.style.background = 'var(--muted)'; }
@@ -1894,8 +1675,6 @@ function syncRadioUI(playing) {
     if (evBadge)  { evBadge.textContent = 'OFFLINE'; evBadge.style.background = 'var(--muted)'; }
     if (evStatus) evStatus.textContent = 'Presioná PLAY para escuchar';
     if (evVisual) evVisual.style.opacity = '.3';
-    if (hmBtn)   { hmBtn.textContent = '▶'; hmBtn.style.background = 'var(--red)'; hmBtn.style.boxShadow = '0 3px 10px rgba(232,0,28,.4)'; }
-    if (hmBadge) { hmBadge.textContent = 'OFFLINE'; hmBadge.style.background = 'var(--muted)'; }
   }
 }
 
@@ -1917,10 +1696,6 @@ function setRadioVol(val) {
   if (radioAudio) radioAudio.volume = parseFloat(val);
   var d = document.getElementById('radio-vol-display');
   if (d) d.textContent = Math.round(val * 100) + '%';
-  ['radio-vol-slider','home-radio-vol-slider'].forEach(function(id){
-    var s = document.getElementById(id);
-    if (s && s.value !== String(val)) s.value = val;
-  });
 }
 
 function radioVol(delta) {
@@ -3079,38 +2854,21 @@ function renderClubInstitucional(nombreClub) {
 // ============================================================
 // VIDEOS con deep links
 // ============================================================
-function abrirVideo(ytId, titulo) {
-  var modalId = 'modal-video-embed';
-  var modal   = document.getElementById(modalId);
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = modalId;
-    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px';
-    modal.innerHTML =
-      '<div style="width:100%;max-width:600px">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-      + '<div id="modal-video-titulo" style="font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:1px;color:#fff;flex:1;padding-right:10px"></div>'
-      + '<button onclick="cerrarVideoModal()" style="background:rgba(255,255,255,.12);border:none;border-radius:50%;width:32px;height:32px;color:#fff;font-size:1.1rem;cursor:pointer;flex-shrink:0">✕</button>'
-      + '</div>'
-      + '<div style="position:relative;width:100%;padding-top:56.25%;background:#000;border-radius:10px;overflow:hidden">'
-      + '<iframe id="modal-video-iframe" src="" allowfullscreen allow="autoplay;encrypted-media" style="position:absolute;inset:0;width:100%;height:100%;border:none"></iframe>'
-      + '</div>'
-      + '<div style="display:flex;justify-content:center;margin-top:10px">'
-      + '<a id="modal-video-ytlink" href="" target="_blank" style="color:rgba(255,255,255,.5);font-size:.65rem;text-decoration:none">Ver en YouTube ↗</a>'
-      + '</div></div>';
-    modal.addEventListener('click', function(e){ if(e.target===modal) cerrarVideoModal(); });
-    document.body.appendChild(modal);
+function abrirVideo(ytId, urlOriginal) {
+  var esAndroid = /android/i.test(navigator.userAgent);
+  var esIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (esAndroid) {
+    var intentUrl = 'intent://watch?v=' + ytId + '#Intent;scheme=vnd.youtube;package=com.google.android.youtube;end';
+    window.location = intentUrl;
+  } else if (esIOS) {
+    var iosUrl = 'youtube://watch?v=' + ytId;
+    window.location = iosUrl;
+    setTimeout(function() {
+      window.location = 'https://www.youtube.com/watch?v=' + ytId;
+    }, 1500);
+  } else {
+    window.open('https://www.youtube.com/watch?v=' + ytId, '_blank');
   }
-  document.getElementById('modal-video-iframe').src  = 'https://www.youtube.com/embed/' + ytId + '?autoplay=1&rel=0';
-  document.getElementById('modal-video-titulo').textContent = titulo || '';
-  document.getElementById('modal-video-ytlink').href = 'https://www.youtube.com/watch?v=' + ytId;
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-function cerrarVideoModal() {
-  var modal = document.getElementById('modal-video-embed');
-  if (modal) { modal.style.display = 'none'; document.getElementById('modal-video-iframe').src = ''; }
-  document.body.style.overflow = '';
 }
 
 // ============================================================
@@ -3161,8 +2919,6 @@ function renderVideoCard(v) {
 window.addEventListener('load', function() {
   renderLista();
   cargarDatos(false);
-  // Recargar datos automáticamente cada 60 segundos
-  scheduleAutoRefresh();
   // Mostrar popup de club si nunca eligió
   setTimeout(function() {
     if (!localStorage.getItem('clubHincha')) mostrarPopupClub();
