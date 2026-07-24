@@ -807,7 +807,7 @@ function getPortadaCards(map) {
   rows.forEach(function(r) {
     var a = r['activo'];
     if (!(a === '' || a === null || a === undefined ? true : boolVal(a))) return;
-    out.push({
+    var card = {
       activo:        'si',
       orden:         numVal(r['orden'] || 99),
       tipo:          String(r['tipo'] || 'imagen').trim().toLowerCase(),
@@ -819,7 +819,11 @@ function getPortadaCards(map) {
       etiqueta_club: strVal(r['etiqueta_club'] || '').trim(),
       contenido:     strVal(r['contenido'] || ''),
       color_fondo:   strVal(r['color_fondo'] || ''),
-    });
+    };
+    // Descartar filas fantasma: sin título, sin imagen y sin contenido no aportan nada
+    // (pueden quedar de una fila vieja con solo un espacio suelto en alguna celda).
+    if (!card.titulo && !card.imagen_url && !card.contenido) return;
+    out.push(card);
   });
   return out.sort(function(a,b){ return a.orden - b.orden; });
 }

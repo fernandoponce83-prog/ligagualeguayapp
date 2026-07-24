@@ -357,6 +357,7 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
     <button class="nav-btn active" onclick="go('inicio',this)">🏠 Inicio</button>
     <button class="nav-btn" onclick="go('envivo',this)">🔴 En Vivo</button>
     <button class="nav-btn" onclick="go('ligaprofesional',this)">🇦🇷 Liga AFA</button>
+    <button class="nav-btn" onclick="go('clubes',this)">🛡️ Clubes</button>
     <button class="nav-btn" onclick="go('posiciones',this)">📊 Posiciones</button>
     <button class="nav-btn" onclick="go('resultados',this)">⚽ Resultados</button>
     <button class="nav-btn" onclick="go('goleadores',this)">🥅 Goleadores</button>
@@ -447,14 +448,6 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
         <div style="font-size:.56rem;color:var(--muted)">AZUL</div>
       </div>
     </a>
-  </div>
-
-  <!-- 7. Clubes — al final para que cargue rápido lo importante -->
-  <div class="sec-div"><h3>🛡️ Clubes · Liga Gualeguay 2026</h3></div>
-  <div class="card">
-    <div id="clubes-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px;padding:11px">
-      <div class="loading-state" style="grid-column:span 5;padding:15px">Cargando clubes...</div>
-    </div>
   </div>
 
 </section>
@@ -568,6 +561,15 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
 </section>
 
 <!-- ===================== POSICIONES ===================== -->
+<section id="clubes" class="section">
+  <div class="sec-div"><h3>🛡️ Clubes · Liga Gualeguay 2026</h3></div>
+  <div class="card">
+    <div id="clubes-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px;padding:11px">
+      <div class="loading-state" style="grid-column:span 5;padding:15px">Cargando clubes...</div>
+    </div>
+  </div>
+</section>
+
 <section id="ligaprofesional" class="section">
   <div class="sec-div"><h3>🇦🇷 Liga Profesional Argentina</h3></div>
   <div id="lpf-tabs" class="cat-tabs">
@@ -954,7 +956,7 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
 // ============================================================
 // CONFIGURACIÓN — REEMPLAZÁ LA URL CUANDO PUBLIQUES EL SCRIPT
 // ============================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZSATQOlYucutSPtDDCGb27PRMwrX3NaibUH23Gvu3-E2qJCi1N5ROfMx5mDSmikGB/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw1M_mfAqZ6E_uX7pIaWzP-Nl-UnPyt16ced9dT1K-E942PpBLZV3_jHuwi3IvuB90x/exec';
 var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m';
 var PASS = 'Reyazucar95';
 
@@ -1131,7 +1133,7 @@ function renderTodo() {
   if (d.galeria)         renderGaleria(d.galeria);
   if (d.sponsors)        renderSponsors(d.sponsors);
   if (d.portada_cards)   renderMuroCards(d.portada_cards);
-  if (d.slider_ads)      renderSliderPublicidades(d.slider_ads);
+  if (d.slider_publicidades) renderSliderPublicidades(d.slider_publicidades);
 }
 
 // ============================================================
