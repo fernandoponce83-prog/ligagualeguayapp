@@ -961,6 +961,20 @@ var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZSATQOlYucutSPt
 var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m';
 var PASS = 'Reyazucar95';
 
+// Al cambiar este número, todos los usuarios ven datos frescos automáticamente
+// (el browser detecta la versión nueva y borra el caché viejo del localStorage).
+// Subilo cada vez que hagas una nueva implementación importante en Apps Script.
+var APP_CACHE_VERSION = '20260726_v3';
+(function() {
+  try {
+    if (localStorage.getItem('appCacheVersion') !== APP_CACHE_VERSION) {
+      localStorage.removeItem('appDataCache');
+      localStorage.removeItem('appDataTs');
+      localStorage.setItem('appCacheVersion', APP_CACHE_VERSION);
+    }
+  } catch(e) {}
+})();
+
 // ============================================================
 // ESTADO GLOBAL
 // ============================================================
