@@ -1371,6 +1371,20 @@ function renderLPF(tab, data) {
     cont.innerHTML = '⚠️ ' + (data && data.error ? data.error : 'Sin datos disponibles');
     return;
   }
+  // Detectar snapshot vacío — el trigger todavía no corrió o no tiene datos aún
+  var sinDatos = (tab === 'zonas' && (!data.zonas || !Object.keys(data.zonas).length))
+              || (tab === 'anual' && (!data.tabla || !data.tabla.length))
+              || (tab === 'copa'  && (!data.rondas || !data.rondas.length));
+  if (sinDatos) {
+    cont.className = '';
+    cont.innerHTML = '<div class="card" style="text-align:center;padding:28px 16px">' +
+      '<div style="font-size:2rem;margin-bottom:8px">🇦🇷</div>' +
+      '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;letter-spacing:1px;margin-bottom:6px">DATOS AÚN NO DISPONIBLES</div>' +
+      '<div style="font-size:.7rem;color:var(--muted);margin-bottom:16px">El sistema de actualización automática se activa cada 45 minutos.<br>Si ves esto, es probable que todavía no se haya ejecutado por primera vez.</div>' +
+      '<button onclick="lpfCache={}; cargarLPF(lpfTabActual)" style="background:var(--blue);border:none;border-radius:20px;color:#fff;font-family:\'Bebas Neue\',sans-serif;font-size:.8rem;letter-spacing:1px;padding:8px 20px;cursor:pointer">🔄 REINTENTAR</button>' +
+      '</div>';
+    return;
+  }
   cont.className = '';
   var actEl = document.getElementById('lpf-actualizado');
   if (actEl) actEl.textContent = data.actualizado ? 'Actualizado: ' + formatearHoraAFA(data.actualizado) : '';
@@ -1601,9 +1615,21 @@ var proximosCache     = [];
 var proximosCatActual = null;
 
 function renderProximos(rows) {
-  // "Próximos" = solo lo que falta jugar. Filtramos lo que el backend
-  // ya marcó como jugado — así se van los fantasmas de fechas viejas.
-  proximosCache = (rows || []).filter(function(r){ return r.estado !== 'jugado'; });
+  // "Próximos" = solo lo que falta jugar. Filtramos lo que el backend ya marcó como jugado.
+  var filtrados = (rows || []).filter(function(r){ return r.estado !== 'jugado'; });
+
+  // Deduplicar: si hay dos filas con mismo partido+fecha, quedarse con la que
+  // tiene hora real (no vacía), o la primera si las dos tienen/no tienen hora.
+  var vistos = {};
+  filtrados = filtrados.filter(function(r) {
+    var clave = (r.division||'') + '|' + (r.local||'').toLowerCase() + '|' + (r.visita||'').toLowerCase() + '|' + (r.fecha_label||'');
+    if (!vistos[clave]) { vistos[clave] = r; return true; }
+    // Si esta tiene hora y la anterior no, reemplazamos
+    if (r.hora && !vistos[clave].hora) { vistos[clave].hora = r.hora; vistos[clave].dia_label = r.dia_label || vistos[clave].dia_label; }
+    return false;
+  });
+
+  proximosCache = filtrados;
 
   var tabsCont = document.getElementById('proximos-tabs');
   var cont     = document.getElementById('proximos-contenido');
