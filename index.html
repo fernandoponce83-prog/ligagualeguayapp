@@ -356,7 +356,7 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
   <div class="nav-inner">
     <button class="nav-btn active" onclick="go('inicio',this)">🏠 Inicio</button>
     <button class="nav-btn" onclick="go('envivo',this)">🔴 En Vivo</button>
-    <button class="nav-btn" onclick="go('petit',this)">🏆 Petit Torneo</button>
+    <button class="nav-btn" onclick="go('ligaprofesional',this)">🇦🇷 Liga AFA</button>
     <button class="nav-btn" onclick="go('clubes',this)">🛡️ Clubes</button>
     <button class="nav-btn" onclick="go('posiciones',this)">📊 Posiciones</button>
     <button class="nav-btn" onclick="go('resultados',this)">⚽ Resultados</button>
@@ -408,23 +408,21 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
     <div id="ganadores-contenido" class="card"></div>
   </div>
 
-  <!-- 4. Petit Torneo — acceso rápido desde inicio -->
-  <div id="inicio-petit-wrap" style="display:none">
-    <div class="sec-div"><h3>🏆 Petit Torneo 2026</h3></div>
-    <div class="card" style="padding:0;overflow:hidden">
-      <div class="card-header" style="background:linear-gradient(135deg,rgba(245,197,24,.15),transparent)">
-        <h3>POSICIONES</h3>
-        <span class="badge" style="background:var(--gold);color:#000">EN CURSO</span>
-      </div>
-      <div id="inicio-petit-tabla"></div>
-      <button onclick="go('petit',document.querySelector('.nav-btn:nth-child(3)'))"
-        style="width:100%;background:transparent;border:none;border-top:1px solid rgba(255,255,255,.08);padding:10px;color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:1px;cursor:pointer">
-        VER FIXTURE Y SEMIFINALES →
-      </button>
-    </div>
+  <!-- 4. Última fecha 1° Masc -->
+  <div class="sec-div"><h3>⚽ Última Fecha — 1° Div. Masc.</h3></div>
+  <div id="inicio-ultima-masc" class="card">
+    <div class="card-header"><h3 id="inicio-fecha-masc-titulo">Última Fecha</h3><span class="badge">MASCULINO</span></div>
+    <div id="inicio-fecha-masc-resultados"><div class="loading-state">Cargando...</div></div>
   </div>
 
-  <!-- 5. Ver en vivo + Radio -->
+  <!-- 5. Última fecha 1° Fem -->
+  <div class="sec-div"><h3>👩 Última Fecha — 1° Div. Fem.</h3></div>
+  <div id="inicio-ultima-fem" class="card">
+    <div class="card-header"><h3 id="inicio-fecha-fem-titulo">Última Fecha</h3><span class="badge pink">FEMENINO</span></div>
+    <div id="inicio-fecha-fem-resultados"><div class="loading-state">Cargando...</div></div>
+  </div>
+
+  <!-- 6. Ver en vivo + Radio -->
   <div class="sec-div"><h3>📺 Ver en vivo</h3></div>
   <div style="display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:8px;margin-bottom:12px;align-items:stretch">
     <a href="https://m.youtube.com/@eldebatepregon2384/shorts" target="_blank" style="text-decoration:none">
@@ -572,41 +570,15 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
   </div>
 </section>
 
-<section id="petit" class="section">
-  <div class="sec-div"><h3>🏆 Petit Torneo 2026</h3></div>
-
-  <!-- Tabs: Tabla / Fixture -->
-  <div class="cat-tabs" style="margin-bottom:10px">
-    <button class="ct active" onclick="switchPetit('tabla',this)">📊 Tabla</button>
-    <button class="ct" onclick="switchPetit('fixture',this)">📅 Fixture</button>
-    <button class="ct" onclick="switchPetit('semis',this)">⚔️ Semifinales</button>
+<section id="ligaprofesional" class="section">
+  <div class="sec-div"><h3>🇦🇷 Liga Profesional Argentina</h3></div>
+  <div id="lpf-tabs" class="cat-tabs">
+    <button class="ct active" onclick="switchLPF('zonas',this)">Zona A / B</button>
+    <button class="ct" onclick="switchLPF('anual',this)">Tabla Anual</button>
+    <button class="ct" onclick="switchLPF('copa',this)">🏆 Copa Argentina</button>
   </div>
-
-  <!-- TABLA DEL PETIT TORNEO -->
-  <div id="petit-tabla">
-    <div class="card">
-      <div class="card-header">
-        <h3>PETIT TORNEO 2026</h3>
-        <span class="badge" style="background:var(--gold);color:#000">4 EQUIPOS</span>
-      </div>
-      <div id="petit-tabla-contenido"><div class="loading-state">Cargando...</div></div>
-    </div>
-    <div style="font-size:.6rem;color:var(--muted);padding:6px 4px;text-align:center">
-      Urquiza · Barrio Norte · Sportiva · Juventud Unida — Todos contra todos (6 fechas)
-    </div>
-  </div>
-
-  <!-- FIXTURE DEL PETIT TORNEO -->
-  <div id="petit-fixture" style="display:none">
-    <div id="petit-fixture-contenido"><div class="loading-state">Cargando...</div></div>
-  </div>
-
-  <!-- SEMIFINALES DIVISIONES -->
-  <div id="petit-semis" style="display:none">
-    <div class="sec-div"><h3>⚔️ Semifinales Ida — Divisiones Inferiores</h3></div>
-    <div id="petit-semis-contenido"><div class="loading-state">Cargando...</div></div>
-  </div>
-
+  <div id="lpf-actualizado" style="font-size:.6rem;color:var(--muted);margin-bottom:8px;text-align:right"></div>
+  <div id="lpf-contenido" class="loading-state">Cargando datos de AFA...</div>
 </section>
 
 <section id="posiciones" class="section">
@@ -985,7 +957,7 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
 // ============================================================
 // CONFIGURACIÓN — REEMPLAZÁ LA URL CUANDO PUBLIQUES EL SCRIPT
 // ============================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4OPGUAFP5bEV9AH-IotkFqgxGumP7htfxtE6pbvM-tfG4o4FsavRzu27bLIYe0AQ7/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw1M_mfAqZ6E_uX7pIaWzP-Nl-UnPyt16ced9dT1K-E942PpBLZV3_jHuwi3IvuB90x/exec';
 var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m';
 var PASS = 'Reyazucar95';
 
@@ -1020,7 +992,7 @@ function go(id, btn) {
   document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
   window.scrollTo(0, 0);
-  if (id === 'petit') renderPetitTorneo(appData.petit_torneo, appData.semifinales);
+  if (id === 'ligaprofesional' && !lpfCache[lpfTabActual]) cargarLPF(lpfTabActual);
   // Actualizar header-banner según la sección activa
   if (appData.recursos) {
     var hdr = document.getElementById('header-banner');
@@ -1165,7 +1137,6 @@ function renderTodo() {
   if (d.clubes)          renderClubes(d.clubes);
   if (d.posiciones)      renderPosiciones(d.posiciones);
   if (d.resultados)      renderResultados(d.resultados);
-  if (d.petit_torneo || d.semifinales) renderPetitTorneo(d.petit_torneo, d.semifinales);
   if (d.goleadores)      renderGoleadores(d.goleadores);
   if (d.vallas)          renderVallas(d.vallas);
   if (d.proximos)        renderProximos(d.proximos);
@@ -1379,187 +1350,135 @@ function renderForma(forma) {
 // ============================================================
 //  LIGA PROFESIONAL ARGENTINA + COPA ARGENTINA
 // ============================================================
-);
+var lpfCache      = {};
+var lpfTabActual  = 'zonas';
+
+function switchLPF(tab, btn) {
+  lpfTabActual = tab;
+  document.querySelectorAll('#lpf-tabs .ct').forEach(function(b){ b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
   cargarLPF(tab);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ============================================================
-// PETIT TORNEO 2026
-// ============================================================
-function switchPetit(tab, btn) {
-  ['tabla','fixture','semis'].forEach(function(t) {
-    document.getElementById('petit-' + t).style.display = (t === tab) ? 'block' : 'none';
-  });
-  btn.closest('.cat-tabs').querySelectorAll('.ct').forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
+function cargarLPF(tab) {
+  var cont = document.getElementById('lpf-contenido');
+  if (lpfCache[tab]) { renderLPF(tab, lpfCache[tab]); return; }
+  cont.className = 'loading-state';
+  cont.innerHTML = 'Cargando datos de AFA...';
+  fetch(APPS_SCRIPT_URL + '?action=ligaprofesional&tab=' + tab + '&token=' + APPS_SCRIPT_TOKEN)
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      lpfCache[tab] = data;
+      renderLPF(tab, data);
+    })
+    .catch(function(err) {
+      console.error('Error cargando Liga Profesional:', err);
+      cont.className = 'error-state';
+      cont.innerHTML = '⚠️ No se pudo cargar la información de AFA';
+    });
 }
 
-function renderPetitTorneo(petit, semifinales) {
-  if (!petit) return;
-
-  // ── Mini tabla en INICIO ──
-  renderInicioMiniPetit(petit.tabla || []);
-
-  // ── Tabla completa ──
-  var tablaEl = document.getElementById('petit-tabla-contenido');
-  if (tablaEl) {
-    if (!petit.tabla || !petit.tabla.length) {
-      tablaEl.innerHTML = '<div style="padding:16px;text-align:center;font-size:.75rem;color:var(--muted)">Los datos se cargarán cuando comiencen los partidos</div>';
-    } else {
-      var filas = petit.tabla.map(function(e) {
-        var dg = (e.dg > 0 ? '+' : '') + e.dg;
-        return '<tr>' +
-          '<td class="pos-num" style="color:var(--gold);font-weight:700">' + e.pos + '</td>' +
-          '<td><div class="td-club"><img class="escudo" src="' + escudoUrl(e.club,'') + '" onerror="escudoFallback(this)"><div><span class="club-name">' + e.club.toUpperCase() + '</span></div></div></td>' +
-          '<td class="pts">' + e.pts + '</td>' +
-          '<td>' + e.pj + '</td>' +
-          '<td>' + e.g  + '</td>' +
-          '<td>' + e.e  + '</td>' +
-          '<td>' + e.p  + '</td>' +
-          '<td>' + e.gf + '</td>' +
-          '<td>' + e.gc + '</td>' +
-          '<td>' + dg   + '</td>' +
-          '</tr>';
-      }).join('');
-      tablaEl.innerHTML =
-        '<table class="tabla">' +
-        '<thead><tr><th>#</th><th>Club</th><th>Pts</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th></tr></thead>' +
-        '<tbody>' + filas + '</tbody>' +
-        '</table>';
-    }
-  }
-
-  // ── Fixture por fecha ──
-  var fixEl = document.getElementById('petit-fixture-contenido');
-  if (fixEl) {
-    if (!petit.fixture || !petit.fixture.length) {
-      fixEl.innerHTML = '<div class="error-state">Sin fixture cargado</div>';
-    } else {
-      var porFecha = {};
-      petit.fixture.forEach(function(p) {
-        var f = p.fecha_label || 'Sin fecha';
-        if (!porFecha[f]) porFecha[f] = [];
-        porFecha[f].push(p);
-      });
-      fixEl.innerHTML = Object.keys(porFecha).map(function(fecha) {
-        var partidos = porFecha[fecha].map(function(p) {
-          var finalizado = p.estado === 'finalizado';
-          var enCurso    = p.estado === 'en_curso';
-          var tieneGoles = p.gl !== null && p.gv !== null;
-          var estadoBadge = enCurso
-            ? '<span class="badge" style="background:var(--red);animation:pulse 1s infinite">🔴 EN VIVO</span>'
-            : finalizado
-            ? '<span class="badge" style="background:var(--green)">FINAL</span>'
-            : '<span class="badge" style="background:var(--muted)">PROGRAMADO</span>';
-          var scoreHtml = tieneGoles
-            ? '<div class="match-score"><div class="score-box' + (p.gl > p.gv ? ' win' : '') + '">' + p.gl + '</div><span class="score-vs">VS</span><div class="score-box' + (p.gv > p.gl ? ' win' : '') + '">' + p.gv + '</div></div>'
-            : '<div class="match-score"><span class="score-vs" style="font-size:.8rem;color:var(--muted)">VS</span></div>';
-          return '<div class="match-row">' +
-            '<div class="match-team"><img src="' + escudoUrl(p.local,'') + '" onerror="escudoFallback(this)"><span class="team-name">' + p.local.toUpperCase() + '</span></div>' +
-            scoreHtml +
-            '<div class="match-team away"><img src="' + escudoUrl(p.visita,'') + '" onerror="escudoFallback(this)"><span class="team-name">' + p.visita.toUpperCase() + '</span></div>' +
-            '</div>';
-        }).join('');
-        return '<div class="card" style="margin-bottom:10px">' +
-          '<div class="card-header" style="background:linear-gradient(135deg,rgba(245,197,24,.1),transparent)">' +
-          '<h3>' + fecha + '</h3></div>' +
-          partidos + '</div>';
-      }).join('');
-    }
-  }
-
-  // ── Semifinales de divisiones ──
-  renderSemifinales(semifinales);
-}
-
-function renderInicioMiniPetit(tabla) {
-  var wrap = document.getElementById('inicio-petit-wrap');
-  var cont = document.getElementById('inicio-petit-tabla');
-  if (!wrap || !cont) return;
-  if (!tabla || !tabla.length) { wrap.style.display = 'none'; return; }
-  wrap.style.display = 'block';
-  var filas = tabla.map(function(e) {
-    var medal = e.pos === 1 ? '🥇' : e.pos === 2 ? '🥈' : e.pos === 3 ? '🥉' : e.pos;
-    return '<tr>' +
-      '<td class="pos-num">' + medal + '</td>' +
-      '<td><div class="td-club"><img class="escudo" src="' + escudoUrl(e.club,'') + '" onerror="escudoFallback(this)"><span class="club-name">' + e.club.toUpperCase() + '</span></div></td>' +
-      '<td class="pts">' + e.pts + '</td>' +
-      '<td>' + e.pj + '</td>' +
-      '<td>' + (e.dg > 0 ? '+' : '') + e.dg + '</td>' +
-      '</tr>';
-  }).join('');
-  cont.innerHTML = '<table class="tabla" style="font-size:.72rem">' +
-    '<thead><tr><th>#</th><th>Club</th><th>Pts</th><th>PJ</th><th>DG</th></tr></thead>' +
-    '<tbody>' + filas + '</tbody></table>';
-}
-
-function renderSemifinales(semis) {
-  var cont = document.getElementById('petit-semis-contenido');
-  if (!cont) return;
-  if (!semis || !semis.length) {
-    cont.innerHTML = '<div class="error-state">Sin datos de semifinales</div>';
+function renderLPF(tab, data) {
+  var cont = document.getElementById('lpf-contenido');
+  if (!data || data.error) {
+    cont.className = 'error-state';
+    cont.innerHTML = '⚠️ ' + (data && data.error ? data.error : 'Sin datos disponibles');
     return;
   }
+  // Detectar snapshot vacío — el trigger todavía no corrió o no tiene datos aún
+  var sinDatos = (tab === 'zonas' && (!data.zonas || !Object.keys(data.zonas).length))
+              || (tab === 'anual' && (!data.tabla || !data.tabla.length))
+              || (tab === 'copa'  && (!data.rondas || !data.rondas.length));
+  if (sinDatos) {
+    cont.className = '';
+    cont.innerHTML = '<div class="card" style="text-align:center;padding:28px 16px">' +
+      '<div style="font-size:2rem;margin-bottom:8px">🇦🇷</div>' +
+      '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;letter-spacing:1px;margin-bottom:6px">DATOS AÚN NO DISPONIBLES</div>' +
+      '<div style="font-size:.7rem;color:var(--muted);margin-bottom:16px">El sistema de actualización automática se activa cada 45 minutos.<br>Si ves esto, es probable que todavía no se haya ejecutado por primera vez.</div>' +
+      '<button onclick="lpfCache={}; cargarLPF(lpfTabActual)" style="background:var(--blue);border:none;border-radius:20px;color:#fff;font-family:\'Bebas Neue\',sans-serif;font-size:.8rem;letter-spacing:1px;padding:8px 20px;cursor:pointer">🔄 REINTENTAR</button>' +
+      '</div>';
+    return;
+  }
+  cont.className = '';
+  var actEl = document.getElementById('lpf-actualizado');
+  if (actEl) actEl.textContent = data.actualizado ? 'Actualizado: ' + formatearHoraAFA(data.actualizado) : '';
 
-  // Agrupar por división
-  var porDiv = {};
-  semis.forEach(function(s) {
-    if (!porDiv[s.division]) porDiv[s.division] = [];
-    porDiv[s.division].push(s);
-  });
+  if (tab === 'zonas')      cont.innerHTML = renderZonasLPF(data.zonas);
+  else if (tab === 'anual') cont.innerHTML = renderTablaLPF(data.tabla, 'TABLA ANUAL', data.tabla ? data.tabla.length : 0);
+  else if (tab === 'copa')  cont.innerHTML = renderCopaLPF(data.rondas);
+}
 
-  var esFemenino = function(div) { return div.toLowerCase().indexOf('femenino') !== -1; };
+function formatearHoraAFA(ts) {
+  try {
+    var d = new Date(ts);
+    return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  } catch(e) { return ''; }
+}
 
-  cont.innerHTML = Object.keys(porDiv).map(function(div) {
-    var color = esFemenino(div) ? 'var(--pink)' : 'var(--blue)';
-    var partidos = porDiv[div].map(function(s) {
-      var idaStr    = s.ida_jugada    ? s.goles_ida_local + ' - ' + s.goles_ida_visita : '?-?';
-      var vueltaStr = s.vuelta_jugada ? s.goles_vuelta_local + ' - ' + s.goles_vuelta_visita : 'Pendiente';
-      var ganadorHtml = s.ganador
-        ? '<div style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:.8rem;color:var(--gold);padding:4px 0">CLASIFICA: ' + s.ganador.toUpperCase() + ' 🏆</div>'
-        : '';
-      return '<div style="border-bottom:1px solid rgba(255,255,255,.05);padding:10px 0">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px">' +
-          '<div style="flex:1;text-align:right">' +
-            '<img src="' + escudoUrl(s.local,'') + '" onerror="escudoFallback(this)" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:5px">' +
-            '<span style="font-size:.75rem;font-weight:700">' + s.local.toUpperCase() + '</span>' +
-          '</div>' +
-          '<div style="text-align:center;min-width:80px">' +
-            '<div style="font-size:.55rem;color:var(--muted)">IDA</div>' +
-            '<div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;background:var(--card2);border-radius:6px;padding:2px 8px">' + idaStr + '</div>' +
-            '<div style="font-size:.55rem;color:var(--muted);margin-top:2px">VUELTA</div>' +
-            '<div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;color:var(--muted);background:var(--card2);border-radius:6px;padding:2px 8px">' + vueltaStr + '</div>' +
-          '</div>' +
-          '<div style="flex:1;text-align:left">' +
-            '<span style="font-size:.75rem;font-weight:700">' + s.visitante.toUpperCase() + '</span>' +
-            '<img src="' + escudoUrl(s.visitante,'') + '" onerror="escudoFallback(this)" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-left:5px">' +
-          '</div>' +
+function renderZonasLPF(zonas) {
+  if (!zonas || !Object.keys(zonas).length) {
+    return '<div class="error-state">Sin datos de zonas todavía</div>';
+  }
+  return Object.keys(zonas).map(function(nombreZona) {
+    return renderTablaLPF(zonas[nombreZona], nombreZona.toUpperCase(), zonas[nombreZona].length);
+  }).join('');
+}
+
+function renderTablaLPF(equipos, titulo, cantidad) {
+  if (!equipos || !equipos.length) return '<div class="error-state">Sin datos todavía</div>';
+  var filas = equipos.map(function(e) {
+    return '<tr>' +
+      '<td class="pos-num">' + e.rank + '</td>' +
+      '<td><div class="td-club"><img class="escudo" src="' + (e.logo || '') + '" onerror="escudoFallback(this)"><span class="club-name">' + String(e.team || '').toUpperCase() + '</span></div></td>' +
+      '<td class="pts">' + e.points + '</td>' +
+      '<td>' + e.played + '</td>' +
+      '<td>' + e.won + '</td>' +
+      '<td>' + e.draw + '</td>' +
+      '<td>' + e.lost + '</td>' +
+      '<td>' + e.gf + '</td>' +
+      '<td>' + e.gc + '</td>' +
+      '<td>' + e.dg + '</td>' +
+      '</tr>';
+  }).join('');
+  return '<div class="card" style="margin-bottom:12px">' +
+    '<div class="card-header"><h3>' + titulo + '</h3><span class="badge">' + cantidad + ' EQUIPOS</span></div>' +
+    '<table class="tabla"><thead><tr><th>#</th><th>Club</th><th>Pts</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th></tr></thead>' +
+    '<tbody>' + filas + '</tbody></table>' +
+    '</div>';
+}
+
+function renderCopaLPF(rondas) {
+  if (!rondas || !rondas.length) return '<div class="error-state">Sin fixture de Copa Argentina todavía</div>';
+  return rondas.map(function(ronda) {
+    var partidos = ronda.matches.map(function(m) {
+      var enVivo = m.fixture.en_vivo;
+      var fin    = m.fixture.finalizado;
+      var golHome = (m.goals.home !== null && m.goals.home !== undefined) ? m.goals.home : '-';
+      var golAway = (m.goals.away !== null && m.goals.away !== undefined) ? m.goals.away : '-';
+      var estadoTxt = enVivo ? '🔴 ' + (m.fixture.elapsed ? m.fixture.elapsed + "'" : 'EN VIVO')
+                    : fin ? 'FINAL'
+                    : formatearFechaPartidoAFA(m.fixture.date);
+      return '<div class="card" style="margin-bottom:8px;padding:10px 14px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;font-size:.6rem;color:var(--muted);margin-bottom:6px">' +
+          '<span>' + estadoTxt + '</span>' +
         '</div>' +
-        ganadorHtml +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
+          '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0"><img src="' + (m.teams.home.logo||'') + '" style="width:22px;height:22px;object-fit:contain" onerror="this.style.display=\'none\'"><span style="font-size:.75rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + m.teams.home.name + '</span></div>' +
+          '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;padding:2px 10px;background:var(--card2);border-radius:6px">' + golHome + ' - ' + golAway + '</div>' +
+          '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;justify-content:flex-end"><span style="font-size:.75rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right">' + m.teams.away.name + '</span><img src="' + (m.teams.away.logo||'') + '" style="width:22px;height:22px;object-fit:contain" onerror="this.style.display=\'none\'"></div>' +
+        '</div>' +
       '</div>';
     }).join('');
-
-    return '<div class="card" style="margin-bottom:10px;border-left:3px solid ' + color + '">' +
-      '<div class="card-header"><h3>' + div + '</h3>' +
-      '<span class="badge" style="background:' + color + ';opacity:.9">SEMIS</span></div>' +
-      partidos + '</div>';
+    return '<div class="sec-div"><h3>' + ronda.name + '</h3></div>' + partidos;
   }).join('');
+}
+
+function formatearFechaPartidoAFA(iso) {
+  if (!iso) return '';
+  try {
+    var d = new Date(iso);
+    return d.toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+  } catch(e) { return ''; }
 }
 
 function mostrarPosDiv(division, btn) {
@@ -1659,8 +1578,6 @@ function mostrarResFecha(divId, fecha, btn) {
 }
 
 function renderInicioUltimaFecha(grupos) {
-  // Sección removida — reemplazada por mini tabla Petit Torneo en inicio
-  return;
   ['1° Masculino','1° Femenino'].forEach(function(div) {
     var isMasc = div.indexOf('Masc') !== -1 || div.indexOf('Masculino') !== -1;
     var sufijo = isMasc ? 'masc' : 'fem';
@@ -2744,26 +2661,12 @@ function sanitizeId(str) {
 
 // Construye URL del escudo desde el nombre del club (con mapa de slugs GitHub)
 var ESCUDO_MAP = {
-  // Nombres canonicals
-  'aldea asuncion':'aldea-asuncion','aldea asuncion':'aldea-asuncion',
+  'aldea asuncion':'aldea-asuncion','aldea asunción':'aldea-asuncion',
   'bancario':'bancario','barrio norte':'barrio-norte',
   'el progreso':'el-progreso','gualeguay central':'gualeguay-central',
   'juventud unida':'juventud-unida','la academia':'la-academia',
   'libertad':'libertad','quilmes':'quilmes',
-  'sportiva':'sportiva','urquiza':'urquiza',
-  // Aliases cortos que causan el bug del logo de la Liga
-  'central':'gualeguay-central',          // ← fix: "Central" → Gualeguay Central
-  'juventud':'juventud-unida',            // ← fix: "Juventud" → Juventud Unida
-  'juventud (carbo)':'juventud-unida',    // ← fix: variante con Carbó
-  'soc. sportiva':'sportiva',             // ← fix alias
-  'sociedad sportiva':'sportiva',
-  'atletico urquiza':'urquiza',
-  'atletico libertad':'libertad',
-  'atletico barrio norte':'barrio-norte',
-  'atletico quilmes':'quilmes',
-  'centro bancario':'bancario',
-  'academia':'la-academia',
-  'aldea':'aldea-asuncion'
+  'sportiva':'sportiva','urquiza':'urquiza'
 };
 function escudoUrl(nombre, escudo_url_fb) {
   if (escudo_url_fb) return escudo_url_fb;
