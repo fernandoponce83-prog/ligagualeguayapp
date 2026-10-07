@@ -408,21 +408,8 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
     <div id="ganadores-contenido" class="card"></div>
   </div>
 
-  <!-- 4. Última fecha 1° Masc -->
-  <div class="sec-div"><h3>⚽ Última Fecha — 1° Div. Masc.</h3></div>
-  <div id="inicio-ultima-masc" class="card">
-    <div class="card-header"><h3 id="inicio-fecha-masc-titulo">Última Fecha</h3><span class="badge">MASCULINO</span></div>
-    <div id="inicio-fecha-masc-resultados"><div class="loading-state">Cargando...</div></div>
-  </div>
-
-  <!-- 5. Última fecha 1° Fem -->
-  <div class="sec-div"><h3>👩 Última Fecha — 1° Div. Fem.</h3></div>
-  <div id="inicio-ultima-fem" class="card">
-    <div class="card-header"><h3 id="inicio-fecha-fem-titulo">Última Fecha</h3><span class="badge pink">FEMENINO</span></div>
-    <div id="inicio-fecha-fem-resultados"><div class="loading-state">Cargando...</div></div>
-  </div>
-
-  <!-- 6. Ver en vivo + Radio -->
+  
+  <!-- 5. Ver en vivo + Radio -->
   <div class="sec-div"><h3>📺 Ver en vivo</h3></div>
   <div style="display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:8px;margin-bottom:12px;align-items:stretch">
     <a href="https://m.youtube.com/@eldebatepregon2384/shorts" target="_blank" style="text-decoration:none">
@@ -898,6 +885,9 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
           <div class="panel-title" style="margin-top:14px">🔄 Datos</div>
           <button class="panel-btn sec" onclick="recargarDatos()">🔄 FORZAR RECARGA DESDE SHEETS</button>
           <div id="adm-reload-r" style="margin-top:8px"></div>
+          <button class="panel-btn" onclick="verParticipantes()">📋 VER INSCRIPTOS</button>
+<button class="panel-btn pri" onclick="sortearGanador()">🎲 SORTEAR</button>
+<div id="admin-sorteo-info"></div>
 
           <!-- ── SUBIDOR DE FOTOS A IMGUR ── -->
           <div class="panel-title" style="margin-top:14px">📸 Subir fotos (carrusel)</div>
@@ -2718,99 +2708,217 @@ function suscribirTodasReacciones() {
 // ============================================================
 // SORTEOS (localStorage + Firebase)
 // ============================================================
-var SK = 'fn_sorteos';
-function getSP() { try { return JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { return []; } }
 function saveSP(a) { localStorage.setItem(SK, JSON.stringify(a)); }
 
-function regSorteo() {
-  var n   = document.getElementById('s-nombre').value.trim();
-  var t   = document.getElementById('s-tel').value.trim();
-  var e   = document.getElementById('s-email').value.trim();
-  var ok  = document.getElementById('s-ok').checked;
+// ============================================
+// REGISTRO DE USUARIOS PARA SORTEOS (FIREBASE)
+// ============================================
+async function regSorteo() {
   var msg = document.getElementById('s-msg');
-  if (!n || !t) { msg.innerHTML = '<div class="msg-box err">⚠️ Ingresá nombre y WhatsApp</div>'; return; }
-  if (!ok)      { msg.innerHTML = '<div class="msg-box err">⚠️ Aceptá los términos para participar</div>'; return; }
-  var ps = getSP();
-  if (ps.find(function(p){ return p.tel === t; })) { msg.innerHTML = '<div class="msg-box err">ℹ️ Ya estás registrado con ese número</div>'; return; }
-  ps.push({ nombre:n, tel:t, email:e, fecha:new Date().toLocaleDateString('es-AR'), ganador:false });
-  saveSP(ps);
-  if (window._firebaseSet && window._firebaseDB && window._firebaseRef)
-    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'sorteos/p_'+Date.now()), {nombre:n,tel:t,email:e,fecha:new Date().toLocaleDateString('es-AR')});
-  document.getElementById('s-nombre').value = '';
-  document.getElementById('s-tel').value    = '';
-  document.getElementById('s-email').value  = '';
-  document.getElementById('s-ok').checked   = false;
-  msg.innerHTML = '<div class="msg-box ok">✅ ¡Registrado! Seguí @pasionazul para novedades.</div>';
-  renderLista();
-}
+  var nombre = document.getElementById('s-nombre').value.trim();
+  var tel    = document.getElementById('s-tel').value.trim();
+  var email  = document.getElementById('s-email').value.trim();
+  var club   = document.getElementById('s-club') ? document.getElementById('s-club').value : '';
+  var acepta = document.getElementById('s-ok').checked;
 
-function renderLista() {
-  var ps = getSP();
-  if (!ps.length) { document.getElementById('s-lista-sec').style.display='none'; return; }
-  document.getElementById('s-lista-sec').style.display = 'block';
-  document.getElementById('s-lista').innerHTML = ps.map(function(p) {
-    return '<div class="sorteo-entry"><div><strong>' + p.nombre + '</strong><span>' + p.tel + ' · ' + p.fecha + '</span></div>' + (p.ganador ? '<span class="badge-win">🏆 GANADOR</span>' : '') + '</div>';
-  }).join('');
-}
+  // Validaciones
+  if (!nombre || nombre.length < 3) {
+    msg.innerHTML = '<p style="color:#ff5252;font-size:.7rem;margin-top:8px">⚠️ Ingresá tu nombre completo</p>';
+    return;
+  }
+  if (!tel || tel.replace(/\D/g,'').length < 8) {
+    msg.innerHTML = '<p style="color:#ff5252;font-size:.7rem;margin-top:8px">⚠️ Ingresá un WhatsApp válido (ej: 3444-123456)</p>';
+    return;
+  }
+  if (!acepta) {
+    msg.innerHTML = '<p style="color:#ff5252;font-size:.7rem;margin-top:8px">⚠️ Debés aceptar las novedades para participar</p>';
+    return;
+  }
 
-function contactCom() {
+  msg.innerHTML = '<p style="color:#ffd700;font-size:.7rem;margin-top:8px">⏳ Registrando...</p>';
+
+  try {
+    var db  = window._firebaseDB;
+    var ref = window._firebaseRef;
+    var set = window._firebaseSet;
+    var get = window._fbModules.get;
+
+    // ID único basado en el teléfono (evita duplicados)
+    var telLimpio = tel.replace(/\D/g, '');
+    var userId = 'u_' + telLimpio;
+
+    // Verificar si ya existe
+    var snap = await get(ref(db, 'sorteos_usuarios/' + userId));
+    if (snap.exists()) {
+      msg.innerHTML = '<p style="color:#4caf50;font-size:.7rem;margin-top:8px">✅ ¡Ya estás registrado/a, ' + nombre.split(' ')[0] + '! Participás del sorteo 🎉</p>';
+      return;
+    }
+
+    // Guardar usuario en Firebase
+    await set(ref(db, 'sorteos_usuarios/' + userId), {
+      nombre: nombre,
+      telefono: tel,
+      email: email || '',
+      club_favorito: club,
+      acepta_sorteos: true,
+      fecha_registro: new Date().toISOString(),
+      activo: true
+    });
+
+    msg.innerHTML = '<p style="color:#4caf50;font-size:.7rem;margin-top:8px">✅ ¡Registrado/a <b>' + nombre.split(' ')[0] + '</b>! Ya participás de los sorteos 🎉</p>';
+
+    // Limpiar formulario
+    document.getElementById('s-nombre').value = '';
+    document.getElementById('s-tel').value = '';
+    document.getElementById('s-email').value = '';
+    if (document.getElementById('s-club')) document.getElementById('s-club').value = '';
+    document.getElementById('s-ok').checked = false;
+
+    // Guardar referencia local
+    localStorage.setItem('sorteo_user', userId);
+
+  } catch (error) {
+    console.error('Error registro sorteo:', error);
+    msg.innerHTML = '<p style="color:#ff5252;font-size:.7rem;margin-top:8px">❌ Error al registrar: ' + error.message + '</p>';
+  }
+}
+async function contactCom() {
   var n = document.getElementById('c-nombre').value.trim();
   var t = document.getElementById('c-tel').value.trim();
   var d = document.getElementById('c-desc').value.trim();
   var r = document.getElementById('c-msg-r');
-  if (!n || !t) { r.innerHTML = '<div class="msg-box err">⚠️ Ingresá nombre y teléfono</div>'; return; }
-  var txt = encodeURIComponent('Hola! Me interesa publicitar en la app de la Liga Departamental Gualeguay.\nComercio: ' + n + '\nMensaje: ' + d);
-  window.open('https://wa.me/543444571340?text=' + txt, '_blank');
-  r.innerHTML = '<div class="msg-box ok">✅ Abriendo WhatsApp...</div>';
-}
-
-// ============================================================
-// ADMIN
-// ============================================================
-function admLogin() {
-  if (document.getElementById('adm-pass').value === PASS) {
-    admOK = true;
-    document.getElementById('adm-login').style.display = 'none';
-    document.getElementById('adm-panel').classList.add('vis');
-    // Mostrar panel admin en En Vivo
-    var lp = document.getElementById('envivo-admin-panel');
-    if (lp) lp.style.display = 'block';
-  } else {
-    document.getElementById('adm-login-msg').innerHTML = '<div class="msg-box err">❌ Contraseña incorrecta</div>';
+  
+  if (!n || !t) { 
+    r.innerHTML = '<div class="msg-box err">⚠️ Ingresá nombre y teléfono</div>'; 
+    return; 
+  }
+  
+  r.innerHTML = '<div class="msg-box ok">⏳ Enviando...</div>';
+  
+  try {
+    // NUEVO: Guardar en Firebase (contactos publicitarios)
+    var db   = window._firebaseDB;
+    var ref  = window._firebaseRef;
+    var push = window._fbModules.push;
+    
+    await push(ref(db, 'contactos_publicitarios'), {
+      nombre: n,
+      telefono: t,
+      descripcion: d,
+      fecha: new Date().toISOString(),
+      visto: false
+    });
+    
+    // Abrir WhatsApp
+    var txt = encodeURIComponent(
+      'Hola! Me interesa publicitar en la app de la Liga Departamental Gualeguay.\n' +
+      'Comercio: ' + n + '\n' +
+      'Mensaje: ' + d
+    );
+    window.open('https://wa.me/543444571340?text=' + txt, '_blank');
+    
+    r.innerHTML = '<div class="msg-box ok">✅ Abriendo WhatsApp...</div>';
+    
+  } catch (error) {
+    // Si falla Firebase, igual abrir WhatsApp
+    var txt = encodeURIComponent(
+      'Hola! Me interesa publicitar en la app de la Liga Departamental Gualeguay.\n' +
+      'Comercio: ' + n + '\n' +
+      'Mensaje: ' + d
+    );
+    window.open('https://wa.me/543444571340?text=' + txt, '_blank');
+    r.innerHTML = '<div class="msg-box ok">✅ Abriendo WhatsApp...</div>';
   }
 }
-function admLogout() {
-  admOK = false;
-  var lp = document.getElementById('envivo-admin-panel');
-  if (lp) lp.style.display = 'none';
-  document.getElementById('adm-login').style.display = 'block';
-  document.getElementById('adm-panel').classList.remove('vis');
-  document.getElementById('adm-pass').value = '';
-  document.getElementById('adm-login-msg').innerHTML = '';
+
+// ============================================
+// ADMIN: VER PARTICIPANTES
+// ============================================
+async function verParticipantes() {
+  var info = document.getElementById('admin-sorteo-info');
+  info.innerHTML = '<p style="color:#ffd700">⏳ Cargando...</p>';
+
+  try {
+    var snap = await window._fbModules.get(
+      window._firebaseRef(window._firebaseDB, 'sorteos_usuarios')
+    );
+    
+    if (!snap.exists()) {
+      info.innerHTML = '<p style="color:#ff5252">⚠️ No hay inscriptos todavía</p>';
+      return;
+    }
+
+    var data = snap.val();
+    var lista = Object.values(data).filter(u => u.activo);
+    
+    var html = '<div style="background:#0a0a1a;padding:10px;border-radius:8px;max-height:200px;overflow-y:auto;margin-top:8px">';
+    html += '<p style="color:#4caf50;font-weight:bold">✅ ' + lista.length + ' inscriptos</p>';
+    lista.forEach((u, i) => {
+      html += '<div style="border-bottom:1px solid #222;padding:5px 0;font-size:.68rem">';
+      html += (i+1) + '. <b>' + u.nombre + '</b> · 📱 ' + u.telefono;
+      if (u.club_favorito) html += ' · ' + u.club_favorito;
+      html += '</div>';
+    });
+    html += '</div>';
+    info.innerHTML = html;
+    
+  } catch (e) {
+    info.innerHTML = '<p style="color:#ff5252">❌ Error: ' + e.message + '</p>';
+  }
 }
-function admVerSorteos() {
-  if (!admOK) return;
-  var ps = getSP();
-  if (!ps.length) { document.getElementById('adm-sorteos-r').innerHTML = '<div class="msg-box">No hay participantes aún</div>'; return; }
-  document.getElementById('adm-sorteos-r').innerHTML = '<div style="font-size:.68rem;color:var(--muted);margin-bottom:5px">' + ps.length + ' participante(s)</div>' +
-    ps.map(function(p,i){ return '<div class="sorteo-entry" style="font-size:.7rem"><div><strong>'+(i+1)+'. '+p.nombre+'</strong><span style="display:block">'+p.tel+(p.email?' · '+p.email:'')+'</span><span>'+p.fecha+'</span></div>'+(p.ganador?'<span class="badge-win">🏆</span>':'')+'</div>'; }).join('');
-}
-function admSortear() {
-  if (!admOK) return;
-  var ps = getSP();
-  if (!ps.length) { alert('No hay participantes'); return; }
-  ps.forEach(function(p){ p.ganador = false; });
-  var idx = Math.floor(Math.random() * ps.length);
-  ps[idx].ganador = true;
-  saveSP(ps);
-  document.getElementById('adm-sorteos-r').innerHTML = '<div class="msg-box ok">🏆 ¡GANADOR SORTEADO!<br><strong>'+ps[idx].nombre+'</strong><br>📱 '+ps[idx].tel+'</div>';
-  admVerSorteos();
-}
-function admVerConsultas() {
-  if (!admOK) return;
-  var cs = JSON.parse(localStorage.getItem('fn_consultas') || '[]');
-  if (!cs.length) { document.getElementById('adm-consultas-r').innerHTML = '<div class="msg-box">No hay consultas aún</div>'; return; }
-  document.getElementById('adm-consultas-r').innerHTML = cs.map(function(c,i){ return '<div class="sorteo-entry" style="font-size:.7rem"><div><strong>'+(i+1)+'. '+c.nombre+'</strong><span style="display:block">'+c.tel+(c.msg?'<br><em>'+c.msg+'</em>':'')+'</span><span>'+c.fecha+'</span></div></div>'; }).join('');
+
+// ============================================
+// ADMIN: SORTEAR Y PUBLICAR
+// ============================================
+async function sortearGanador() {
+  if (!confirm('¿Realizar sorteo entre todos los inscriptos?')) return;
+
+  var info = document.getElementById('admin-sorteo-info');
+  info.innerHTML = '<p style="color:#ffd700">⏳ Sorteando...</p>';
+
+  try {
+    var snap = await window._fbModules.get(
+      window._firebaseRef(window._firebaseDB, 'sorteos_usuarios')
+    );
+    
+    if (!snap.exists()) {
+      info.innerHTML = '<p style="color:#ff5252">⚠️ No hay inscriptos</p>';
+      return;
+    }
+
+    var lista = Object.values(snap.val()).filter(u => u.activo);
+    if (lista.length === 0) {
+      info.innerHTML = '<p style="color:#ff5252">⚠️ Sin participantes activos</p>';
+      return;
+    }
+
+    // Sorteo aleatorio
+    var ganador = lista[Math.floor(Math.random() * lista.length)];
+    var fecha = new Date().toLocaleDateString('es-AR');
+
+    // Publicar en Firebase (ya tenés el onValue que lo muestra en portada)
+    await window._firebaseSet(
+      window._firebaseRef(window._firebaseDB, 'sorteo_ganador'),
+      {
+        activo: true,
+        nombre: ganador.nombre,
+        telefono: ganador.telefono,
+        club: ganador.club_favorito || '',
+        fecha: fecha
+      }
+    );
+
+    info.innerHTML = 
+      '<div style="background:#1a1a2e;border:2px solid #ffd700;border-radius:10px;padding:12px;margin-top:8px;text-align:center">' +
+      '<div style="font-size:1.5rem">🏆</div>' +
+      '<div style="color:#ffd700;font-weight:bold">' + ganador.nombre + '</div>' +
+      '<div style="color:#888;font-size:.7rem">📱 ' + ganador.telefono + '</div>' +
+      '<div style="color:#4caf50;font-size:.68rem;margin-top:6px">✅ Publicado (' + lista.length + ' participantes)</div>' +
+      '</div>';
+
+  } catch (e) {
+    info.innerHTML = '<p style="color:#ff5252">❌ Error: ' + e.message + '</p>';
+  }
 }
 
 // ============================================================
@@ -3466,65 +3574,146 @@ if ('serviceWorker' in navigator) {
 
 <!-- ===================== FIREBASE ===================== -->
 <script type="module">
-  import { initializeApp }  from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set, push, get, update, remove } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, push, get, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const firebaseConfig = {
-    apiKey:            "AIzaSyCv7tt0id1FXRaHlNxdWewiY4a5SNAfe8c",
-    authDomain:        "liga-gualeguay.firebaseapp.com",
-    databaseURL:       "https://liga-gualeguay-default-rtdb.firebaseio.com",
-    projectId:         "liga-gualeguay",
-    storageBucket:     "liga-gualeguay.firebasestorage.app",
+    apiKey: "AIzaSyCv7tt0id1FXRaHlNxdWewiY4a5SNAfe8c",
+    authDomain: "liga-gualeguay.firebaseapp.com",
+    databaseURL: "https://liga-gualeguay-default-rtdb.firebaseio.com",
+    projectId: "liga-gualeguay",
+    storageBucket: "liga-gualeguay.firebasestorage.app",
     messagingSenderId: "402887930793",
-    appId:             "1:402887930793:web:4322b3d9f79f816b9b4ab8",
-    measurementId:     "G-8GQ2GWHH27"
+    appId: "1:402887930793:web:4322b3d9f79f816b9b4ab8",
+    measurementId: "G-8GQ2GWHH27"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // Exponer para uso desde JS no-modular
+  // Exponer para uso desde JS no-modular (tu código legacy)
   window._firebaseDB  = db;
   window._firebaseRef = ref;
   window._firebaseSet = set;
-  // Módulos para reacciones
   window._fbModules = { ref, onValue, set, push, get, update, remove };
 
-  // liveUrl en tiempo real (override de Sheets si existe)
+  // 1. LiveUrl en tiempo real (override de Sheets si existe)
   onValue(ref(db, 'config/liveUrl'), function(snapshot) {
     var url = snapshot.val();
     if (url) {
       var id = url.match(/(?:v=|youtu\.be\/)([\w-]{11})/);
       if (id) {
-        document.getElementById('envivoIframe').src   = 'https://www.youtube.com/embed/' + id[1] + '?autoplay=1';
+        document.getElementById('envivoIframe').src = 'https://www.youtube.com/embed/' + id[1] + '?autoplay=1';
         document.getElementById('envivoFrame').style.display = 'block';
-        document.getElementById('envivoOff').style.display   = 'none';
+        document.getElementById('envivoOff').style.display = 'none';
         document.getElementById('liveBanner').classList.add('on');
         document.getElementById('liveBannerBtn').href = url;
       }
     }
   });
 
-  console.log('✅ Firebase conectado — liga-gualeguay');
-
-  // Ganador del sorteo en tiempo real
+  // 2. Mostrar Ganador del sorteo en tiempo real en la portada
   onValue(ref(db, 'sorteo_ganador'), function(snapshot) {
     var data = snapshot.val();
     var wrap = document.getElementById('ganadores-wrap');
     var cont = document.getElementById('ganadores-contenido');
     if (!wrap || !cont) return;
+    
     if (data && data.activo) {
       wrap.style.display = 'block';
       cont.innerHTML =
         '<div style="padding:16px;text-align:center">' +
         '<div style="font-size:2rem;margin-bottom:6px">🏆</div>' +
         '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--gold);margin-bottom:4px">' + data.nombre + '</div>' +
-        '<div style="font-size:.7rem;color:var(--muted)">Ganador del sorteo · ' + (data.fecha||'') + '</div>' +
+        '<div style="font-size:.7rem;color:var(--muted)">Ganador del sorteo · ' + (data.fecha || '') + '</div>' +
         '</div>';
     } else {
       wrap.style.display = 'none';
     }
   });
+
+  // ==========================================================
+  // 3. NUEVO: Lógica de Sorteos (Disponible globalmente)
+  // ==========================================================
+
+  // A) Función para que el USUARIO se registre desde el formulario
+  window.registrarParaSorteo = async function(nombre, telefono, acepta) {
+    if (!nombre || !telefono || !acepta) {
+      alert("⚠️ Por favor completá todos los datos y aceptá participar.");
+      return false;
+    }
+    try {
+      // Usamos el teléfono sin caracteres especiales como ID único
+      const idUsuario = telefono.replace(/\D/g, ''); 
+      const usuarioRef = ref(db, `usuarios_sorteos/${idUsuario}`);
+      
+      await set(usuarioRef, {
+        nombre: nombre.trim(),
+        telefono: telefono.trim(),
+        acepta: acepta,
+        fecha_registro: new Date().toISOString(),
+        activo: true
+      });
+      
+      alert("✅ ¡Registrado con éxito! Ya participás de los sorteos de Pasión Azul.");
+      return true;
+    } catch (error) {
+      console.error("Error al registrar:", error);
+      alert("❌ Hubo un error al registrarte. Revisá tu conexión e intentá de nuevo.");
+      return false;
+    }
+  };
+
+  // B) Función para que el ADMIN realice el sorteo (Llamar desde el panel de admin)
+  window.realizarSorteoAdmin = async function() {
+    if (!confirm("⚠️ ¿Estás seguro de realizar el sorteo ahora? Se elegirá al azar entre todos los inscritos.")) return;
+
+    try {
+      // 1. Obtener todos los usuarios registrados
+      const snapshot = await get(ref(db, 'usuarios_sorteos'));
+      const usuarios = snapshot.val();
+
+      if (!usuarios) {
+        alert("⚠️ No hay usuarios registrados en la base de datos para sortear.");
+        return;
+      }
+
+      // 2. Filtrar solo los que están activos y aceptaron
+      const listaElegible = Object.values(usuarios).filter(u => u.activo && u.acepta);
+
+      if (listaElegible.length === 0) {
+        alert("⚠️ No hay usuarios activos para sortear.");
+        return;
+      }
+
+      // 3. Elegir uno al azar
+      const indiceAleatorio = Math.floor(Math.random() * listaElegible.length);
+      const ganador = listaElegible[indiceAleatorio];
+
+      // 4. Publicar el ganador (esto activará automáticamente el bloque 'onValue' de arriba)
+      await set(ref(db, 'sorteo_ganador'), {
+        nombre: ganador.nombre,
+        telefono: ganador.telefono,
+        fecha: new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+        activo: true
+      });
+
+      // 5. Guardar en el histórico (opcional pero recomendado)
+      await push(ref(db, 'historial_sorteos'), {
+        nombre: ganador.nombre,
+        telefono: ganador.telefono,
+        fecha_sorteo: new Date().toISOString()
+      });
+
+      alert(`🎉 ¡SORTEO REALIZADO CON ÉXITO!\n\nGanador: ${ganador.nombre}\nTeléfono: ${ganador.telefono}\n\nEl ganador ya se muestra en la portada de la app.`);
+
+    } catch (error) {
+      console.error("Error al sortear:", error);
+      alert("❌ Error al realizar el sorteo. Revisá la consola.");
+    }
+  };
+
+  console.log('✅ Firebase conectado y sistema de sorteos operativo — liga-gualeguay');
 </script>
 </body>
 </html>
