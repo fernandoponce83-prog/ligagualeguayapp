@@ -408,7 +408,22 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
     <div id="ganadores-contenido" class="card"></div>
   </div>
 
-  
+  <!-- 4. Petit Torneo — acceso rápido desde inicio -->
+  <div id="inicio-petit-wrap" style="display:none">
+    <div class="sec-div"><h3>🏆 Petit Torneo 2026</h3></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="card-header" style="background:linear-gradient(135deg,rgba(245,197,24,.15),transparent)">
+        <h3>POSICIONES</h3>
+        <span class="badge" style="background:var(--gold);color:#000">EN CURSO</span>
+      </div>
+      <div id="inicio-petit-tabla"></div>
+      <button onclick="go('petit',document.querySelector('.nav-btn:nth-child(3)'))"
+        style="width:100%;background:transparent;border:none;border-top:1px solid rgba(255,255,255,.08);padding:10px;color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:1px;cursor:pointer">
+        VER FIXTURE Y SEMIFINALES →
+      </button>
+    </div>
+  </div>
+
   <!-- 5. Ver en vivo + Radio -->
   <div class="sec-div"><h3>📺 Ver en vivo</h3></div>
   <div style="display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:8px;margin-bottom:12px;align-items:stretch">
@@ -559,11 +574,15 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
 
 <section id="petit" class="section">
   <div class="sec-div"><h3>🏆 Petit Torneo 2026</h3></div>
+
+  <!-- Tabs: Tabla / Fixture -->
   <div class="cat-tabs" style="margin-bottom:10px">
     <button class="ct active" onclick="switchPetit('tabla',this)">📊 Tabla</button>
     <button class="ct" onclick="switchPetit('fixture',this)">📅 Fixture</button>
     <button class="ct" onclick="switchPetit('semis',this)">⚔️ Semifinales</button>
   </div>
+
+  <!-- TABLA DEL PETIT TORNEO -->
   <div id="petit-tabla">
     <div class="card">
       <div class="card-header">
@@ -572,15 +591,22 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
       </div>
       <div id="petit-tabla-contenido"><div class="loading-state">Cargando...</div></div>
     </div>
-    <div style="font-size:.6rem;color:var(--muted);padding:6px 4px;text-align:center">Todos contra todos · 6 fechas</div>
+    <div style="font-size:.6rem;color:var(--muted);padding:6px 4px;text-align:center">
+      Urquiza · Barrio Norte · Sportiva · Juventud Unida — Todos contra todos (6 fechas)
+    </div>
   </div>
+
+  <!-- FIXTURE DEL PETIT TORNEO -->
   <div id="petit-fixture" style="display:none">
     <div id="petit-fixture-contenido"><div class="loading-state">Cargando...</div></div>
   </div>
+
+  <!-- SEMIFINALES DIVISIONES -->
   <div id="petit-semis" style="display:none">
     <div class="sec-div"><h3>⚔️ Semifinales Ida — Divisiones Inferiores</h3></div>
     <div id="petit-semis-contenido"><div class="loading-state">Cargando...</div></div>
   </div>
+
 </section>
 
 <section id="posiciones" class="section">
@@ -885,9 +911,6 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
           <div class="panel-title" style="margin-top:14px">🔄 Datos</div>
           <button class="panel-btn sec" onclick="recargarDatos()">🔄 FORZAR RECARGA DESDE SHEETS</button>
           <div id="adm-reload-r" style="margin-top:8px"></div>
-          <button class="panel-btn" onclick="verParticipantes()">📋 VER INSCRIPTOS</button>
-<button class="panel-btn pri" onclick="sortearGanador()">🎲 SORTEAR</button>
-<div id="admin-sorteo-info"></div>
 
           <!-- ── SUBIDOR DE FOTOS A IMGUR ── -->
           <div class="panel-title" style="margin-top:14px">📸 Subir fotos (carrusel)</div>
@@ -1356,281 +1379,188 @@ function renderForma(forma) {
 // ============================================================
 //  LIGA PROFESIONAL ARGENTINA + COPA ARGENTINA
 // ============================================================
-var lpfCache      = {};
-var lpfTabActual  = 'zonas';
-
-function switchLPF(tab, btn) {
-  lpfTabActual = tab;
-  document.querySelectorAll('#lpf-tabs .ct').forEach(function(b){ b.classList.remove('active'); });
+);
   if (btn) btn.classList.add('active');
-  /* cargarLPF eliminada */
+  cargarLPF(tab);
 }
 
-function cargarLPF(tab) {
-  var cont = document.getElementById('lpf-contenido');
-  if (lpfCache[tab]) { renderLPF(tab, lpfCache[tab]); return; }
-  cont.className = 'loading-state';
-  cont.innerHTML = 'Cargando datos de AFA...';
-  fetch(APPS_SCRIPT_URL + '?action=ligaprofesional&tab=' + tab + '&token=' + APPS_SCRIPT_TOKEN)
-    .then(function(r){ return r.json(); })
-    .then(function(data) {
-      lpfCache[tab] = data;
-      renderLPF(tab, data);
-    })
-    .catch(function(err) {
-      console.error('Error cargando Liga Profesional:', err);
-      cont.className = 'error-state';
-      cont.innerHTML = '⚠️ No se pudo cargar la información de AFA';
-    });
-}
 
-function renderLPF(tab, data) {
-  var cont = document.getElementById('lpf-contenido');
-  if (!data || data.error) {
-    cont.className = 'error-state';
-    cont.innerHTML = '⚠️ ' + (data && data.error ? data.error : 'Sin datos disponibles');
-    return;
-  }
-  // Detectar snapshot vacío — el trigger todavía no corrió o no tiene datos aún
-  var sinDatos = (tab === 'zonas' && (!data.zonas || !Object.keys(data.zonas).length))
-              || (tab === 'anual' && (!data.tabla || !data.tabla.length))
-              || (tab === 'copa'  && (!data.rondas || !data.rondas.length));
-  if (sinDatos) {
-    cont.className = '';
-    cont.innerHTML = '<div class="card" style="text-align:center;padding:28px 16px">' +
-      '<div style="font-size:2rem;margin-bottom:8px">🇦🇷</div>' +
-      '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;letter-spacing:1px;margin-bottom:6px">DATOS AÚN NO DISPONIBLES</div>' +
-      '<div style="font-size:.7rem;color:var(--muted);margin-bottom:16px">El sistema de actualización automática se activa cada 45 minutos.<br>Si ves esto, es probable que todavía no se haya ejecutado por primera vez.</div>' +
-      '<button onclick="lpfCache={}; cargarLPF(lpfTabActual)" style="background:var(--blue);border:none;border-radius:20px;color:#fff;font-family:\'Bebas Neue\',sans-serif;font-size:.8rem;letter-spacing:1px;padding:8px 20px;cursor:pointer">🔄 REINTENTAR</button>' +
-      '</div>';
-    return;
-  }
-  cont.className = '';
-  var actEl = document.getElementById('lpf-actualizado');
-  if (actEl) actEl.textContent = data.actualizado ? 'Actualizado: ' + formatearHoraAFA(data.actualizado) : '';
 
-  if (tab === 'zonas')      cont.innerHTML = renderZonasLPF(data.zonas);
-  else if (tab === 'anual') cont.innerHTML = renderTablaLPF(data.tabla, 'TABLA ANUAL', data.tabla ? data.tabla.length : 0);
-  else if (tab === 'copa')  cont.innerHTML = renderCopaLPF(data.rondas);
-}
 
-function formatearHoraAFA(ts) {
-  try {
-    var d = new Date(ts);
-    return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-  } catch(e) { return ''; }
-}
 
-function renderZonasLPF(zonas) {
-  if (!zonas || !Object.keys(zonas).length) {
-    return '<div class="error-state">Sin datos de zonas todavía</div>';
-  }
-  return Object.keys(zonas).map(function(nombreZona) {
-    return renderTablaLPF(zonas[nombreZona], nombreZona.toUpperCase(), zonas[nombreZona].length);
-  }).join('');
-}
 
-function renderTablaLPF(equipos, titulo, cantidad) {
-  if (!equipos || !equipos.length) return '<div class="error-state">Sin datos todavía</div>';
-  var filas = equipos.map(function(e) {
-    return '<tr>' +
-      '<td class="pos-num">' + e.rank + '</td>' +
-      '<td><div class="td-club"><img class="escudo" src="' + (e.logo || '') + '" onerror="escudoFallback(this)"><span class="club-name">' + String(e.team || '').toUpperCase() + '</span></div></td>' +
-      '<td class="pts">' + e.points + '</td>' +
-      '<td>' + e.played + '</td>' +
-      '<td>' + e.won + '</td>' +
-      '<td>' + e.draw + '</td>' +
-      '<td>' + e.lost + '</td>' +
-      '<td>' + e.gf + '</td>' +
-      '<td>' + e.gc + '</td>' +
-      '<td>' + e.dg + '</td>' +
-      '</tr>';
-  }).join('');
-  return '<div class="card" style="margin-bottom:12px">' +
-    '<div class="card-header"><h3>' + titulo + '</h3><span class="badge">' + cantidad + ' EQUIPOS</span></div>' +
-    '<table class="tabla"><thead><tr><th>#</th><th>Club</th><th>Pts</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th></tr></thead>' +
-    '<tbody>' + filas + '</tbody></table>' +
-    '</div>';
-}
 
-function renderCopaLPF(rondas) {
-  if (!rondas || !rondas.length) return '<div class="error-state">Sin fixture de Copa Argentina todavía</div>';
-  return rondas.map(function(ronda) {
-    var partidos = ronda.matches.map(function(m) {
-      var enVivo = m.fixture.en_vivo;
-      var fin    = m.fixture.finalizado;
-      var golHome = (m.goals.home !== null && m.goals.home !== undefined) ? m.goals.home : '-';
-      var golAway = (m.goals.away !== null && m.goals.away !== undefined) ? m.goals.away : '-';
-      var estadoTxt = enVivo ? '🔴 ' + (m.fixture.elapsed ? m.fixture.elapsed + "'" : 'EN VIVO')
-                    : fin ? 'FINAL'
-                    : formatearFechaPartidoAFA(m.fixture.date);
-      return '<div class="card" style="margin-bottom:8px;padding:10px 14px">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;font-size:.6rem;color:var(--muted);margin-bottom:6px">' +
-          '<span>' + estadoTxt + '</span>' +
-        '</div>' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
-          '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0"><img src="' + (m.teams.home.logo||'') + '" style="width:22px;height:22px;object-fit:contain" onerror="this.style.display=\'none\'"><span style="font-size:.75rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + m.teams.home.name + '</span></div>' +
-          '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;padding:2px 10px;background:var(--card2);border-radius:6px">' + golHome + ' - ' + golAway + '</div>' +
-          '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;justify-content:flex-end"><span style="font-size:.75rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right">' + m.teams.away.name + '</span><img src="' + (m.teams.away.logo||'') + '" style="width:22px;height:22px;object-fit:contain" onerror="this.style.display=\'none\'"></div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-    return '<div class="sec-div"><h3>' + ronda.name + '</h3></div>' + partidos;
-  }).join('');
-}
 
-function formatearFechaPartidoAFA(iso) {
-  if (!iso) return '';
-  try {
-    var d = new Date(iso);
-    return d.toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-  } catch(e) { return ''; }
-}
+
+
+
+
+
+
 
 
 // ============================================================
-// PETIT TORNEO 2026 — Renderizado
+// PETIT TORNEO 2026
 // ============================================================
 function switchPetit(tab, btn) {
   ['tabla','fixture','semis'].forEach(function(t) {
-    var el = document.getElementById('petit-' + t);
-    if (el) el.style.display = (t === tab) ? 'block' : 'none';
+    document.getElementById('petit-' + t).style.display = (t === tab) ? 'block' : 'none';
   });
-  btn.closest('.cat-tabs').querySelectorAll('.ct').forEach(function(b) {
-    b.classList.remove('active');
-  });
+  btn.closest('.cat-tabs').querySelectorAll('.ct').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
 }
 
 function renderPetitTorneo(petit, semifinales) {
-  // ── Tabla ──
+  if (!petit) return;
+
+  // ── Mini tabla en INICIO ──
+  renderInicioMiniPetit(petit.tabla || []);
+
+  // ── Tabla completa ──
   var tablaEl = document.getElementById('petit-tabla-contenido');
   if (tablaEl) {
-    if (!petit || !petit.tabla || !petit.tabla.length) {
-      tablaEl.innerHTML = '<div style="padding:16px;text-align:center;font-size:.75rem;color:var(--muted)">Sin datos aún</div>';
+    if (!petit.tabla || !petit.tabla.length) {
+      tablaEl.innerHTML = '<div style="padding:16px;text-align:center;font-size:.75rem;color:var(--muted)">Los datos se cargarán cuando comiencen los partidos</div>';
     } else {
       var filas = petit.tabla.map(function(e) {
         var dg = (e.dg > 0 ? '+' : '') + e.dg;
-        var medal = e.pos === 1 ? '🥇' : e.pos === 2 ? '🥈' : e.pos === 3 ? '🥉' : String(e.pos);
         return '<tr>' +
-          '<td class="pos-num">' + medal + '</td>' +
+          '<td class="pos-num" style="color:var(--gold);font-weight:700">' + e.pos + '</td>' +
           '<td><div class="td-club"><img class="escudo" src="' + escudoUrl(e.club,'') + '" onerror="escudoFallback(this)"><div><span class="club-name">' + e.club.toUpperCase() + '</span></div></div></td>' +
           '<td class="pts">' + e.pts + '</td>' +
           '<td>' + e.pj + '</td>' +
-          '<td>' + e.g + '</td>' +
-          '<td>' + e.e + '</td>' +
-          '<td>' + e.p + '</td>' +
+          '<td>' + e.g  + '</td>' +
+          '<td>' + e.e  + '</td>' +
+          '<td>' + e.p  + '</td>' +
           '<td>' + e.gf + '</td>' +
           '<td>' + e.gc + '</td>' +
-          '<td>' + dg + '</td>' +
+          '<td>' + dg   + '</td>' +
           '</tr>';
       }).join('');
       tablaEl.innerHTML =
-        '<table class="tabla"><thead><tr>' +
-        '<th>#</th><th>Club</th><th>Pts</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th>' +
-        '</tr></thead><tbody>' + filas + '</tbody></table>';
+        '<table class="tabla">' +
+        '<thead><tr><th>#</th><th>Club</th><th>Pts</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th></tr></thead>' +
+        '<tbody>' + filas + '</tbody>' +
+        '</table>';
     }
   }
 
-  // ── Fixture ──
+  // ── Fixture por fecha ──
   var fixEl = document.getElementById('petit-fixture-contenido');
   if (fixEl) {
-    if (!petit || !petit.fixture || !petit.fixture.length) {
+    if (!petit.fixture || !petit.fixture.length) {
       fixEl.innerHTML = '<div class="error-state">Sin fixture cargado</div>';
     } else {
       var porFecha = {};
       petit.fixture.forEach(function(p) {
         var f = p.fecha_label || 'Sin fecha';
-        if (!porFecha[f]) { porFecha[f] = []; }
+        if (!porFecha[f]) porFecha[f] = [];
         porFecha[f].push(p);
       });
-      var fechasHtml = Object.keys(porFecha).map(function(fecha) {
-        var partidosHtml = porFecha[fecha].map(function(p) {
-          var tieneGoles = (p.gl !== null && p.gv !== null);
-          var badgeColor = p.estado === 'en_curso' ? 'var(--red)' : p.estado === 'finalizado' ? 'var(--green)' : 'var(--muted)';
-          var badgeText  = p.estado === 'en_curso' ? '🔴 EN VIVO' : p.estado === 'finalizado' ? 'FINAL' : 'PROG.';
-          var scoreHtml  = tieneGoles
-            ? ('<span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;background:rgba(255,255,255,.08);border-radius:6px;padding:2px 8px">' + p.gl + '</span>' +
-               '<span style="font-size:.7rem;color:var(--muted);margin:0 2px">VS</span>' +
-               '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;background:rgba(255,255,255,.08);border-radius:6px;padding:2px 8px">' + p.gv + '</span>')
-            : '<span style="font-size:.7rem;color:var(--muted)">VS</span>';
+      fixEl.innerHTML = Object.keys(porFecha).map(function(fecha) {
+        var partidos = porFecha[fecha].map(function(p) {
+          var finalizado = p.estado === 'finalizado';
+          var enCurso    = p.estado === 'en_curso';
+          var tieneGoles = p.gl !== null && p.gv !== null;
+          var estadoBadge = enCurso
+            ? '<span class="badge" style="background:var(--red);animation:pulse 1s infinite">🔴 EN VIVO</span>'
+            : finalizado
+            ? '<span class="badge" style="background:var(--green)">FINAL</span>'
+            : '<span class="badge" style="background:var(--muted)">PROGRAMADO</span>';
+          var scoreHtml = tieneGoles
+            ? '<div class="match-score"><div class="score-box' + (p.gl > p.gv ? ' win' : '') + '">' + p.gl + '</div><span class="score-vs">VS</span><div class="score-box' + (p.gv > p.gl ? ' win' : '') + '">' + p.gv + '</div></div>'
+            : '<div class="match-score"><span class="score-vs" style="font-size:.8rem;color:var(--muted)">VS</span></div>';
           return '<div class="match-row">' +
             '<div class="match-team"><img src="' + escudoUrl(p.local,'') + '" onerror="escudoFallback(this)"><span class="team-name">' + p.local.toUpperCase() + '</span></div>' +
-            '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:70px">' +
-              '<div style="display:flex;align-items:center;gap:2px">' + scoreHtml + '</div>' +
-              '<span class="badge" style="background:' + badgeColor + ';font-size:.5rem;padding:1px 4px">' + badgeText + '</span>' +
-            '</div>' +
+            scoreHtml +
             '<div class="match-team away"><img src="' + escudoUrl(p.visita,'') + '" onerror="escudoFallback(this)"><span class="team-name">' + p.visita.toUpperCase() + '</span></div>' +
             '</div>';
         }).join('');
-        var bg = porFecha[fecha].every(function(p) { return p.estado === 'finalizado'; })
-          ? 'rgba(39,174,96,.1)' : 'rgba(245,197,24,.07)';
         return '<div class="card" style="margin-bottom:10px">' +
-          '<div class="card-header" style="background:' + bg + '"><h3>' + fecha + '</h3></div>' +
-          partidosHtml + '</div>';
+          '<div class="card-header" style="background:linear-gradient(135deg,rgba(245,197,24,.1),transparent)">' +
+          '<h3>' + fecha + '</h3></div>' +
+          partidos + '</div>';
       }).join('');
-      fixEl.innerHTML = fechasHtml;
     }
   }
 
-  // ── Semifinales ──
+  // ── Semifinales de divisiones ──
   renderSemifinales(semifinales);
+}
+
+function renderInicioMiniPetit(tabla) {
+  var wrap = document.getElementById('inicio-petit-wrap');
+  var cont = document.getElementById('inicio-petit-tabla');
+  if (!wrap || !cont) return;
+  if (!tabla || !tabla.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  var filas = tabla.map(function(e) {
+    var medal = e.pos === 1 ? '🥇' : e.pos === 2 ? '🥈' : e.pos === 3 ? '🥉' : e.pos;
+    return '<tr>' +
+      '<td class="pos-num">' + medal + '</td>' +
+      '<td><div class="td-club"><img class="escudo" src="' + escudoUrl(e.club,'') + '" onerror="escudoFallback(this)"><span class="club-name">' + e.club.toUpperCase() + '</span></div></td>' +
+      '<td class="pts">' + e.pts + '</td>' +
+      '<td>' + e.pj + '</td>' +
+      '<td>' + (e.dg > 0 ? '+' : '') + e.dg + '</td>' +
+      '</tr>';
+  }).join('');
+  cont.innerHTML = '<table class="tabla" style="font-size:.72rem">' +
+    '<thead><tr><th>#</th><th>Club</th><th>Pts</th><th>PJ</th><th>DG</th></tr></thead>' +
+    '<tbody>' + filas + '</tbody></table>';
 }
 
 function renderSemifinales(semis) {
   var cont = document.getElementById('petit-semis-contenido');
-  if (!cont) { return; }
+  if (!cont) return;
   if (!semis || !semis.length) {
     cont.innerHTML = '<div class="error-state">Sin datos de semifinales</div>';
     return;
   }
+
+  // Agrupar por división
   var porDiv = {};
   semis.forEach(function(s) {
-    var div = s.division || 'Sin división';
-    if (!porDiv[div]) { porDiv[div] = []; }
-    porDiv[div].push(s);
+    if (!porDiv[s.division]) porDiv[s.division] = [];
+    porDiv[s.division].push(s);
   });
-  var divsHtml = Object.keys(porDiv).map(function(div) {
-    var esFem  = div.toLowerCase().indexOf('femenino') !== -1;
-    var color  = esFem ? '#e91e8c' : 'var(--blue)';
-    var cruces = porDiv[div].map(function(s) {
-      var idaHtml    = s.ida_jugada
-        ? ('<span style="font-family:\'Bebas Neue\',sans-serif;font-size:.95rem">' + s.goles_ida_local + ' — ' + s.goles_ida_visita + '</span>')
-        : '<span style="font-size:.7rem;color:var(--muted)">?-?</span>';
-      var vueltaHtml = s.vuelta_jugada
-        ? ('<span style="font-family:\'Bebas Neue\',sans-serif;font-size:.85rem;color:rgba(255,255,255,.6)">' + s.goles_vuelta_local + ' — ' + s.goles_vuelta_visita + '</span>')
-        : '<span style="font-size:.6rem;color:var(--muted)">Pendiente</span>';
-      var ganHtml = s.ganador
-        ? ('<div style="text-align:center;font-family:\'Bebas Neue\',sans-serif;font-size:.75rem;color:var(--gold);padding:4px 0;border-top:1px solid rgba(255,255,255,.05)">CLASIFICA: ' + s.ganador.toUpperCase() + ' 🏆</div>')
+
+  var esFemenino = function(div) { return div.toLowerCase().indexOf('femenino') !== -1; };
+
+  cont.innerHTML = Object.keys(porDiv).map(function(div) {
+    var color = esFemenino(div) ? 'var(--pink)' : 'var(--blue)';
+    var partidos = porDiv[div].map(function(s) {
+      var idaStr    = s.ida_jugada    ? s.goles_ida_local + ' - ' + s.goles_ida_visita : '?-?';
+      var vueltaStr = s.vuelta_jugada ? s.goles_vuelta_local + ' - ' + s.goles_vuelta_visita : 'Pendiente';
+      var ganadorHtml = s.ganador
+        ? '<div style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:.8rem;color:var(--gold);padding:4px 0">CLASIFICA: ' + s.ganador.toUpperCase() + ' 🏆</div>'
         : '';
-      return '<div style="padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.04)">' +
-        '<div style="display:flex;align-items:center;gap:4px">' +
-          '<div style="flex:1;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:5px">' +
-            '<span style="font-size:.72rem;font-weight:700">' + (s.local || '').toUpperCase() + '</span>' +
-            '<img src="' + escudoUrl(s.local,'') + '" onerror="escudoFallback(this)" style="width:22px;height:22px;object-fit:contain">' +
+      return '<div style="border-bottom:1px solid rgba(255,255,255,.05);padding:10px 0">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px">' +
+          '<div style="flex:1;text-align:right">' +
+            '<img src="' + escudoUrl(s.local,'') + '" onerror="escudoFallback(this)" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:5px">' +
+            '<span style="font-size:.75rem;font-weight:700">' + s.local.toUpperCase() + '</span>' +
           '</div>' +
-          '<div style="text-align:center;min-width:90px;display:flex;flex-direction:column;align-items:center;gap:1px">' +
-            '<span style="font-size:.5rem;color:var(--muted)">IDA</span>' +
-            idaHtml +
-            '<span style="font-size:.5rem;color:var(--muted);margin-top:2px">VUELTA</span>' +
-            vueltaHtml +
+          '<div style="text-align:center;min-width:80px">' +
+            '<div style="font-size:.55rem;color:var(--muted)">IDA</div>' +
+            '<div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;background:var(--card2);border-radius:6px;padding:2px 8px">' + idaStr + '</div>' +
+            '<div style="font-size:.55rem;color:var(--muted);margin-top:2px">VUELTA</div>' +
+            '<div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;color:var(--muted);background:var(--card2);border-radius:6px;padding:2px 8px">' + vueltaStr + '</div>' +
           '</div>' +
-          '<div style="flex:1;text-align:left;display:flex;align-items:center;gap:5px">' +
-            '<img src="' + escudoUrl(s.visitante,'') + '" onerror="escudoFallback(this)" style="width:22px;height:22px;object-fit:contain">' +
-            '<span style="font-size:.72rem;font-weight:700">' + (s.visitante || '').toUpperCase() + '</span>' +
+          '<div style="flex:1;text-align:left">' +
+            '<span style="font-size:.75rem;font-weight:700">' + s.visitante.toUpperCase() + '</span>' +
+            '<img src="' + escudoUrl(s.visitante,'') + '" onerror="escudoFallback(this)" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-left:5px">' +
           '</div>' +
         '</div>' +
-        ganHtml +
+        ganadorHtml +
       '</div>';
     }).join('');
+
     return '<div class="card" style="margin-bottom:10px;border-left:3px solid ' + color + '">' +
       '<div class="card-header"><h3>' + div + '</h3>' +
-      '<span class="badge" style="background:' + color + ';font-size:.6rem">SEMIS</span></div>' +
-      cruces + '</div>';
+      '<span class="badge" style="background:' + color + ';opacity:.9">SEMIS</span></div>' +
+      partidos + '</div>';
   }).join('');
-  cont.innerHTML = divsHtml;
 }
-
 
 function mostrarPosDiv(division, btn) {
   document.querySelectorAll('[id^="pos-panel-"]').forEach(function(el){ el.style.display='none'; });
@@ -1729,6 +1659,8 @@ function mostrarResFecha(divId, fecha, btn) {
 }
 
 function renderInicioUltimaFecha(grupos) {
+  // Sección removida — reemplazada por mini tabla Petit Torneo en inicio
+  return;
   ['1° Masculino','1° Femenino'].forEach(function(div) {
     var isMasc = div.indexOf('Masc') !== -1 || div.indexOf('Masculino') !== -1;
     var sufijo = isMasc ? 'masc' : 'fem';
@@ -2708,217 +2640,99 @@ function suscribirTodasReacciones() {
 // ============================================================
 // SORTEOS (localStorage + Firebase)
 // ============================================================
+var SK = 'fn_sorteos';
+function getSP() { try { return JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { return []; } }
 function saveSP(a) { localStorage.setItem(SK, JSON.stringify(a)); }
 
-// ============================================
-// REGISTRO DE USUARIOS PARA SORTEOS (FIREBASE)
-// ============================================
-async function regSorteo() {
+function regSorteo() {
+  var n   = document.getElementById('s-nombre').value.trim();
+  var t   = document.getElementById('s-tel').value.trim();
+  var e   = document.getElementById('s-email').value.trim();
+  var ok  = document.getElementById('s-ok').checked;
   var msg = document.getElementById('s-msg');
-  var nombre = document.getElementById('s-nombre').value.trim();
-  var tel    = document.getElementById('s-tel').value.trim();
-  var email  = document.getElementById('s-email').value.trim();
-  var club   = document.getElementById('s-club') ? document.getElementById('s-club').value : '';
-  var acepta = document.getElementById('s-ok').checked;
-
-  // Validaciones
-  if (!nombre || nombre.length < 3) {
-    msg.innerHTML = '<p style="color:#ff5252;font-size:.7rem;margin-top:8px">⚠️ Ingresá tu nombre completo</p>';
-    return;
-  }
-  if (!tel || tel.replace(/\D/g,'').length < 8) {
-    msg.innerHTML = '<p style="color:#ff5252;font-size:.7rem;margin-top:8px">⚠️ Ingresá un WhatsApp válido (ej: 3444-123456)</p>';
-    return;
-  }
-  if (!acepta) {
-    msg.innerHTML = '<p style="color:#ff5252;font-size:.7rem;margin-top:8px">⚠️ Debés aceptar las novedades para participar</p>';
-    return;
-  }
-
-  msg.innerHTML = '<p style="color:#ffd700;font-size:.7rem;margin-top:8px">⏳ Registrando...</p>';
-
-  try {
-    var db  = window._firebaseDB;
-    var ref = window._firebaseRef;
-    var set = window._firebaseSet;
-    var get = window._fbModules.get;
-
-    // ID único basado en el teléfono (evita duplicados)
-    var telLimpio = tel.replace(/\D/g, '');
-    var userId = 'u_' + telLimpio;
-
-    // Verificar si ya existe
-    var snap = await get(ref(db, 'sorteos_usuarios/' + userId));
-    if (snap.exists()) {
-      msg.innerHTML = '<p style="color:#4caf50;font-size:.7rem;margin-top:8px">✅ ¡Ya estás registrado/a, ' + nombre.split(' ')[0] + '! Participás del sorteo 🎉</p>';
-      return;
-    }
-
-    // Guardar usuario en Firebase
-    await set(ref(db, 'sorteos_usuarios/' + userId), {
-      nombre: nombre,
-      telefono: tel,
-      email: email || '',
-      club_favorito: club,
-      acepta_sorteos: true,
-      fecha_registro: new Date().toISOString(),
-      activo: true
-    });
-
-    msg.innerHTML = '<p style="color:#4caf50;font-size:.7rem;margin-top:8px">✅ ¡Registrado/a <b>' + nombre.split(' ')[0] + '</b>! Ya participás de los sorteos 🎉</p>';
-
-    // Limpiar formulario
-    document.getElementById('s-nombre').value = '';
-    document.getElementById('s-tel').value = '';
-    document.getElementById('s-email').value = '';
-    if (document.getElementById('s-club')) document.getElementById('s-club').value = '';
-    document.getElementById('s-ok').checked = false;
-
-    // Guardar referencia local
-    localStorage.setItem('sorteo_user', userId);
-
-  } catch (error) {
-    console.error('Error registro sorteo:', error);
-    msg.innerHTML = '<p style="color:#ff5252;font-size:.7rem;margin-top:8px">❌ Error al registrar: ' + error.message + '</p>';
-  }
+  if (!n || !t) { msg.innerHTML = '<div class="msg-box err">⚠️ Ingresá nombre y WhatsApp</div>'; return; }
+  if (!ok)      { msg.innerHTML = '<div class="msg-box err">⚠️ Aceptá los términos para participar</div>'; return; }
+  var ps = getSP();
+  if (ps.find(function(p){ return p.tel === t; })) { msg.innerHTML = '<div class="msg-box err">ℹ️ Ya estás registrado con ese número</div>'; return; }
+  ps.push({ nombre:n, tel:t, email:e, fecha:new Date().toLocaleDateString('es-AR'), ganador:false });
+  saveSP(ps);
+  if (window._firebaseSet && window._firebaseDB && window._firebaseRef)
+    window._firebaseSet(window._firebaseRef(window._firebaseDB, 'sorteos/p_'+Date.now()), {nombre:n,tel:t,email:e,fecha:new Date().toLocaleDateString('es-AR')});
+  document.getElementById('s-nombre').value = '';
+  document.getElementById('s-tel').value    = '';
+  document.getElementById('s-email').value  = '';
+  document.getElementById('s-ok').checked   = false;
+  msg.innerHTML = '<div class="msg-box ok">✅ ¡Registrado! Seguí @pasionazul para novedades.</div>';
+  renderLista();
 }
-async function contactCom() {
+
+function renderLista() {
+  var ps = getSP();
+  if (!ps.length) { document.getElementById('s-lista-sec').style.display='none'; return; }
+  document.getElementById('s-lista-sec').style.display = 'block';
+  document.getElementById('s-lista').innerHTML = ps.map(function(p) {
+    return '<div class="sorteo-entry"><div><strong>' + p.nombre + '</strong><span>' + p.tel + ' · ' + p.fecha + '</span></div>' + (p.ganador ? '<span class="badge-win">🏆 GANADOR</span>' : '') + '</div>';
+  }).join('');
+}
+
+function contactCom() {
   var n = document.getElementById('c-nombre').value.trim();
   var t = document.getElementById('c-tel').value.trim();
   var d = document.getElementById('c-desc').value.trim();
   var r = document.getElementById('c-msg-r');
-  
-  if (!n || !t) { 
-    r.innerHTML = '<div class="msg-box err">⚠️ Ingresá nombre y teléfono</div>'; 
-    return; 
-  }
-  
-  r.innerHTML = '<div class="msg-box ok">⏳ Enviando...</div>';
-  
-  try {
-    // NUEVO: Guardar en Firebase (contactos publicitarios)
-    var db   = window._firebaseDB;
-    var ref  = window._firebaseRef;
-    var push = window._fbModules.push;
-    
-    await push(ref(db, 'contactos_publicitarios'), {
-      nombre: n,
-      telefono: t,
-      descripcion: d,
-      fecha: new Date().toISOString(),
-      visto: false
-    });
-    
-    // Abrir WhatsApp
-    var txt = encodeURIComponent(
-      'Hola! Me interesa publicitar en la app de la Liga Departamental Gualeguay.\n' +
-      'Comercio: ' + n + '\n' +
-      'Mensaje: ' + d
-    );
-    window.open('https://wa.me/543444571340?text=' + txt, '_blank');
-    
-    r.innerHTML = '<div class="msg-box ok">✅ Abriendo WhatsApp...</div>';
-    
-  } catch (error) {
-    // Si falla Firebase, igual abrir WhatsApp
-    var txt = encodeURIComponent(
-      'Hola! Me interesa publicitar en la app de la Liga Departamental Gualeguay.\n' +
-      'Comercio: ' + n + '\n' +
-      'Mensaje: ' + d
-    );
-    window.open('https://wa.me/543444571340?text=' + txt, '_blank');
-    r.innerHTML = '<div class="msg-box ok">✅ Abriendo WhatsApp...</div>';
-  }
+  if (!n || !t) { r.innerHTML = '<div class="msg-box err">⚠️ Ingresá nombre y teléfono</div>'; return; }
+  var txt = encodeURIComponent('Hola! Me interesa publicitar en la app de la Liga Departamental Gualeguay.\nComercio: ' + n + '\nMensaje: ' + d);
+  window.open('https://wa.me/543444571340?text=' + txt, '_blank');
+  r.innerHTML = '<div class="msg-box ok">✅ Abriendo WhatsApp...</div>';
 }
 
-// ============================================
-// ADMIN: VER PARTICIPANTES
-// ============================================
-async function verParticipantes() {
-  var info = document.getElementById('admin-sorteo-info');
-  info.innerHTML = '<p style="color:#ffd700">⏳ Cargando...</p>';
-
-  try {
-    var snap = await window._fbModules.get(
-      window._firebaseRef(window._firebaseDB, 'sorteos_usuarios')
-    );
-    
-    if (!snap.exists()) {
-      info.innerHTML = '<p style="color:#ff5252">⚠️ No hay inscriptos todavía</p>';
-      return;
-    }
-
-    var data = snap.val();
-    var lista = Object.values(data).filter(u => u.activo);
-    
-    var html = '<div style="background:#0a0a1a;padding:10px;border-radius:8px;max-height:200px;overflow-y:auto;margin-top:8px">';
-    html += '<p style="color:#4caf50;font-weight:bold">✅ ' + lista.length + ' inscriptos</p>';
-    lista.forEach((u, i) => {
-      html += '<div style="border-bottom:1px solid #222;padding:5px 0;font-size:.68rem">';
-      html += (i+1) + '. <b>' + u.nombre + '</b> · 📱 ' + u.telefono;
-      if (u.club_favorito) html += ' · ' + u.club_favorito;
-      html += '</div>';
-    });
-    html += '</div>';
-    info.innerHTML = html;
-    
-  } catch (e) {
-    info.innerHTML = '<p style="color:#ff5252">❌ Error: ' + e.message + '</p>';
+// ============================================================
+// ADMIN
+// ============================================================
+function admLogin() {
+  if (document.getElementById('adm-pass').value === PASS) {
+    admOK = true;
+    document.getElementById('adm-login').style.display = 'none';
+    document.getElementById('adm-panel').classList.add('vis');
+    // Mostrar panel admin en En Vivo
+    var lp = document.getElementById('envivo-admin-panel');
+    if (lp) lp.style.display = 'block';
+  } else {
+    document.getElementById('adm-login-msg').innerHTML = '<div class="msg-box err">❌ Contraseña incorrecta</div>';
   }
 }
-
-// ============================================
-// ADMIN: SORTEAR Y PUBLICAR
-// ============================================
-async function sortearGanador() {
-  if (!confirm('¿Realizar sorteo entre todos los inscriptos?')) return;
-
-  var info = document.getElementById('admin-sorteo-info');
-  info.innerHTML = '<p style="color:#ffd700">⏳ Sorteando...</p>';
-
-  try {
-    var snap = await window._fbModules.get(
-      window._firebaseRef(window._firebaseDB, 'sorteos_usuarios')
-    );
-    
-    if (!snap.exists()) {
-      info.innerHTML = '<p style="color:#ff5252">⚠️ No hay inscriptos</p>';
-      return;
-    }
-
-    var lista = Object.values(snap.val()).filter(u => u.activo);
-    if (lista.length === 0) {
-      info.innerHTML = '<p style="color:#ff5252">⚠️ Sin participantes activos</p>';
-      return;
-    }
-
-    // Sorteo aleatorio
-    var ganador = lista[Math.floor(Math.random() * lista.length)];
-    var fecha = new Date().toLocaleDateString('es-AR');
-
-    // Publicar en Firebase (ya tenés el onValue que lo muestra en portada)
-    await window._firebaseSet(
-      window._firebaseRef(window._firebaseDB, 'sorteo_ganador'),
-      {
-        activo: true,
-        nombre: ganador.nombre,
-        telefono: ganador.telefono,
-        club: ganador.club_favorito || '',
-        fecha: fecha
-      }
-    );
-
-    info.innerHTML = 
-      '<div style="background:#1a1a2e;border:2px solid #ffd700;border-radius:10px;padding:12px;margin-top:8px;text-align:center">' +
-      '<div style="font-size:1.5rem">🏆</div>' +
-      '<div style="color:#ffd700;font-weight:bold">' + ganador.nombre + '</div>' +
-      '<div style="color:#888;font-size:.7rem">📱 ' + ganador.telefono + '</div>' +
-      '<div style="color:#4caf50;font-size:.68rem;margin-top:6px">✅ Publicado (' + lista.length + ' participantes)</div>' +
-      '</div>';
-
-  } catch (e) {
-    info.innerHTML = '<p style="color:#ff5252">❌ Error: ' + e.message + '</p>';
-  }
+function admLogout() {
+  admOK = false;
+  var lp = document.getElementById('envivo-admin-panel');
+  if (lp) lp.style.display = 'none';
+  document.getElementById('adm-login').style.display = 'block';
+  document.getElementById('adm-panel').classList.remove('vis');
+  document.getElementById('adm-pass').value = '';
+  document.getElementById('adm-login-msg').innerHTML = '';
+}
+function admVerSorteos() {
+  if (!admOK) return;
+  var ps = getSP();
+  if (!ps.length) { document.getElementById('adm-sorteos-r').innerHTML = '<div class="msg-box">No hay participantes aún</div>'; return; }
+  document.getElementById('adm-sorteos-r').innerHTML = '<div style="font-size:.68rem;color:var(--muted);margin-bottom:5px">' + ps.length + ' participante(s)</div>' +
+    ps.map(function(p,i){ return '<div class="sorteo-entry" style="font-size:.7rem"><div><strong>'+(i+1)+'. '+p.nombre+'</strong><span style="display:block">'+p.tel+(p.email?' · '+p.email:'')+'</span><span>'+p.fecha+'</span></div>'+(p.ganador?'<span class="badge-win">🏆</span>':'')+'</div>'; }).join('');
+}
+function admSortear() {
+  if (!admOK) return;
+  var ps = getSP();
+  if (!ps.length) { alert('No hay participantes'); return; }
+  ps.forEach(function(p){ p.ganador = false; });
+  var idx = Math.floor(Math.random() * ps.length);
+  ps[idx].ganador = true;
+  saveSP(ps);
+  document.getElementById('adm-sorteos-r').innerHTML = '<div class="msg-box ok">🏆 ¡GANADOR SORTEADO!<br><strong>'+ps[idx].nombre+'</strong><br>📱 '+ps[idx].tel+'</div>';
+  admVerSorteos();
+}
+function admVerConsultas() {
+  if (!admOK) return;
+  var cs = JSON.parse(localStorage.getItem('fn_consultas') || '[]');
+  if (!cs.length) { document.getElementById('adm-consultas-r').innerHTML = '<div class="msg-box">No hay consultas aún</div>'; return; }
+  document.getElementById('adm-consultas-r').innerHTML = cs.map(function(c,i){ return '<div class="sorteo-entry" style="font-size:.7rem"><div><strong>'+(i+1)+'. '+c.nombre+'</strong><span style="display:block">'+c.tel+(c.msg?'<br><em>'+c.msg+'</em>':'')+'</span><span>'+c.fecha+'</span></div></div>'; }).join('');
 }
 
 // ============================================================
@@ -2930,19 +2744,26 @@ function sanitizeId(str) {
 
 // Construye URL del escudo desde el nombre del club (con mapa de slugs GitHub)
 var ESCUDO_MAP = {
+  // Nombres canonicals
   'aldea asuncion':'aldea-asuncion','aldea asuncion':'aldea-asuncion',
   'bancario':'bancario','barrio norte':'barrio-norte',
   'el progreso':'el-progreso','gualeguay central':'gualeguay-central',
   'juventud unida':'juventud-unida','la academia':'la-academia',
   'libertad':'libertad','quilmes':'quilmes',
   'sportiva':'sportiva','urquiza':'urquiza',
-  'central':'gualeguay-central',
-  'juventud':'juventud-unida',
-  'juventud (carbo)':'juventud-unida',
-  'soc. sportiva':'sportiva','sociedad sportiva':'sportiva',
-  'atletico urquiza':'urquiza','atletico libertad':'libertad',
-  'atletico barrio norte':'barrio-norte','atletico quilmes':'quilmes',
-  'centro bancario':'bancario','academia':'la-academia','aldea':'aldea-asuncion'
+  // Aliases cortos que causan el bug del logo de la Liga
+  'central':'gualeguay-central',          // ← fix: "Central" → Gualeguay Central
+  'juventud':'juventud-unida',            // ← fix: "Juventud" → Juventud Unida
+  'juventud (carbo)':'juventud-unida',    // ← fix: variante con Carbó
+  'soc. sportiva':'sportiva',             // ← fix alias
+  'sociedad sportiva':'sportiva',
+  'atletico urquiza':'urquiza',
+  'atletico libertad':'libertad',
+  'atletico barrio norte':'barrio-norte',
+  'atletico quilmes':'quilmes',
+  'centro bancario':'bancario',
+  'academia':'la-academia',
+  'aldea':'aldea-asuncion'
 };
 function escudoUrl(nombre, escudo_url_fb) {
   if (escudo_url_fb) return escudo_url_fb;
@@ -3218,7 +3039,7 @@ function renderMuroCard(card) {
     if (urls.length > 1) {
       html += crearCarrusel(urls, titulo);
     } else if (urls.length === 1) {
-      html += '<img src="' + urls[0] + '" alt="' + titulo + '" style="width:100%;height:auto;display:block;border-radius:0" onerror="this.style.display=\'none\'">';
+      html += '<img src="' + urls[0] + '" alt="' + titulo + '" style="width:100%;height:auto;max-height:260px;object-fit:cover;display:block" onerror="this.style.display=\'none\'">';
     }
     html += '<div class="muro-body">' + badgeHtml +
       (titulo ? '<div class="muro-titulo">' + titulo + '</div>' : '') +
@@ -3574,146 +3395,65 @@ if ('serviceWorker' in navigator) {
 
 <!-- ===================== FIREBASE ===================== -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set, push, get, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { initializeApp }  from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, push, get, update, remove } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyCv7tt0id1FXRaHlNxdWewiY4a5SNAfe8c",
-    authDomain: "liga-gualeguay.firebaseapp.com",
-    databaseURL: "https://liga-gualeguay-default-rtdb.firebaseio.com",
-    projectId: "liga-gualeguay",
-    storageBucket: "liga-gualeguay.firebasestorage.app",
+    apiKey:            "AIzaSyCv7tt0id1FXRaHlNxdWewiY4a5SNAfe8c",
+    authDomain:        "liga-gualeguay.firebaseapp.com",
+    databaseURL:       "https://liga-gualeguay-default-rtdb.firebaseio.com",
+    projectId:         "liga-gualeguay",
+    storageBucket:     "liga-gualeguay.firebasestorage.app",
     messagingSenderId: "402887930793",
-    appId: "1:402887930793:web:4322b3d9f79f816b9b4ab8",
-    measurementId: "G-8GQ2GWHH27"
+    appId:             "1:402887930793:web:4322b3d9f79f816b9b4ab8",
+    measurementId:     "G-8GQ2GWHH27"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // Exponer para uso desde JS no-modular (tu código legacy)
+  // Exponer para uso desde JS no-modular
   window._firebaseDB  = db;
   window._firebaseRef = ref;
   window._firebaseSet = set;
+  // Módulos para reacciones
   window._fbModules = { ref, onValue, set, push, get, update, remove };
 
-  // 1. LiveUrl en tiempo real (override de Sheets si existe)
+  // liveUrl en tiempo real (override de Sheets si existe)
   onValue(ref(db, 'config/liveUrl'), function(snapshot) {
     var url = snapshot.val();
     if (url) {
       var id = url.match(/(?:v=|youtu\.be\/)([\w-]{11})/);
       if (id) {
-        document.getElementById('envivoIframe').src = 'https://www.youtube.com/embed/' + id[1] + '?autoplay=1';
+        document.getElementById('envivoIframe').src   = 'https://www.youtube.com/embed/' + id[1] + '?autoplay=1';
         document.getElementById('envivoFrame').style.display = 'block';
-        document.getElementById('envivoOff').style.display = 'none';
+        document.getElementById('envivoOff').style.display   = 'none';
         document.getElementById('liveBanner').classList.add('on');
         document.getElementById('liveBannerBtn').href = url;
       }
     }
   });
 
-  // 2. Mostrar Ganador del sorteo en tiempo real en la portada
+  console.log('✅ Firebase conectado — liga-gualeguay');
+
+  // Ganador del sorteo en tiempo real
   onValue(ref(db, 'sorteo_ganador'), function(snapshot) {
     var data = snapshot.val();
     var wrap = document.getElementById('ganadores-wrap');
     var cont = document.getElementById('ganadores-contenido');
     if (!wrap || !cont) return;
-    
     if (data && data.activo) {
       wrap.style.display = 'block';
       cont.innerHTML =
         '<div style="padding:16px;text-align:center">' +
         '<div style="font-size:2rem;margin-bottom:6px">🏆</div>' +
         '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--gold);margin-bottom:4px">' + data.nombre + '</div>' +
-        '<div style="font-size:.7rem;color:var(--muted)">Ganador del sorteo · ' + (data.fecha || '') + '</div>' +
+        '<div style="font-size:.7rem;color:var(--muted)">Ganador del sorteo · ' + (data.fecha||'') + '</div>' +
         '</div>';
     } else {
       wrap.style.display = 'none';
     }
   });
-
-  // ==========================================================
-  // 3. NUEVO: Lógica de Sorteos (Disponible globalmente)
-  // ==========================================================
-
-  // A) Función para que el USUARIO se registre desde el formulario
-  window.registrarParaSorteo = async function(nombre, telefono, acepta) {
-    if (!nombre || !telefono || !acepta) {
-      alert("⚠️ Por favor completá todos los datos y aceptá participar.");
-      return false;
-    }
-    try {
-      // Usamos el teléfono sin caracteres especiales como ID único
-      const idUsuario = telefono.replace(/\D/g, ''); 
-      const usuarioRef = ref(db, `usuarios_sorteos/${idUsuario}`);
-      
-      await set(usuarioRef, {
-        nombre: nombre.trim(),
-        telefono: telefono.trim(),
-        acepta: acepta,
-        fecha_registro: new Date().toISOString(),
-        activo: true
-      });
-      
-      alert("✅ ¡Registrado con éxito! Ya participás de los sorteos de Pasión Azul.");
-      return true;
-    } catch (error) {
-      console.error("Error al registrar:", error);
-      alert("❌ Hubo un error al registrarte. Revisá tu conexión e intentá de nuevo.");
-      return false;
-    }
-  };
-
-  // B) Función para que el ADMIN realice el sorteo (Llamar desde el panel de admin)
-  window.realizarSorteoAdmin = async function() {
-    if (!confirm("⚠️ ¿Estás seguro de realizar el sorteo ahora? Se elegirá al azar entre todos los inscritos.")) return;
-
-    try {
-      // 1. Obtener todos los usuarios registrados
-      const snapshot = await get(ref(db, 'usuarios_sorteos'));
-      const usuarios = snapshot.val();
-
-      if (!usuarios) {
-        alert("⚠️ No hay usuarios registrados en la base de datos para sortear.");
-        return;
-      }
-
-      // 2. Filtrar solo los que están activos y aceptaron
-      const listaElegible = Object.values(usuarios).filter(u => u.activo && u.acepta);
-
-      if (listaElegible.length === 0) {
-        alert("⚠️ No hay usuarios activos para sortear.");
-        return;
-      }
-
-      // 3. Elegir uno al azar
-      const indiceAleatorio = Math.floor(Math.random() * listaElegible.length);
-      const ganador = listaElegible[indiceAleatorio];
-
-      // 4. Publicar el ganador (esto activará automáticamente el bloque 'onValue' de arriba)
-      await set(ref(db, 'sorteo_ganador'), {
-        nombre: ganador.nombre,
-        telefono: ganador.telefono,
-        fecha: new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-        activo: true
-      });
-
-      // 5. Guardar en el histórico (opcional pero recomendado)
-      await push(ref(db, 'historial_sorteos'), {
-        nombre: ganador.nombre,
-        telefono: ganador.telefono,
-        fecha_sorteo: new Date().toISOString()
-      });
-
-      alert(`🎉 ¡SORTEO REALIZADO CON ÉXITO!\n\nGanador: ${ganador.nombre}\nTeléfono: ${ganador.telefono}\n\nEl ganador ya se muestra en la portada de la app.`);
-
-    } catch (error) {
-      console.error("Error al sortear:", error);
-      alert("❌ Error al realizar el sorteo. Revisá la consola.");
-    }
-  };
-
-  console.log('✅ Firebase conectado y sistema de sorteos operativo — liga-gualeguay');
 </script>
 </body>
 </html>
