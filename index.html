@@ -356,7 +356,7 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
   <div class="nav-inner">
     <button class="nav-btn active" onclick="go('inicio',this)">🏠 Inicio</button>
     <button class="nav-btn" onclick="go('envivo',this)">🔴 En Vivo</button>
-    <button class="nav-btn" onclick="go('ligaprofesional',this)">🇦🇷 Liga AFA</button>
+    <button class="nav-btn" onclick="go('petit',this)">🏆 Petit Torneo</button>
     <button class="nav-btn" onclick="go('clubes',this)">🛡️ Clubes</button>
     <button class="nav-btn" onclick="go('posiciones',this)">📊 Posiciones</button>
     <button class="nav-btn" onclick="go('resultados',this)">⚽ Resultados</button>
@@ -570,15 +570,30 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
   </div>
 </section>
 
-<section id="ligaprofesional" class="section">
-  <div class="sec-div"><h3>🇦🇷 Liga Profesional Argentina</h3></div>
-  <div id="lpf-tabs" class="cat-tabs">
-    <button class="ct active" onclick="switchLPF('zonas',this)">Zona A / B</button>
-    <button class="ct" onclick="switchLPF('anual',this)">Tabla Anual</button>
-    <button class="ct" onclick="switchLPF('copa',this)">🏆 Copa Argentina</button>
+<section id="petit" class="section">
+  <div class="sec-div"><h3>🏆 Petit Torneo 2026</h3></div>
+  <div class="cat-tabs" style="margin-bottom:10px">
+    <button class="ct active" onclick="switchPetit('tabla',this)">📊 Tabla</button>
+    <button class="ct" onclick="switchPetit('fixture',this)">📅 Fixture</button>
+    <button class="ct" onclick="switchPetit('semis',this)">⚔️ Semifinales</button>
   </div>
-  <div id="lpf-actualizado" style="font-size:.6rem;color:var(--muted);margin-bottom:8px;text-align:right"></div>
-  <div id="lpf-contenido" class="loading-state">Cargando datos de AFA...</div>
+  <div id="petit-tabla">
+    <div class="card">
+      <div class="card-header">
+        <h3>PETIT TORNEO 2026</h3>
+        <span class="badge" style="background:var(--gold);color:#000">4 EQUIPOS</span>
+      </div>
+      <div id="petit-tabla-contenido"><div class="loading-state">Cargando...</div></div>
+    </div>
+    <div style="font-size:.6rem;color:var(--muted);padding:6px 4px;text-align:center">Todos contra todos · 6 fechas</div>
+  </div>
+  <div id="petit-fixture" style="display:none">
+    <div id="petit-fixture-contenido"><div class="loading-state">Cargando...</div></div>
+  </div>
+  <div id="petit-semis" style="display:none">
+    <div class="sec-div"><h3>⚔️ Semifinales Ida — Divisiones Inferiores</h3></div>
+    <div id="petit-semis-contenido"><div class="loading-state">Cargando...</div></div>
+  </div>
 </section>
 
 <section id="posiciones" class="section">
@@ -957,7 +972,7 @@ tr.fila-vivo td:first-child{border-left:3px solid currentColor}
 // ============================================================
 // CONFIGURACIÓN — REEMPLAZÁ LA URL CUANDO PUBLIQUES EL SCRIPT
 // ============================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw1M_mfAqZ6E_uX7pIaWzP-Nl-UnPyt16ced9dT1K-E942PpBLZV3_jHuwi3IvuB90x/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4OPGUAFP5bEV9AH-IotkFqgxGumP7htfxtE6pbvM-tfG4o4FsavRzu27bLIYe0AQ7/exec';
 var APPS_SCRIPT_TOKEN = 'pA_LigaGualeguay_2026_xK9m';
 var PASS = 'Reyazucar95';
 
@@ -992,7 +1007,7 @@ function go(id, btn) {
   document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
   window.scrollTo(0, 0);
-  if (id === 'ligaprofesional' && !lpfCache[lpfTabActual]) cargarLPF(lpfTabActual);
+  if (id === 'petit') renderPetitTorneo(appData.petit_torneo, appData.semifinales);
   // Actualizar header-banner según la sección activa
   if (appData.recursos) {
     var hdr = document.getElementById('header-banner');
@@ -1137,6 +1152,7 @@ function renderTodo() {
   if (d.clubes)          renderClubes(d.clubes);
   if (d.posiciones)      renderPosiciones(d.posiciones);
   if (d.resultados)      renderResultados(d.resultados);
+  if (d.petit_torneo || d.semifinales) renderPetitTorneo(d.petit_torneo, d.semifinales);
   if (d.goleadores)      renderGoleadores(d.goleadores);
   if (d.vallas)          renderVallas(d.vallas);
   if (d.proximos)        renderProximos(d.proximos);
@@ -1357,7 +1373,7 @@ function switchLPF(tab, btn) {
   lpfTabActual = tab;
   document.querySelectorAll('#lpf-tabs .ct').forEach(function(b){ b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
-  cargarLPF(tab);
+  /* cargarLPF eliminada */
 }
 
 function cargarLPF(tab) {
@@ -1479,6 +1495,148 @@ function formatearFechaPartidoAFA(iso) {
     var d = new Date(iso);
     return d.toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
   } catch(e) { return ''; }
+}
+
+
+// ============================================================
+// PETIT TORNEO 2026 — Renderizado
+// ============================================================
+function switchPetit(tab, btn) {
+  ['tabla','fixture','semis'].forEach(function(t) {
+    var el = document.getElementById('petit-' + t);
+    if (el) el.style.display = (t === tab) ? 'block' : 'none';
+  });
+  btn.closest('.cat-tabs').querySelectorAll('.ct').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+function renderPetitTorneo(petit, semifinales) {
+  // ── Tabla ──
+  var tablaEl = document.getElementById('petit-tabla-contenido');
+  if (tablaEl) {
+    if (!petit || !petit.tabla || !petit.tabla.length) {
+      tablaEl.innerHTML = '<div style="padding:16px;text-align:center;font-size:.75rem;color:var(--muted)">Sin datos aún</div>';
+    } else {
+      var filas = petit.tabla.map(function(e) {
+        var dg = (e.dg > 0 ? '+' : '') + e.dg;
+        var medal = e.pos === 1 ? '🥇' : e.pos === 2 ? '🥈' : e.pos === 3 ? '🥉' : e.pos;
+        return '<tr>' +
+          '<td class="pos-num">' + medal + '</td>' +
+          '<td><div class="td-club"><img class="escudo" src="' + escudoUrl(e.club,'') + '" onerror="escudoFallback(this)"><div><span class="club-name">' + e.club.toUpperCase() + '</span></div></div></td>' +
+          '<td class="pts">' + e.pts + '</td>' +
+          '<td>' + e.pj + '</td>' +
+          '<td>' + e.g  + '</td>' +
+          '<td>' + e.e  + '</td>' +
+          '<td>' + e.p  + '</td>' +
+          '<td>' + e.gf + '</td>' +
+          '<td>' + e.gc + '</td>' +
+          '<td>' + dg   + '</td>' +
+          '</tr>';
+      }).join('');
+      tablaEl.innerHTML =
+        '<table class="tabla"><thead><tr>' +
+        '<th>#</th><th>Club</th><th>Pts</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th>' +
+        '</tr></thead><tbody>' + filas + '</tbody></table>';
+    }
+  }
+
+  // ── Fixture ──
+  var fixEl = document.getElementById('petit-fixture-contenido');
+  if (fixEl) {
+    if (!petit || !petit.fixture || !petit.fixture.length) {
+      fixEl.innerHTML = '<div class="error-state">Sin fixture cargado</div>';
+    } else {
+      var porFecha = {};
+      petit.fixture.forEach(function(p) {
+        var f = p.fecha_label || 'Sin fecha';
+        if (!porFecha[f]) porFecha[f] = [];
+        porFecha[f].push(p);
+      });
+      fixEl.innerHTML = Object.keys(porFecha).map(function(fecha) {
+        var partidos = porFecha[fecha].map(function(p) {
+          var tieneGoles = p.gl !== null && p.gv !== null;
+          var estadoBadge = p.estado === 'en_curso'
+            ? '<span class="badge" style="background:var(--red);font-size:.55rem">🔴 EN VIVO</span>'
+            : p.estado === 'finalizado'
+            ? '<span class="badge" style="background:var(--green);font-size:.55rem">FINAL</span>'
+            : '<span class="badge" style="background:var(--muted);font-size:.55rem">PROG.</span>';
+          var score = tieneGoles
+            ? '<div style="display:flex;align-items:center;gap:4px;min-width:60px;justify-content:center">' +
+              '<span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;background:rgba(255,255,255,.08);border-radius:6px;padding:2px 8px">' + p.gl + '</span>' +
+              '<span style="font-size:.7rem;color:var(--muted)">VS</span>' +
+              '<span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;background:rgba(255,255,255,.08);border-radius:6px;padding:2px 8px">' + p.gv + '</span>' +
+              '</div>'
+            : '<div style="min-width:60px;text-align:center;font-size:.7rem;color:var(--muted)">VS</div>';
+          return '<div class="match-row">' +
+            '<div class="match-team"><img src="' + escudoUrl(p.local,'') + '" onerror="escudoFallback(this)"><span class="team-name">' + p.local.toUpperCase() + '</span></div>' +
+            '<div style="display:flex;flex-direction:column;align-items:center;gap:2px">' + score + estadoBadge + '</div>' +
+            '<div class="match-team away"><img src="' + escudoUrl(p.visita,'') + '" onerror="escudoFallback(this)"><span class="team-name">' + p.visita.toUpperCase() + '</span></div>' +
+            '</div>';
+        }).join('');
+        var esFinalizada = porFecha[fecha].every(function(p){ return p.estado === 'finalizado'; });
+        var headerBg = esFinalizada ? 'rgba(39,174,96,.12)' : 'rgba(245,197,24,.08)';
+        return '<div class="card" style="margin-bottom:10px">' +
+          '<div class="card-header" style="background:' + headerBg + '">' +
+          '<h3>' + fecha + '</h3></div>' + partidos + '</div>';
+      }).join('');
+    }
+  }
+
+  // ── Semifinales ──
+  renderSemifinales(semifinales);
+}
+
+function renderSemifinales(semis) {
+  var cont = document.getElementById('petit-semis-contenido');
+  if (!cont) return;
+  if (!semis || !semis.length) {
+    cont.innerHTML = '<div class="error-state">Sin datos de semifinales</div>';
+    return;
+  }
+  var porDiv = {};
+  semis.forEach(function(s) {
+    var div = s.division || 'Sin división';
+    if (!porDiv[div]) porDiv[div] = [];
+    porDiv[div].push(s);
+  });
+  cont.innerHTML = Object.keys(porDiv).map(function(div) {
+    var esFem = div.toLowerCase().indexOf('femenino') !== -1;
+    var color = esFem ? '#e91e8c' : 'var(--blue)';
+    var partidos = porDiv[div].map(function(s) {
+      var idaStr = s.ida_jugada
+        ? '<span style="font-family:'Bebas Neue',sans-serif;font-size:.95rem">' + s.goles_ida_local + ' — ' + s.goles_ida_visita + '</span>'
+        : '<span style="font-size:.7rem;color:var(--muted)">?-?</span>';
+      var vueltaStr = s.vuelta_jugada
+        ? '<span style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;color:rgba(255,255,255,.6)">' + s.goles_vuelta_local + ' — ' + s.goles_vuelta_visita + '</span>'
+        : '<span style="font-size:.6rem;color:var(--muted)">Pendiente</span>';
+      var ganadorHtml = s.ganador
+        ? '<div style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:.75rem;color:var(--gold);padding:4px 0;border-top:1px solid rgba(255,255,255,.05)">CLASIFICA: ' + s.ganador.toUpperCase() + ' 🏆</div>'
+        : '';
+      return '<div style="padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.04)">' +
+        '<div style="display:flex;align-items:center;gap:4px">' +
+          '<div style="flex:1;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:5px">' +
+            '<span style="font-size:.72rem;font-weight:700">' + (s.local || '').toUpperCase() + '</span>' +
+            '<img src="' + escudoUrl(s.local,'') + '" onerror="escudoFallback(this)" style="width:22px;height:22px;object-fit:contain">' +
+          '</div>' +
+          '<div style="text-align:center;min-width:90px;display:flex;flex-direction:column;align-items:center;gap:1px">' +
+            '<span style="font-size:.5rem;color:var(--muted);letter-spacing:.5px">IDA</span>' +
+            idaStr +
+            '<span style="font-size:.5rem;color:var(--muted);letter-spacing:.5px;margin-top:2px">VUELTA</span>' +
+            vueltaStr +
+          '</div>' +
+          '<div style="flex:1;text-align:left;display:flex;align-items:center;gap:5px">' +
+            '<img src="' + escudoUrl(s.visitante,'') + '" onerror="escudoFallback(this)" style="width:22px;height:22px;object-fit:contain">' +
+            '<span style="font-size:.72rem;font-weight:700">' + (s.visitante || '').toUpperCase() + '</span>' +
+          '</div>' +
+        '</div>' +
+        ganadorHtml +
+      '</div>';
+    }).join('');
+    return '<div class="card" style="margin-bottom:10px;border-left:3px solid ' + color + '">' +
+      '<div class="card-header"><h3>' + div + '</h3>' +
+      '<span class="badge" style="background:' + color + ';opacity:.9;font-size:.6rem">SEMIS</span></div>' +
+      partidos + '</div>';
+  }).join('');
 }
 
 function mostrarPosDiv(division, btn) {
@@ -2661,12 +2819,19 @@ function sanitizeId(str) {
 
 // Construye URL del escudo desde el nombre del club (con mapa de slugs GitHub)
 var ESCUDO_MAP = {
-  'aldea asuncion':'aldea-asuncion','aldea asunción':'aldea-asuncion',
+  'aldea asuncion':'aldea-asuncion','aldea asuncion':'aldea-asuncion',
   'bancario':'bancario','barrio norte':'barrio-norte',
   'el progreso':'el-progreso','gualeguay central':'gualeguay-central',
   'juventud unida':'juventud-unida','la academia':'la-academia',
   'libertad':'libertad','quilmes':'quilmes',
-  'sportiva':'sportiva','urquiza':'urquiza'
+  'sportiva':'sportiva','urquiza':'urquiza',
+  'central':'gualeguay-central',
+  'juventud':'juventud-unida',
+  'juventud (carbo)':'juventud-unida',
+  'soc. sportiva':'sportiva','sociedad sportiva':'sportiva',
+  'atletico urquiza':'urquiza','atletico libertad':'libertad',
+  'atletico barrio norte':'barrio-norte','atletico quilmes':'quilmes',
+  'centro bancario':'bancario','academia':'la-academia','aldea':'aldea-asuncion'
 };
 function escudoUrl(nombre, escudo_url_fb) {
   if (escudo_url_fb) return escudo_url_fb;
@@ -2942,7 +3107,7 @@ function renderMuroCard(card) {
     if (urls.length > 1) {
       html += crearCarrusel(urls, titulo);
     } else if (urls.length === 1) {
-      html += '<img src="' + urls[0] + '" alt="' + titulo + '" style="width:100%;height:auto;max-height:260px;object-fit:cover;display:block" onerror="this.style.display=\'none\'">';
+      html += '<img src="' + urls[0] + '" alt="' + titulo + '" style="width:100%;height:auto;display:block;border-radius:0" onerror="this.style.display=\'none\'">';
     }
     html += '<div class="muro-body">' + badgeHtml +
       (titulo ? '<div class="muro-titulo">' + titulo + '</div>' : '') +
